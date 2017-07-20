@@ -23,10 +23,10 @@ class Simulated_GateSource(Generic_GateSource):
         Returns:
 
         """
-        self.dutycycle = 0
-        self.enable = False
-        self.period = 3
-        print("Opened connection to \"Simulated GateSource\"")
+        self.dutycycle = 0  # default duty cycle level
+        self.enable = False  # default output state
+        self.period = 3  # default period in us
+        print("Opened connection to \"Simulated GateSource\"")  # informs the user the object has been constructed
 
     def __del__(self):
         """
@@ -36,86 +36,85 @@ class Simulated_GateSource(Generic_GateSource):
         Returns:
 
         """
-        print("Closed connection to \"Simulated GateSource\"")
-
+        print("Closed connection to \"Simulated GateSource\"") # informs the user the object has been deconstructed
 
     def get_device_ID(self):
-        """Abstract method for override that will return device ID.
+        """Override method, that will return device ID.
 
         Args:
 
         Returns:
             str: The DeviceID of the gate source.
         """
-        return "Simulated GateSource"
+        return "Simulated GateSource"  # simulated device type
 
     def turn_on_modulation(self):
-        """Turn on the pulse modulation
+        """Override method, Turn on the pulse modulation
 
         Args: 
 
         Returns:
 
         """
-        self.enable = True
+        self.enable = True  # make the virtual state on
         return self.get_modulation_state()
 
     def turn_off_modulation(self):
-        """Rurn off the pulse modulation
+        """Override method, Rurn off the pulse modulation
 
         Args: 
 
         Returns:
 
         """
-        self.enable = False
+        self.enable = False  # make the virtual state off
         return self.get_modulation_state()
 
     def get_modulation_state(self):
-        """Checks if the pulse modulation is on or off
+        """Override method, Checks if the pulse modulation is on or off
 
         Args: 
 
         Returns:
 
         """
-        return self.enable
-
+        return self.enable  # get the modulation state
 
     def get_pulse_period(self):
-        """Abstract method for override, gets the total pulse period of the modulation signal
+        """Override method, gets the total pulse period of the modulation signal
 
-            Args: 
-
-            Returns:
-                str: The value of the pulse period with the units concatenated
-                float: The pulse period in float form
-                str: The units that the pulse period is measured in 
+        Args: 
+        Returns:
+            str: The value of the pulse period with the units concatenated
+            float: The pulse period in float form
+            str: The units that the pulse period is measured in 
 
         """
-        return self.period, str(self.period)+"uS"
+        return self.period, str(self.period)+"uS"  #get the pulse period in uS
 
     def set_pulse_period(self, period):
-        """Abstract method for override sets the total pulse period of the modulation signal
+        """Override method, sets the total pulse period of the modulation signal
 
-            Args:
-                period (str/float): The period of the pulse modulation signal.
-                    if a float is used the units will be in seconds, if a string
-                    is used the units can be changed to ms, us, ns, etc...
+        Args:
+            period (str/float): The period of the pulse modulation signal.
+                if a float is used the units will be in seconds, if a string
+                is used the units can be changed to ms, us, ns, etc...
 
-            Returns:
-                str: The value of the pulse period with the units concatenated.
-                float: The pulse period in float form.
+        Returns:
+            str: The value of the pulse period with the units concatenated.
+            float: The pulse period in float form.
         """
+        # checks a numeric is used
         if type(period) != float and type(period) != int:
             raise TypeError
+        # checks a positive number is used
         elif period < 0:
             raise ValueError
-        self.period = period
+        self.period = period  # sets the virtual pulse period
         return self.get_pulse_period()
 
     def get_pulse_dutycycle(self):
-        """Abstract method for override, gets the duty cycle of the modulation signal
+        """Override method, gets the duty cycle of the modulation signal
 
         The duty cycle of the signal will be set as a decimal of the pulse period.
         If the pulse period is 100us and the duty cycle input is 0.3, the pulse that 
@@ -123,14 +122,13 @@ class Simulated_GateSource(Generic_GateSource):
         will return the decimal value.
 
          Args: 
-
          Returns:
              float: decimal value (0-1) of the duty cycle of the pulse modulation 
          """
-        return self.dutycycle
+        return self.dutycycle  # get the virtual duty cycle
 
     def set_pulse_dutycycle(self, dutycycle):
-        """Abstract method for override, gets the duty cycle of the modulation signal
+        """Override method, gets the duty cycle of the modulation signal
 
         The duty cycle of the signal will be set as a decimal of the pulse period.
         If the pulse period is 100us and the duty cycle input is 0.3, the pulse that 
@@ -142,10 +140,12 @@ class Simulated_GateSource(Generic_GateSource):
         Returns:
             float: decimal value (0-1) of the duty cycle of the pulse modulation 
         """
+        # check the duty cycle is a numeric
         if type(dutycycle) != float and type(dutycycle) != int and np.float64 != np.dtype(dutycycle):
             raise TypeError
+        # check the duty cycle is a 0-1 decimal
         elif dutycycle > 1 or dutycycle < 0:
             raise ValueError
 
-        self.dutycycle = dutycycle
+        self.dutycycle = dutycycle  # set the virtual duty cycle
         return self.get_pulse_dutycycle()
