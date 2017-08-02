@@ -5,6 +5,7 @@ from pylatex import Document, Section, Figure, NoEscape, Command, Tabular
 import matplotlib.pyplot as plt
 import numpy as np
 from math import ceil
+import os
 
 
 def takespread(sequence, num):
@@ -12,8 +13,8 @@ def takespread(sequence, num):
     for i in range(num):
         yield sequence[int(ceil(i * length / num))]
 
-class Tex_Report():
 
+class Tex_Report():
 
     """A LaTeX test report object with APIs for writing the BPM report.
 
@@ -40,6 +41,7 @@ class Tex_Report():
         Returns:
             
         """
+        logo_path = os.path.split(os.path.realpath(__file__))
         self.doc = Document(fname)
         self.doc.documentclass = Command(
             'documentclass',
@@ -52,7 +54,7 @@ class Tex_Report():
         self.doc.append(NoEscape(r'\noindent'))
         self.doc.append(NoEscape(r'\large\textbf{Diamond Light Source Ltd} \hfill\large\textbf{Date: \today}'))
         self.doc.append(NoEscape(r'\\\normalsize Beam Diagnostics Group \hfill\\'))
-        self.doc.append(NoEscape(r'\\\\\includegraphics[width = 1\textwidth]{./Latex_Report/Logo.PNG}\\\\'))
+        self.doc.append(NoEscape(''.join((r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
         self.doc.append(NoEscape(r'\section*{BPM Test Report}'))
 
         intro_text = r'This is a \LaTeX test report for the, beam profile monitor electronics that are used at ' \
@@ -63,7 +65,6 @@ class Tex_Report():
         self.doc.append(NoEscape(r'\clearpage'))
         self.doc.append(NoEscape(r'\tableofcontents'))
         self.doc.append(NoEscape(r'\listoffigures'))
-
 
     def _decimate_list(self, signal, size):
         step = len(signal) / size
@@ -109,7 +110,6 @@ class Tex_Report():
             for i in parameter_names:
                 self.doc.append(NoEscape(i + r'\\'))
 
-
     def add_figure_to_test(self,image_name, caption=""):
         """Adds a figure to the current section of the report
 
@@ -154,7 +154,6 @@ class Tex_Report():
 
         for index in range(len(data)):
 
-
             data[index] = np.round_(data[index],2)
             data[index] = data[index].tolist()
             if len(data[index]) > 20:
@@ -168,7 +167,6 @@ class Tex_Report():
         table.add_hline()
         self.doc.append(table)
         self.doc.append(NoEscape(r'\end{figure}'))
-
 
     def create_report(self):
         """Creates the report
