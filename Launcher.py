@@ -1,9 +1,13 @@
+import sys
+import os
+import time
 import RFSignalGenerators
 import BPMDevice
 import Gate_Source
 import ProgrammableAttenuator
 import Latex_Report
 import Tests
+
 
 RF = RFSignalGenerators.Rigol3030DSG_RFSigGen(
     ipaddress="172.23.252.51",
@@ -21,15 +25,19 @@ ProgAtten = ProgrammableAttenuator.MC_RC4DAT6G95_Prog_Atten(
     port=23,
     timeout=1)
 
-BPM = BPMDevice.SparkERXR_EPICS_BPMDevice(
-    database="libera",
-    daq_type="fa")
+BPM = BPMDevice.Electron_BPMDevice(
+    dev_ID="TS-DI-EBPM-05:")
 
-report = Latex_Report.Tex_Report("BPMTestReport")
+root_path = '/'.join((sys.argv[1], BPM.macaddress.replace(':', '-'), time.strftime("%d-%m-%Y_T_%H-%M")))
+print root_path
+if not os.path.exists(root_path):
+    os.makedirs(root_path)
+
+report = Latex_Report.Tex_Report('/'.join((root_path, "BPMTestReport")), BPM.macaddress)
 
 dls_RF_frequency = 499.6817682
 dls_bunch = 1.87319
-subdirectory = "./Results/"
+subdirectory = ''.join((root_path, '/'))
 settling_time = 0
 
 Tests.Beam_position_equidistant_grid_raster_scan_test(

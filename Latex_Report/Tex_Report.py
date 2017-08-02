@@ -27,7 +27,7 @@ class Tex_Report():
         doc (pylatex document Obj): LaTeX document that all text and figures
             for the report are written to. 
     """
-    def __init__(self, fname):
+    def __init__(self, fname, mac):
         """Initialise the test report and start to record the data.
 
         Creates an instance of the pylatex document object, this is stored as class
@@ -55,7 +55,7 @@ class Tex_Report():
         self.doc.append(NoEscape(r'\large\textbf{Diamond Light Source Ltd} \hfill\large\textbf{Date: \today}'))
         self.doc.append(NoEscape(r'\\\normalsize Beam Diagnostics Group \hfill\\'))
         self.doc.append(NoEscape(''.join((r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
-        self.doc.append(NoEscape(r'\section*{BPM Test Report}'))
+        self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', mac, '}'))))
 
         intro_text = r'This is a \LaTeX test report for the, beam profile monitor electronics that are used at ' \
                      r'Diamond. In this document the different tests will be recorded in their own individual section. ' \
