@@ -48,36 +48,11 @@ def Beam_Power_Dependence(
         float array: Y Positions read from the BPM
     """
 
-
     intro_text = r"""Tests the relationship between RF output power and values read from the BPM. 
     An RF signal is output, and then different parameters are measured from the BPM. 
     The signal is linearly ramped up in dBm at a single frequency. The number of samples to take, 
     and settling time between each measurement can be decided using the arguments. \\~\\
-    Args:\\
-        RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.\\
-        BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.\\
-        frequency (float): Output frequency for the tests, set as a float that will 
-            use the assumed units of MHz. \\
-        start\_power (float): Starting output power for the tests, default value is 
-            -100 dBm. The input values are floats and dBm is assumed. \\
-        end\_power (float): Final output power for the tests, default value is 0 dBm.
-            The input values are floats and dBm assumed. \\
-        samples (int): Number of samples take is this value + 1.\\
-        settling\_time (float): Time in seconds, that the program will wait in between 
-            setting an  output power on the RF, and reading the values of the BPM. \\
-        ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
-            to. If no report is sent to the test then it will just display the results in 
-            a graph. \\
-        sub\_directory (str): String that can change where the graphs will be saved to.\\~\\
-    Returns:\\
-        float array: Power output from the RF\\
-        float array: Power read at the BPM\\
-        float array: Beam Current read at the BPM\\
-        float array: X Positions read from the BPM\\
-        float array: Y Positions read from the BPM\\~\\
     """
-
-
 
     # Formats the test name and tells the user the test has started
     test_name = __name__
@@ -124,7 +99,7 @@ def Beam_Power_Dependence(
         input_power = np.append(input_power, BPMObject.get_input_power())
         ADC_sum = np.append(ADC_sum, BPMObject.get_ADC_sum())
 
-    #turn off the RF
+    # turn off the RF
     RFObject.turn_off_RF()
 
     # add the test details to the report
@@ -140,7 +115,7 @@ def Beam_Power_Dependence(
     ReportObject.add_table_to_test('|c|c|c|c|c|c|', data, headings, caption)
 
     # Get the plot values in a format thats easy to iterate
-    format_plot = []# x axis, y axis, x axis title, y axis title, title of file, caption
+    format_plot = [] # x axis, y axis, x axis title, y axis title, title of file, caption
     format_plot.append((output_power, input_power,'RF Source Power Output (dBm)', 'Power input at BPM (dBm)',"power_vs_power.pdf"))
     format_plot.append((output_power, beam_current, 'RF Source Power Output (dBm)', 'Beam Current at BPM (mA)', "power_vs_current.pdf"))
     format_plot.append((output_power, X_pos, 'RF Source Power Output (dBm)', 'Horizontal Beam Position (mm)', "power_vs_X.pdf"))
@@ -153,10 +128,11 @@ def Beam_Power_Dependence(
         plt.xlabel(index[2])
         plt.ylabel(index[3])
         plt.grid(True)
-        plt.savefig(sub_directory+index[4])
+        plt.savefig(''.join((sub_directory, index[4])))
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
-        ReportObject.add_figure_to_test(sub_directory + index[4], "")
+        ReportObject.add_figure_to_test(image_name=''.join((sub_directory, index[4])),
+                                        caption=index[4])
 
     # return the full data sets
     return output_power, input_power, beam_current, X_pos, Y_pos

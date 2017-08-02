@@ -78,26 +78,6 @@ def Beam_position_equidistant_grid_raster_scan_test(
     plane. This is then converted into attenuation values to put into the attenuator. A fixed RF frequency 
     and power is used while the attenuator values are changed. Finally the predicted values are compared 
     with the measured values of position. \\~\\
-    Args:\\
-        RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.\\
-        BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.\\
-        ProgAttenObject (Prog\_Atten Obj): Object to interface with programmable attenuator hardware\\
-        rf\_power (float): Output power of the RF system throughout the test, in dBm \\
-        rf\_frequency (float): Frequency output of the RF throughout the test, in MHz\\
-        nominal\_attenuation (float): starting attenuation values of each attenuator, in dB\\
-        x\_points (int): number of samples in the X plane\\
-        y\_points (int) number of samples in the Y plane \\
-        settling\_time (float): time in seconds to wait between changing an attenuator value and 
-            taking a reading from the BPM. \\
-        ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
-            to. If no report is sent to the test then it will just display the results in 
-            a graph. \\
-        sub\_directory (str): String that can change where the graphs will be saved to\\~\\
-    Returns:\\
-        float array: measured X values of position\\
-        float array: measured Y values of position\\
-        float array: predicted X values of position\\
-        float array: predicted Y values of position\\~\\
     """
 
     # Formats the name of plot that is saved as, and also informs the user that the test has started
@@ -226,14 +206,16 @@ def Beam_position_equidistant_grid_raster_scan_test(
     plt.ylabel("Vertical Beam Position (mm)")
     plt.grid(True)
 
-    if ReportObject == None:
+    if ReportObject is None:
         # If no report is entered as an input to the test, simply display the results
         plt.show()
     else:
         # If there is a report for the data to be copied to, do so.
-        plt.savefig(sub_directory+"Beam_position_equidistant_grid_raster_scan_test" + ".pdf")
+        plt.savefig(''.join((sub_directory, "Beam_position_equidistant_grid_raster_scan_test" + ".pdf")))
         ReportObject.setup_test(test_name, intro_text, device_names, parameter_names)
-        ReportObject.add_figure_to_test(sub_directory+"Beam_position_equidistant_grid_raster_scan_test")
+        ReportObject.add_figure_to_test(image_name=''.join((sub_directory,
+                                                            "Beam_position_equidistant_grid_raster_scan_test")),
+                                        caption="Beam_position_equidistant_grid_raster_scan_test")
 
     return measured_x, measured_y, predicted_x, predicted_y
 

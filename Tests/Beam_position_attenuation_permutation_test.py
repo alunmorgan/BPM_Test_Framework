@@ -78,26 +78,6 @@ def Beam_position_attenuation_permutation_test(
     attenuation. These values will then be put into all possible permutations with four values. Each 
     permutation will be fed to the four attenuators, and the BPM position recoded after each 
     attenuation change. \\~\\
-    Args:\\
-        RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.\\
-        BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.\\
-        ProgAttenObject (Prog\_Atten Obj): Object to interface with programmable attenuator hardware\\
-        rf\_power (float): Output power of the RF system throughout the test, in dBm \\
-        rf\_frequency (float): Frequency output of the RF throughout the test, in MHz\\
-        attenuator\_max (float): max value for the attenuators\\
-        attenuator\_min (float): min value for the attenuators\\
-        attenuator\_steps (float): steps between the min and max values\\
-        settling\_time (float): time in seconds to wait between changing an attenuator value and 
-            taking a reading from the BPM. \\
-        ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
-            to. If no report is sent to the test then it will just display the results in 
-            a graph. \\
-        sub\_directory (str): String that can change where the graphs will be saved to\\~\\
-    Returns:\\
-        float array: measured X values of position\\
-        float array: measured Y values of position\\
-        float array: predicted X values of position\\
-        float array: predicted Y values of position\\~\\
     """
 
     # Formats the name of plot that is saved as, and also informs the user that the test has started
@@ -166,14 +146,15 @@ def Beam_position_attenuation_permutation_test(
     plt.ylabel("Vertical Beam Position (mm)")
     plt.grid(True)
 
-    if ReportObject == None:
+    if ReportObject is None:
         # If no report is entered as an input to the test, simply display the results
         plt.show()
     else:
         # If there is a report for the data to be copied to, do so.
         plt.savefig(sub_directory+"beam_position_attenuation_permutation" + ".pdf")
         ReportObject.setup_test("beam_position_attenuation_permutation", intro_text, device_names, parameter_names)
-        ReportObject.add_figure_to_test(sub_directory+"beam_position_attenuation_permutation")
+        ReportObject.add_figure_to_test(image_name=''.join((sub_directory,"beam_position_attenuation_permutation")),
+                                        caption="beam_position_attenuation_permutation")
 
     return measured_x, measured_y, predicted_x, predicted_y
 

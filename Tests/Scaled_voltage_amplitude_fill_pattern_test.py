@@ -64,24 +64,6 @@ def Scaled_voltage_amplitude_fill_pattern_test(
         duty cycle of the pulse, from 0.1 to 1. Readings on the BPM are then recorded as the duty cycle
         is changed. While the duty cycle is increased, the peak RF voltage increases, meaning that 
         the average power will be constant with duty cycle change. \\~\\
-        Args:\\
-            RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.\\
-            BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.\\
-            GateSourceObject: (GateSource Obj): Object used to interface with the gate source hardware. \\
-            frequency (float/str): Output frequency for the tests, set as a float that will use the assumed units of MHz. \\
-            desired\_power (float): Starting output power for the tests, default value is -40 dBm. The input values are floats and dBm is assumed. \\
-            samples (int): Number of samples take is this value + 1.\\
-            pulse\_period (float): The pulse period for the modulation signal, i.e. the bunch length, this is a float that is in micro seconds. \\
-            settling\_time (float): Time in seconds, that the program will wait in between setting an  output power on the RF, and reading the values of the BPM. \\
-            ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded to. If no report is sent to the test then it will just display the results in a graph. \\
-            sub\_directory (str): String that can change where the graphs will be saved to \\~\\ 
-        Returns:\\
-            float array: duty cycle of the modulation signal \\
-            float array: power set at the rf output \\
-            float array: power read from the BPM \\
-            float array: current read fro mthe BPM \\
-            float array: X position read from the BPM \\
-            float array: Y position read from the BPM \\~\\  
     """
 
     test_name = __name__
@@ -158,10 +140,11 @@ def Scaled_voltage_amplitude_fill_pattern_test(
         plt.xlabel(index[2])
         plt.ylabel(index[3])
         plt.grid(True)
-        plt.savefig(sub_directory+index[4])
+        plt.savefig(''.join((sub_directory, index[4])))
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
-        ReportObject.add_figure_to_test(sub_directory + index[4], "")
+        ReportObject.add_figure_to_test(image_name=''.join((sub_directory, index[4])),
+                                        caption=index[4])
 
     # return the full data sets
     return dutycycle, rf_output, bpm_power, bpm_current, bpm_Xpos, bpm_Ypos

@@ -110,7 +110,7 @@ class Tex_Report():
             for i in parameter_names:
                 self.doc.append(NoEscape(i + r'\\'))
 
-    def add_figure_to_test(self,image_name, caption=""):
+    def add_figure_to_test(self, image_name, caption=""):
         """Adds a figure to the current section of the report
 
         Adds a pdf image in the form of a figure to the current section of the report. 
