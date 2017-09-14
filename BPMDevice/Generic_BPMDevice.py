@@ -112,5 +112,15 @@ class Generic_BPMDevice():
         """
         pass
 
+    @abstractmethod
+    def get_performance_spec(self):
+        """Abstract method for override, gets the factory performance specification data
+
+                Args:
+                Returns: 
+                    dict: Various vectors of floats for different performance measures.
+                """
+        pass
+
 
 

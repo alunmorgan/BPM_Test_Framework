@@ -150,7 +150,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
             str: Device with epics channel ID and MAC address
         """
 
-        return "Libera Electron BPM with the Epics ID "+ "\""+self.epicsID+"\" and the MAC Address \""+self.macaddress+"\""
+        return "Libera Electron BPM with the Epics ID " + "\""+self.epicsID+"\" and the MAC Address \""+self.macaddress+"\""
 
     def get_input_tolerance(self):
         """Override method, gets the maximum input power the device can take
@@ -164,4 +164,47 @@ class Electron_BPMDevice(Generic_BPMDevice):
             float: max input power in dBm
         """
         return -20 # The maximum continuous input power the Electron can handle in dBm
+
+    def get_performance_spec(self):
+        """Override method, gets the factory performance specifications.
+
+        In order to determine pass/fail criteria, one needs to have something to compare to. 
+        This function returns the factory specification data ready for comparison.
+
+        The following results are present: All results are in um.
+        Noise measurements:
+            'noise_10kHz' (fs=10kHz, BW=2kHz, DSC=on, AGC=off)
+            'noise_1MHz' (fs=1MHz(TBT), BW=0.3*fs, DSC=off, AGC=off)
+        Beam current dependence: Input is power at the Libera input
+            'Beam_current_dependence_X' (fs=10kHz, DSC=on, AGC=off)
+            'Beam_current_dependence_Y' (fs=10kHz, DSC=on, AGC=off)
+            'Beam_current_dependence_deviation_within_range_X' (fs=10kHz, DSC=on, AGC=off)
+            'Beam_current_dependence_deviation_within_range_Y' (fs=10kHz, DSC=on, AGC=off)
+        Fill pattern dependence: (Constant input power of -10dBm at libera input)
+            'Fill_pattern_dependence_X' (T=1/fs, fs=10kHz, DSC=on, AGC=off)
+            
+        Args:
+        Returns: 
+            dict: a set of vectors containing comparison data
+        """
+        specs ={}
+        specs['noise_10kHz'] = ([0,  -24, -32, -40, -44, -50, -56, -62, -68, -74, -80],
+                                [0.2, 0.3, 0.5, 1,   2,   4,   5,   10,  20,  50, 100])
+        specs['noise_1MHz'] = ([0, -32, -36, -40, -44, -50, -56, -62, -68, -74, -80],
+                               [3,  5,   6,   8,   15,  30,  50,  150, 300, 600, 1500])
+        specs['Beam_current_dependence_X'] = ([0, -2, -56, -68, -74, -80],
+                                              [0,  1,   2,  10,  20,  50])
+        specs['Beam_current_dependence_Y'] = ([0, -2, -56, -68, -74, -80],
+                                              [0,  1,   2,  10,  20,  50])
+        specs['Beam_current_dependence_deviation_within_range_X'] = \
+            ([[0, -8], [-8, -20], [-20, -32], [-32, -40], [-40, -56], [-56, -68], [-68, -70]],
+             [   1,        1,          1,          1,          1,          5,          50])
+        specs['Beam_current_dependence_deviation_within_range_Y'] = \
+            ([[0, -8], [-8, -20], [-20, -32], [-32, -40], [-40, -56], [-56, -68], [-68, -70]],
+             [   1,        1,          1,          1,          1,          5,          50])
+
+        specs['Fill_pattern_dependence_X'] = ([20, 100], 1)
+        specs['Fill_pattern_dependence_Y'] = ([20, 100], 1)
+
+        return specs
 
