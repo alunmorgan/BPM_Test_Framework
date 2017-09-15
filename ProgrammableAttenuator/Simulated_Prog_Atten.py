@@ -4,9 +4,10 @@ from pkg_resources import require
 require("numpy")
 import numpy as np
 
+
 class Simulated_Prog_Atten(Generic_Prog_Atten):
 
-    def __init__(self, ipaddress, port, timeout):
+    def __init__(self):
         self.A = 0
         self.B = 0
         self.C = 0
@@ -27,7 +28,7 @@ class Simulated_Prog_Atten(Generic_Prog_Atten):
             while channel not in ["A", "B", "C", "D"]:
                 raise ValueError
         elif type(channel) == int:
-            while channel not in [1,2,3,4]:
+            while channel not in [1, 2, 3, 4]:
                 raise ValueError
         else:
             raise TypeError
@@ -43,7 +44,7 @@ class Simulated_Prog_Atten(Generic_Prog_Atten):
         self.D = attenuation
 
     def get_global_attenuation(self):
-        return (self.A, self.B, self.C, self.D)
+        return self.A, self.B, self.C, self.D
 
     def set_channel_attenuation(self, channel, attenuation):
 

@@ -114,26 +114,39 @@ def Beam_Power_Dependence(
     # copy the values to the report
     ReportObject.add_table_to_test('|c|c|c|c|c|c|', data, headings, caption)
 
+    specs = BPMObject.get_performance_spec()
+
     # Get the plot values in a format thats easy to iterate
     format_plot = [] # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append((output_power, input_power,'RF Source Power Output (dBm)', 'Power input at BPM (dBm)',"power_vs_power.pdf"))
-    format_plot.append((output_power, beam_current, 'RF Source Power Output (dBm)', 'Beam Current at BPM (mA)', "power_vs_current.pdf"))
-    format_plot.append((output_power, X_pos, 'RF Source Power Output (dBm)', 'Horizontal Beam Position (mm)', "power_vs_X.pdf"))
-    format_plot.append((output_power, Y_pos, 'RF Source Power Output (dBm)', 'Vertical Beam Position (mm)', "power_vs_Y.pdf"))
-    format_plot.append((output_power, ADC_sum, 'RF Source Power Output (dBm)', 'ADC Sum (counts)', 'power_vs_ADC_sum.pdf'))
+    format_plot.append(((output_power, input_power),
+                       ('RF Source Power Output (dBm)', 'Power input at BPM (dBm)', "power_vs_power.pdf")))
+    format_plot.append(((output_power, beam_current),
+                       ('RF Source Power Output (dBm)', 'Beam Current at BPM (mA)', "power_vs_current.pdf")))
+    format_plot.append(((output_power, X_pos),
+                       ('RF Source Power Output (dBm)', 'Horizontal Beam Position (mm)', "power_vs_X.pdf"),
+                       specs['Beam_power_dependence_X']))
+    format_plot.append(((output_power, Y_pos),
+                       ('RF Source Power Output (dBm)', 'Vertical Beam Position (mm)', "power_vs_Y.pdf"),
+                       specs['Beam_power_dependence_Y']))
+    format_plot.append(((output_power, ADC_sum),
+                       ('RF Source Power Output (dBm)', 'ADC Sum (counts)', 'power_vs_ADC_sum.pdf')))
 
     # plot all of the graphs
     for index in format_plot:
-        plt.plot(index[0], index[1])
-        plt.xlabel(index[2])
-        plt.ylabel(index[3])
+        plt.plot(index[0][0], index[0][1])
+        plt.xlabel(index[1][0])
+        plt.ylabel(index[1][1])
         plt.grid(True)
-        plt.savefig(''.join((sub_directory, index[4])))
+        if len(index) == 3:
+            print index[2]
+            # There is a specification line. Add this.
+            plt.plot(index[2][0], index[2][1], 'r')
+
+        plt.savefig(''.join((sub_directory, index[1][2])))
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
-        ReportObject.add_figure_to_test(image_name=''.join((sub_directory, index[4])),
-                                        caption=index[4])
+        ReportObject.add_figure_to_test(image_name=''.join((sub_directory, index[1][2])),
+                                        caption=index[1][2])
 
     # return the full data sets
     return output_power, input_power, beam_current, X_pos, Y_pos
-

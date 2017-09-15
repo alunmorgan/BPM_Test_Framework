@@ -18,7 +18,7 @@ class Simulated_RFSigGen(Generic_RFSigGen):
     """
 
     # Constructor and Deconstructor.
-    def __init__(self, limit = -40):
+    def __init__(self, limit=-40):
         """Informs the user when the simulated device has been created in memory.
         
         The simulated device for the RF sig gen does not need any arguments. It's main 
