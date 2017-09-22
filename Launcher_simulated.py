@@ -9,10 +9,10 @@ import Latex_Report
 import Tests
 
 
-RF = RFSignalGenerators.Simulated_RFSigGen(limit=-40)
+RF = RFSignalGenerators.Simulated_RFSigGen(limit=-40, noise_mag=1)
 GS = Gate_Source.Simulated_GateSource()
 ProgAtten = ProgrammableAttenuator.Simulated_Prog_Atten()
-BPM = BPMDevice.Simulated_BPMDevice(RFSim=RF, gatesim=GS, progatten=ProgAtten)
+BPM = BPMDevice.Simulated_BPMDevice(RFSim=RF, gatesim=GS, progatten=ProgAtten, noise_mag=1)
 
 root_path = '/'.join((sys.argv[1], BPM.macaddress.replace(':', '-'), time.strftime("%d-%m-%Y_T_%H-%M")))
 print root_path
@@ -88,6 +88,16 @@ Tests.Scaled_voltage_amplitude_fill_pattern_test(
     settling_time=settling_time,
     ReportObject=report,
     sub_directory=subdirectory)
+
+Tests.noise_test(rf_object=RF,
+                 bpm_object=BPM,
+                 frequency=dls_RF_frequency,
+                 start_power=-100,
+                 end_power=-40,
+                 samples=1000,
+                 settling_time=settling_time,
+                 report_object=report,
+                 sub_directory=subdirectory)
 
 report.create_report()
 

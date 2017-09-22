@@ -4,3 +4,4 @@ from Scaled_voltage_amplitude_fill_pattern_test import *
 from Template import *
 from Beam_position_attenuation_permutation_test import Beam_position_attenuation_permutation_test
 from Beam_position_equidistant_grid_raster_scan_test import Beam_position_equidistant_grid_raster_scan_test
+from Noise_test import noise_test

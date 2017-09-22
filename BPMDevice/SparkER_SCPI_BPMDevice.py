@@ -123,6 +123,36 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         mean_y = mean_y / 1000  # convert um to mm
         return mean_y
 
+    def get_X_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            list: [raw_timestamp (tuple), X position in mm]
+        """
+        self._trigger_DAQ()
+        replies = self._telnet_query(" ".join(("TBT_XY", num_vals)))  # Get 100 samples of XY data
+        replies = replies.rsplit()  # Split the data into lists
+        replies = np.array(map(float, replies))  # Convert the data into a float array
+        sa_x_data = replies[0::2]  # Grab the X data only
+        return sa_x_times, sa_x_data  #WHAT ABOUT THE TIMESTAMPS
+
+    def get_Y_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            list: [raw_timestamp (tuple), X position in mm]
+        """
+        self._trigger_DAQ()
+        replies = self._telnet_query(" ".join(("TBT_XY", num_vals)))  # Get 100 samples of XY data
+        replies = replies.rsplit()  # Split the data into lists
+        replies = np.array(map(float, replies))  # Convert the data into a float array
+        sa_y_data = replies[1::2]  # Grab the Y data only
+        return sa_y_times, sa_y_data  #WHAT ABOUT THE TIMESTAMPS
+
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 
 

@@ -5,6 +5,8 @@ import cothread
 from Generic_BPMDevice import *
 from subprocess import Popen, PIPE
 import numpy as np
+from BPM_helper_functions import Accumulator
+
 
 class Electron_BPMDevice(Generic_BPMDevice):
     """Libera Electron BPM Device class that uses Epics to communicate with PVs.
@@ -19,7 +21,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         epicsID (str): Channel identifier string that will be used to access PVs.  
     """
 
-    def _read_epics_pv (self,pv):
+    def _read_epics_pv(self, pv):
         """Private method to read an Epics process variable.
         
         Wraps up caget call, makes it easy for multiple reads to be programmed 
@@ -30,7 +32,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         Returns: 
             variant: Value of requested process variable.
         """
-        return caget(self.epicsID+pv)  # Get PV data
+        return caget(self.epicsID + pv)  # Get PV data
 
     def __init__(self, dev_ID):
         """Initializes the Libera BPM device object and assigns it an ID. 
@@ -80,6 +82,32 @@ class Electron_BPMDevice(Generic_BPMDevice):
             float: Y position in mm
         """
         return self._read_epics_pv("SA:Y")  # Reads the requested PV
+
+    def get_X_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_x_accum = Accumulator(''.join((self.epicsID, ':SA:X')), num_vals)
+        sa_x_times,sa_x_data = sa_x_accum.wait()
+        return sa_x_times, sa_x_data
+
+    def get_Y_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_y_accum = Accumulator(''.join((self.epicsID, ':SA:Y')), num_vals)
+        sa_y_times, sa_y_data = sa_y_accum.wait()
+        return sa_y_times, sa_y_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 
@@ -164,6 +192,9 @@ class Electron_BPMDevice(Generic_BPMDevice):
             float: max input power in dBm
         """
         return -20 # The maximum continuous input power the Electron can handle in dBm
+
+    def get_SA_data(self, PV):
+        camonitor()
 
     def get_performance_spec(self):
         """Override method, gets the factory performance specifications.

@@ -33,6 +33,28 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
+    def get_X_SA_data(self, num_vals):
+        """Abstract method for override, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            list: [raw_timestamp (tuple), X position in mm]
+        """
+        pass
+
+    @abstractmethod
+    def get_Y_SA_data(self, num_vals):
+        """Abstract method for override, gets the calculated Y position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            list: [raw_timestamp (tuple), Y position in mm]
+        """
+        pass
+
+    @abstractmethod
     def get_beam_current(self):
         """Abstract method for override, gets the beam current read by the BPMs. 
         

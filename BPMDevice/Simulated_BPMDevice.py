@@ -4,6 +4,7 @@ from Generic_BPMDevice import *
 from pkg_resources import require
 require("numpy")
 import numpy as np
+import random
 
 
 class Simulated_BPMDevice(Generic_BPMDevice):
@@ -19,7 +20,7 @@ class Simulated_BPMDevice(Generic_BPMDevice):
         GateSim (Gate Source Simulator Obj) : Reference to a gate source simulator
     """
 
-    def __init__(self, RFSim, gatesim=None, progatten=None):
+    def __init__(self, RFSim, gatesim=None, progatten=None, noise_mag=0.):
         """Initializes the Libera BPM device object and assigns it an ID. 
         
         Args:
@@ -32,6 +33,7 @@ class Simulated_BPMDevice(Generic_BPMDevice):
             progatten (Programmable attenuator Object): The interface object that has access to a programmable attenuator
                 device. This will typically be a simulated GateSource, this is an input to this 
                 class so it know how much signals are being attenuated between the RF source and it. 
+            noise_mag (float): The magnitude of the white noise to be added to the input signals
         Returns: 
             
         """
@@ -39,8 +41,9 @@ class Simulated_BPMDevice(Generic_BPMDevice):
         self.attenuation = 12  # Typical attenuation when using a 4 way splitter and cables
         self.RFSim = RFSim  # Instance of the RF source used, allows the simulator to know what signals are output
         self.GateSim = gatesim  # Instance of the Gate device, allows the simulator to know what signals are output
-        self.ProgAtten = progatten # Instance of the Programmable attenuator, allows to know about changes to input levels.
+        self.ProgAtten = progatten  # Instance of the Programmable attenuator, allows to know about changes to input levels.
         self.macaddress = 'SIMULATED'
+        self.noise_mag = noise_mag
 
     def get_X_position(self):
         """Override method, gets the calculated X position of the beam.
@@ -51,12 +54,12 @@ class Simulated_BPMDevice(Generic_BPMDevice):
             float: X position in mm
         """
         if self.ProgAtten is None:
-            x_val = 0.0 # With an equal splitter there should be no X shift
+            x_val = 0.0  # With an equal splitter there should be no X shift
         else:
             A_pwr, B_pwr, C_pwr, D_pwr = self.attenuate_inputs(self.RFSim.get_output_power()[0])
             total_power = A_pwr + B_pwr + C_pwr + D_pwr
             x_val = ((A_pwr + D_pwr) - (B_pwr + C_pwr)) / total_power
-        return x_val * 10  # Scaling to mm
+        return x_val * 10 + (random.random() - 0.5) * self.noise_mag  # Scaling to mm and adding noise
 
     def get_Y_position(self):
         """Override method, gets the calculated X position of the beam.
@@ -73,7 +76,39 @@ class Simulated_BPMDevice(Generic_BPMDevice):
             total_power = A_pwr + B_pwr + C_pwr + D_pwr
             y_val = ((A_pwr + B_pwr) - (C_pwr + D_pwr)) / total_power
             print y_val
-        return y_val * 10  # Scaling to mm
+        return y_val * 10 + (random.random() - 0.5) * self.noise_mag  # Scaling to mm and adding noise
+
+    def get_X_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_x_data = []
+        sa_x_times = []
+        for m in range(num_vals):
+            sa_x_data.append((random.random() - 0.5) * self.noise_mag)
+            sa_x_times.append(m * 0.1)
+        return sa_x_times, sa_x_data
+
+    def get_Y_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_y_data = []
+        sa_y_times = []
+        for m in range(num_vals):
+            sa_y_data.append((random.random() - 0.5) * self.noise_mag)
+            sa_y_times.append(m * 0.1)
+        return sa_y_times, sa_y_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 

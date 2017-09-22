@@ -5,6 +5,7 @@ import cothread
 from Generic_BPMDevice import *
 from subprocess import Popen, PIPE
 import numpy as np
+from BPM_helper_functions import Accumulator
 
 
 class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
@@ -81,7 +82,6 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
     def __del__(self):
         print "Closed link with" + self.get_device_ID()  # Tells the user they have connected to the device
 
-
     def get_X_position(self):
         """Override method, gets the calculated X position of the beam.
 
@@ -109,6 +109,32 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         y = np.mean(y)  # Gets the mean PV value
         y = y/1000000.0  # Converts from nm to mm
         return y
+
+    def get_X_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_x_accum = Accumulator(''.join((self.epicsID, ':SA:X')), num_vals)
+        sa_x_times, sa_x_data = sa_x_accum.wait()
+        return sa_x_times, sa_x_data
+
+    def get_Y_SA_data(self, num_vals):
+        """Override method, gets the calculated X position SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_y_accum = Accumulator(''.join((self.epicsID, ':SA:Y')), num_vals)
+        sa_y_times, sa_y_data = sa_y_accum.wait()
+        return sa_y_times, sa_y_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 
