@@ -85,7 +85,12 @@ def noise_test(rf_object,
     rf_object.set_frequency(frequency)
     rf_object.set_output_power(start_power)
     rf_object.turn_on_RF()
-    x_time = x_pos = y_time = y_pos = output_power = input_power = []
+    x_time = []
+    x_pos = []
+    y_time = []
+    y_pos = []
+    output_power = []
+    input_power = []
     for index in power:
         rf_object.set_output_power(index)  # Set next output power value
         time.sleep(settling_time)  # Wait for signal to settle
