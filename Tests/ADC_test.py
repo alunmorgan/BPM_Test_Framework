@@ -1,0 +1,115 @@
+from pkg_resources import require
+require("numpy")
+require("cothread")
+require("matplotlib")
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+from math import floor
+
+
+def adc_test(rf_object,
+               bpm_object,
+               frequency,
+               samples=10,
+               power_levels=(-60., -45.),
+               settling_time=1,
+               report_object=None,
+               sub_directory=""):
+    """Compares the noise generated.
+
+    The RF signal is turned off, and then different parameters are measured from the BPM. 
+
+    Args:
+        rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
+        bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
+        frequency (float): Output frequency for the tests, set as a float that will use the assumed units of MHz. 
+        power_levels (tuple of floats): output power levels for the tests. dBm is assumed. 
+        samples (int): Number of samples take.
+        settling_time (float): Time in seconds, that the program will wait in between 
+            setting an  output power on the RF, and reading the values of the BPM. 
+        report_object (LaTeX Report Obj): Specific report that the test results will be recorded 
+            to. If no report is sent to the test then it will just display the results in a graph. 
+        sub_directory (str): String that can change where the graphs will be saved to.
+
+    Returns:
+        float array: X ADC data read from the BPM
+        float array: Y ADC data read from the BPM
+    """
+
+    intro_text = r"""Compares the noise generated.
+
+    The RF signal is a sine wave.  \\~\\
+    """
+
+    # Formats the test name and tells the user the test has started
+    test_name = __name__
+    test_name = test_name.rsplit("Tests.")[1]
+    test_name = test_name.replace("_", " ")
+    print("Starting test \"" + test_name + "\"")
+
+    # Get the device names for the report
+    device_names = []
+    device_names.append(rf_object.get_device_ID())
+    device_names.append(bpm_object.get_device_ID())
+
+    # Get the parameter values for the report
+    parameter_names = []
+    parameter_names.append("Samples: " + str(samples))
+
+    # Initial setup of the RF system
+    rf_object.turn_off_RF()
+    rf_object.set_frequency(frequency)
+    adc_n_bits = 16
+    adc_max_counts = np.power(2, adc_n_bits)
+    adc_step = adc_max_counts / adc_n_bits
+    bin_edges = range(adc_n_bits +1)
+
+    input_power = []
+    output_power = []
+    x_data = []
+    y_data = []
+    x_time = []
+    y_time = []
+    for index in power_levels:
+        rf_object.set_output_power(index)  # Set next output power value
+        rf_object.turn_on_RF()
+        time.sleep(settling_time)  # Wait for signal to settle
+        x_time_tmp, x_data_tmp = bpm_object.get_X_ADC_data(samples)  # record X data
+        y_time_tmp, y_data_tmp = bpm_object.get_Y_ADC_data(samples)  # record Y data
+        x_time.append(x_time_tmp)
+        x_data.append(x_data_tmp)
+        y_time.append(y_time_tmp)
+        y_data.append(y_data_tmp)
+        output_power = np.append(output_power, rf_object.get_output_power()[0])
+        input_power = np.append(input_power, bpm_object.get_input_power())
+
+    # turn off the RF
+    rf_object.turn_off_RF()
+
+    # add the test details to the report
+    report_object.setup_test(test_name, intro_text, device_names, parameter_names)
+
+    specs = bpm_object.get_performance_spec()
+
+    # Get the plot values in a format that is easy to iterate
+    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
+    format_plot.append(((x_time, x_data), ('bit number', 'counts', "ADC_histogram_x.pdf")))
+    format_plot.append(((x_time, y_data), ('bit number', 'counts', "ADC_histogram_y.pdf")))
+   # print 'X data = ', x_data_tmp
+    # plot all of the graphs
+    for index in format_plot:
+       # print index
+        plt.hist(np.transpose(np.floor(index[0][1] / adc_step)), bins=bin_edges)
+       # print index[0][1]
+        plt.xlabel(index[1][0])
+        plt.ylabel(index[1][1])
+
+        plt.savefig(''.join((sub_directory, index[1][2])))
+        plt.cla()  # Clear axis
+        plt.clf()  # Clear figure
+        report_object.add_figure_to_test(image_name=''.join((sub_directory, index[1][2])),
+                                         caption=index[1][2])
+
+    # return the full data sets
+    return x_data, y_data

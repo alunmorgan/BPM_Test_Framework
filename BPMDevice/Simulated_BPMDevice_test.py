@@ -18,7 +18,7 @@ class ExpectedDataTestNoGateNoAttentuator(unittest.TestCase):
         self.test_output_values = [-100]
         self.current = 1000 * 1.1193 ** (self.test_output_values[0] - self.simulator_attenuation)
         mock_rf_dev.get_output_power.return_value = self.test_output_values
-        self.simbpm = Simulated_BPMDevice(mock_rf_dev)
+        self.simbpm = SimulatedBPMDevice(mock_rf_dev)
         unittest.TestCase.setUp(self)
 
     def tearDown(self):
@@ -82,7 +82,7 @@ class ExpectedDataTestWithGateNoAttentuator(unittest.TestCase):
                                           np.absolute(20 * np.log10(duty_cycle)) -
                                           self.simulator_attenuation)
         self.current = 1000 * 1.1193 ** self.expected_input_power
-        self.simbpm = Simulated_BPMDevice(mock_rf_dev, mock_gate)
+        self.simbpm = SimulatedBPMDevice(mock_rf_dev, mock_gate)
         unittest.TestCase.setUp(self)
 
     def tearDown(self):
@@ -157,7 +157,7 @@ class ExpectedDataTestWithGateWithAttenuator(unittest.TestCase):
         self.d_pwr = 10 ** ((expected_input_power - 6 - d_attenuator) / 10)
         self.expected_input_power = 10 * np.log10(self.a_pwr + self.b_pwr + self.c_pwr + self.d_pwr)
         self.current = 1000 * 1.1193 ** self.expected_input_power
-        self.simbpm = Simulated_BPMDevice(mock_rf_dev, mock_gate, mock_atten)
+        self.simbpm = SimulatedBPMDevice(mock_rf_dev, mock_gate, mock_atten)
         unittest.TestCase.setUp(self)
 
     def tearDown(self):

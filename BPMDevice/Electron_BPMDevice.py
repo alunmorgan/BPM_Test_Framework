@@ -84,7 +84,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         return self._read_epics_pv("SA:Y")  # Reads the requested PV
 
     def get_X_SA_data(self, num_vals):
-        """Override method, gets the calculated X position SA data.
+        """Gets the calculated X position SA data.
 
         Args:
             num_vals (int): The number of samples to capture
@@ -93,11 +93,11 @@ class Electron_BPMDevice(Generic_BPMDevice):
             data (list): floats
         """
         sa_x_accum = Accumulator(''.join((self.epicsID, ':SA:X')), num_vals)
-        sa_x_times,sa_x_data = sa_x_accum.wait()
+        sa_x_times, sa_x_data = sa_x_accum.wait()
         return sa_x_times, sa_x_data
 
     def get_Y_SA_data(self, num_vals):
-        """Override method, gets the calculated X position SA data.
+        """Gets the calculated X position SA data.
 
         Args:
             num_vals (int): The number of samples to capture

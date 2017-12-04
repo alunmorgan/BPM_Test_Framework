@@ -12,7 +12,7 @@ import Tests
 RF = RFSignalGenerators.Simulated_RFSigGen(limit=-40, noise_mag=1)
 GS = Gate_Source.Simulated_GateSource()
 ProgAtten = ProgrammableAttenuator.Simulated_Prog_Atten()
-BPM = BPMDevice.Simulated_BPMDevice(RFSim=RF, gatesim=GS, progatten=ProgAtten, noise_mag=1)
+BPM = BPMDevice.SimulatedBPMDevice(rf_sim=RF, gatesim=GS, progatten=ProgAtten, noise_mag=1)
 
 root_path = '/'.join((sys.argv[1], BPM.macaddress.replace(':', '-'), time.strftime("%d-%m-%Y_T_%H-%M")))
 print root_path
@@ -94,10 +94,19 @@ Tests.noise_test(rf_object=RF,
                  frequency=dls_RF_frequency,
                  start_power=-100,
                  end_power=-40,
-                 samples=1000,
+                 samples=10,
                  settling_time=settling_time,
                  report_object=report,
                  sub_directory=subdirectory)
+
+Tests.adc_test(rf_object=RF,
+               bpm_object=BPM,
+               frequency=1,
+               samples=1000,
+               power_levels=(-50., -40.),
+               settling_time=1,
+               report_object=report,
+               sub_directory=subdirectory)
 
 report.create_report()
 

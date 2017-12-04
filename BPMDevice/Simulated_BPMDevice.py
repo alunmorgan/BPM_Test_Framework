@@ -7,7 +7,7 @@ import numpy as np
 import random
 
 
-class Simulated_BPMDevice(Generic_BPMDevice):
+class SimulatedBPMDevice(Generic_BPMDevice):
     """Simulated BPM device used for testing without the hardware. 
 
     All of the abstract methods in the parent class must be overridden. This class has
@@ -20,11 +20,11 @@ class Simulated_BPMDevice(Generic_BPMDevice):
         GateSim (Gate Source Simulator Obj) : Reference to a gate source simulator
     """
 
-    def __init__(self, RFSim, gatesim=None, progatten=None, noise_mag=0.):
+    def __init__(self, rf_sim, gatesim=None, progatten=None, noise_mag=0.):
         """Initializes the Libera BPM device object and assigns it an ID. 
         
         Args:
-            RFSim (RFSignalGenerator Obj): The interface object that has access to an RF device 
+            rf_sim (RFSignalGenerator Obj): The interface object that has access to an RF device 
                 this is needed in the simulator so it can access the input values that would 
                 normally come through the signals supplied to the devices inputs.
             gatesim (Gate_Source Object): The interface object that has access to a Gate Source
@@ -39,7 +39,7 @@ class Simulated_BPMDevice(Generic_BPMDevice):
         """
         print("Simulated BPM device accessed on virtual channel")
         self.attenuation = 12  # Typical attenuation when using a 4 way splitter and cables
-        self.RFSim = RFSim  # Instance of the RF source used, allows the simulator to know what signals are output
+        self.RFSim = rf_sim  # Instance of the RF source used, allows the simulator to know what signals are output
         self.GateSim = gatesim  # Instance of the Gate device, allows the simulator to know what signals are output
         self.ProgAtten = progatten  # Instance of the Programmable attenuator, allows to know about changes to input levels.
         self.macaddress = 'SIMULATED'
@@ -75,7 +75,6 @@ class Simulated_BPMDevice(Generic_BPMDevice):
             A_pwr, B_pwr, C_pwr, D_pwr = self.attenuate_inputs(self.RFSim.get_output_power()[0])
             total_power = A_pwr + B_pwr + C_pwr + D_pwr
             y_val = ((A_pwr + B_pwr) - (C_pwr + D_pwr)) / total_power
-            print y_val
         return y_val * 10 + (random.random() - 0.5) * self.noise_mag  # Scaling to mm and adding noise
 
     def get_X_SA_data(self, num_vals):
@@ -95,7 +94,7 @@ class Simulated_BPMDevice(Generic_BPMDevice):
         return sa_x_times, sa_x_data
 
     def get_Y_SA_data(self, num_vals):
-        """Override method, gets the calculated X position SA data.
+        """Override method, gets the calculated Y position SA data.
 
         Args:
             num_vals (int): The number of samples to capture
@@ -109,6 +108,68 @@ class Simulated_BPMDevice(Generic_BPMDevice):
             sa_y_data.append((random.random() - 0.5) * self.noise_mag)
             sa_y_times.append(m * 0.1)
         return sa_y_times, sa_y_data
+
+    def get_X_TT_data(self, num_vals):
+        """Override method, gets the calculated X position TT data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        tt_x_data = []
+        tt_x_times = []
+        for m in range(num_vals):
+            tt_x_data.append((random.random() - 0.5) * self.noise_mag)
+            tt_x_times.append(m * 0.1)
+        return tt_x_times, tt_x_data
+
+    def get_Y_TT_data(self, num_vals):
+        """Override method, gets the calculated Y position TT data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        tt_y_data = []
+        tt_y_times = []
+        for m in range(num_vals):
+            tt_y_data.append((random.random() - 0.5) * self.noise_mag)
+            tt_y_times.append(m * 0.1)
+        return tt_y_times, tt_y_data
+
+    def get_X_ADC_data(self, num_vals):
+        """Override method, gets the calculated X position ADC data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        adc_n_bits = 16
+        adc_max_counts = np.power(2, adc_n_bits)
+        adc_x_times = np.arange(0, num_vals * 0.1, 0.1)
+        adc_x_data = (np.sin(adc_x_times) + 1) * adc_max_counts # ADD power sensitivity to sin amplitude?
+        return adc_x_times, adc_x_data
+
+    def get_Y_ADC_data(self, num_vals):
+        """Override method, gets the calculated Y position ADC data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        adc_n_bits = 16
+        adc_max_counts = np.power(2, adc_n_bits)
+        adc_y_times = np.arange(0, num_vals * 0.1, 0.1)
+        adc_y_data = (np.sin(adc_y_times) + 1) * adc_max_counts  # ADD power sensitivity to sin amplitude?
+        return adc_y_times, adc_y_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 

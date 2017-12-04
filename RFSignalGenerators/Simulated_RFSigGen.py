@@ -3,9 +3,11 @@ from pkg_resources import require
 require("numpy")
 import numpy as np
 import warnings
+import random
 
 class CustomException(Exception):
     pass
+
 
 class Simulated_RFSigGen(Generic_RFSigGen):
     """Simulated_RFSigGen Class, Child of Generic_RFSigGen
@@ -18,7 +20,7 @@ class Simulated_RFSigGen(Generic_RFSigGen):
     """
 
     # Constructor and Deconstructor.
-    def __init__(self, limit=-40):
+    def __init__(self, limit=-40, noise_mag=None):
         """Informs the user when the simulated device has been created in memory.
         
         The simulated device for the RF sig gen does not need any arguments. It's main 
@@ -34,6 +36,7 @@ class Simulated_RFSigGen(Generic_RFSigGen):
         self.Frequency = 0  # Default frequency is zero
         self.Output_State = False  # Default output state is off/False
         self.limit = limit  # Sets the limit of the device
+        self.noise_magnitude = noise_mag
         print("Constructed " + self.DeviceID)
 
     def __del__(self):
@@ -70,7 +73,12 @@ class Simulated_RFSigGen(Generic_RFSigGen):
             str: The current output power concatenated with the units.
             float: The current power value as a float and assumed units. 
         """
-        return self.Output_Power, str(self.Output_Power) + "dBm"  # Gets the output power
+        if self.noise_magnitude is not None:
+            Out_pwr = self.Output_Power + self.noise_magnitude * random.random()
+        else:
+            Out_pwr = self.Output_Power
+
+        return Out_pwr, str(Out_pwr) + "dBm"  # Gets the output power
 
     def set_output_power(self, power):
         """Override method that will set the output power.

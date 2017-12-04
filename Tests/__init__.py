@@ -5,3 +5,4 @@ from Template import *
 from Beam_position_attenuation_permutation_test import Beam_position_attenuation_permutation_test
 from Beam_position_equidistant_grid_raster_scan_test import Beam_position_equidistant_grid_raster_scan_test
 from Noise_test import noise_test
+from ADC_test import adc_test
