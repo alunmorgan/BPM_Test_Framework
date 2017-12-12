@@ -98,7 +98,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         self._check_attenuation(attenuation)
         self._check_channel(channel)
         if type(channel) == str:
-            channel_dict = {"A": 1, "B": 2, "C": 3, "D": 4}
+            channel_dict = {"D": 1, "C": 2, "B": 3, "A": 4}
             channel = channel.upper()
             channel = channel_dict[channel]
         channel = str(channel)
@@ -106,13 +106,28 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         channel = int(channel)
         return self.get_channel_attenuation(channel)
 
-    def get_channel_attenuation(self, channel):
-        self._check_channel(channel)
-        if type(channel) == str:
-            channel_dict = {"A": 1, "B": 2, "C": 3, "D": 4}
-            channel = channel.upper()
-            channel = channel_dict[channel]
-        channel = str(channel)
-        reply = self._telnet_query(":CHAN:"+channel+":Att?")
+    def get_channel_attenuation(self, bpm_channel):
+        """
+        
+        Args:
+             bpm_channel (str or number): The channel of the attenuator to use. This is either in native values of 
+             1,2,3,4, or bpm labels of A, B, C, D.
+        
+        Returns:
+             float: Value of the attenuator on that channel.
+        """
+        self._check_channel(bpm_channel)
+        if type(bpm_channel) == str:
+            channel_dict = {"D": 1, "C": 2, "B": 3, "A": 4}
+            atten_channel = channel_dict[bpm_channel.upper()]
+            command = ''.join((":CHAN:" + str(atten_channel) + ":Att?"))
+        else:
+            command = ''.join((":CHAN:" + str(bpm_channel) + ":Att?"))
+        print 'Command = ', command
+        reply = self._telnet_query(command)
+        if not reply:  # Checking for an empty string.
+            print 'Got nothing back .... Trying again.'
+            reply = self._telnet_query(command)
+        print 'Get Channel reply = ', reply
         return float(reply)
 
