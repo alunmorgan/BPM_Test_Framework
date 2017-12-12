@@ -9,13 +9,13 @@ from math import floor
 
 
 def adc_test(rf_object,
-               bpm_object,
-               frequency,
-               samples=10,
-               power_levels=(-60., -45.),
-               settling_time=1,
-               report_object=None,
-               sub_directory=""):
+             bpm_object,
+             frequency,
+             samples=10,
+             power_levels=(-60., -45.),
+             settling_time=1,
+             report_object=None,
+             sub_directory=""):
     """Compares the noise generated.
 
     The RF signal is turned off, and then different parameters are measured from the BPM. 
@@ -37,7 +37,8 @@ def adc_test(rf_object,
         float array: Y ADC data read from the BPM
     """
 
-    intro_text = r"""Compares the noise generated.
+    intro_text = r"""Excites with a sine wave and then gets the ADC data from each channel. 
+    Plots the histogram to that any missing bits can be identified.
 
     The RF signal is a sine wave.  \\~\\
     """
@@ -63,24 +64,25 @@ def adc_test(rf_object,
     adc_n_bits = 16
     adc_max_counts = np.power(2, adc_n_bits)
     adc_step = adc_max_counts / adc_n_bits
-    bin_edges = range(adc_n_bits +1)
+    bin_edges = range(adc_n_bits + 1)
 
     input_power = []
     output_power = []
-    x_data = []
-    y_data = []
-    x_time = []
-    y_time = []
+    data1 = []
+    data2 = []
+    data3 = []
+    data4 = []
+    times = []
     for index in power_levels:
         rf_object.set_output_power(index)  # Set next output power value
         rf_object.turn_on_RF()
         time.sleep(settling_time)  # Wait for signal to settle
-        x_time_tmp, x_data_tmp = bpm_object.get_X_ADC_data(samples)  # record X data
-        y_time_tmp, y_data_tmp = bpm_object.get_Y_ADC_data(samples)  # record Y data
-        x_time.append(x_time_tmp)
-        x_data.append(x_data_tmp)
-        y_time.append(y_time_tmp)
-        y_data.append(y_data_tmp)
+        time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_ADC_data()  # record data
+        times.append(time_tmp)
+        data1.append(data1_tmp)
+        data2.append(data2_tmp)
+        data3.append(data3_tmp)
+        data4.append(data4_tmp)
         output_power = np.append(output_power, rf_object.get_output_power()[0])
         input_power = np.append(input_power, bpm_object.get_input_power())
 
@@ -90,18 +92,15 @@ def adc_test(rf_object,
     # add the test details to the report
     report_object.setup_test(test_name, intro_text, device_names, parameter_names)
 
-    specs = bpm_object.get_performance_spec()
-
     # Get the plot values in a format that is easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append(((x_time, x_data), ('bit number', 'counts', "ADC_histogram_x.pdf")))
-    format_plot.append(((x_time, y_data), ('bit number', 'counts', "ADC_histogram_y.pdf")))
-   # print 'X data = ', x_data_tmp
+    format_plot.append(((times, data1), ('bit number', 'counts', "ADC1_histogram.pdf")))
+    format_plot.append(((times, data2), ('bit number', 'counts', "ADC2_histogram.pdf")))
+    format_plot.append(((times, data3), ('bit number', 'counts', "ADC3_histogram.pdf")))
+    format_plot.append(((times, data4), ('bit number', 'counts', "ADC4_histogram.pdf")))
     # plot all of the graphs
     for index in format_plot:
-       # print index
         plt.hist(np.transpose(np.floor(index[0][1] / adc_step)), bins=bin_edges)
-       # print index[0][1]
         plt.xlabel(index[1][0])
         plt.ylabel(index[1][1])
 
@@ -112,4 +111,4 @@ def adc_test(rf_object,
                                          caption=index[1][2])
 
     # return the full data sets
-    return x_data, y_data
+    return
