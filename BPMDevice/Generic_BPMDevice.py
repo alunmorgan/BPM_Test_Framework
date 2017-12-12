@@ -55,7 +55,18 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_X_TT_data(self, num_vals):
+    def get_SA_data(self, num_vals):
+        """Abstract method for override, gets the ABCD SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            list: [raw_timestamp (tuple), Y position in mm]
+        """
+        pass
+
+    @abstractmethod
+    def get_TT_data(self):
         """Abstract method for override, gets the calculated X position TT data.
 
         Args:
@@ -66,19 +77,8 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_Y_TT_data(self, num_vals):
-        """Abstract method for override, gets the calculated Y position TT data.
-
-        Args:
-            num_vals (int): The number of samples to capture
-        Returns: 
-            list: [raw_timestamp (tuple), Y position in mm]
-        """
-        pass
-
-    @abstractmethod
-    def get_X_ADC_data(self, num_vals):
-        """Abstract method for override, gets the calculated X position ADC data.
+    def get_ADC_data(self):
+        """Abstract method for override, gets the ABCD ADC data.
 
         Args:
             num_vals (int): The number of samples to capture
@@ -88,8 +88,8 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_Y_ADC_data(self, num_vals):
-        """Abstract method for override, gets the calculated Y position ADC data.
+    def get_FT_data(self):
+        """Abstract method for override, gets the ABCD first turn data.
 
         Args:
             num_vals (int): The number of samples to capture

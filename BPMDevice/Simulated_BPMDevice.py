@@ -109,8 +109,8 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             sa_y_times.append(m * 0.1)
         return sa_y_times, sa_y_data
 
-    def get_X_TT_data(self, num_vals):
-        """Override method, gets the calculated X position TT data.
+    def get_SA_data(self, num_vals):
+        """Override method, gets the calculated Y position SA data.
 
         Args:
             num_vals (int): The number of samples to capture
@@ -118,58 +118,57 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        tt_x_data = []
-        tt_x_times = []
+        data = []
+        times = []
         for m in range(num_vals):
-            tt_x_data.append((random.random() - 0.5) * self.noise_mag)
-            tt_x_times.append(m * 0.1)
-        return tt_x_times, tt_x_data
+            data.append((random.random() - 0.5) * self.noise_mag)
+            times.append(m * 0.1)
+        return times, data, data, data, data
 
-    def get_Y_TT_data(self, num_vals):
-        """Override method, gets the calculated Y position TT data.
+    def get_TT_data(self):
+        """Override method, gets the ABCD TT data.
 
         Args:
-            num_vals (int): The number of samples to capture
         Returns: 
             timestamps (list): floats
             data (list): floats
         """
         tt_y_data = []
         tt_y_times = []
-        for m in range(num_vals):
+        for m in range(131072):
             tt_y_data.append((random.random() - 0.5) * self.noise_mag)
-            tt_y_times.append(m * 0.1)
+            tt_y_times.append(m * 936./500e6)
         return tt_y_times, tt_y_data
 
-    def get_X_ADC_data(self, num_vals):
-        """Override method, gets the calculated X position ADC data.
+    def get_ADC_data(self):
+        """Override method, gets the ABCD ADC data.
 
         Args:
-            num_vals (int): The number of samples to capture
         Returns: 
             timestamps (list): floats
             data (list): floats
         """
         adc_n_bits = 16
         adc_max_counts = np.power(2, adc_n_bits)
-        adc_x_times = np.arange(0, num_vals * 0.1, 0.1)
-        adc_x_data = (np.sin(adc_x_times) + 1) * adc_max_counts # ADD power sensitivity to sin amplitude?
-        return adc_x_times, adc_x_data
+        times = np.arange(0, 250. / 117E6, 1./117e6)
+        excitation_f = 500e3
+        angles = np.mod(times * excitation_f, 1) * 2 * np.pi
+        data = (np.sin(angles) + 1) * adc_max_counts / 2   # ADD power sensitivity to sin amplitude?
+        return times, data, data, data, data
 
-    def get_Y_ADC_data(self, num_vals):
-        """Override method, gets the calculated Y position ADC data.
+    def get_FT_data(self):
+        """Override method, gets the ABCD first turn data.
 
         Args:
-            num_vals (int): The number of samples to capture
         Returns: 
             timestamps (list): floats
             data (list): floats
         """
         adc_n_bits = 16
         adc_max_counts = np.power(2, adc_n_bits)
-        adc_y_times = np.arange(0, num_vals * 0.1, 0.1)
-        adc_y_data = (np.sin(adc_y_times) + 1) * adc_max_counts  # ADD power sensitivity to sin amplitude?
-        return adc_y_times, adc_y_data
+        times = np.arange(0, 250. / 30e6, 1./30e6)
+        data = (np.sin(times) + 1) * adc_max_counts  # ADD power sensitivity to sin amplitude?
+        return times, data, data, data, data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 

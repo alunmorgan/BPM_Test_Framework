@@ -32,7 +32,21 @@ class Electron_BPMDevice(Generic_BPMDevice):
         Returns: 
             variant: Value of requested process variable.
         """
-        return caget(self.epicsID + pv)  # Get PV data
+        return caget(''.join((self.epicsID, pv)))  # Get PV data
+
+    def _write_epics_pv(self, pv, val):
+        """Private method to write to an Epics process variable.
+
+        Wraps up caget call, makes it easy for multiple reads to be programmed 
+        and a timeout added if required. 
+
+        Args:
+            pv (str): Name of the Epics process variable to read. 
+            val (str, int, float): Value to write to the process variable.
+        Returns: 
+            variant: Value of requested process variable.
+        """
+        return caput(''.join((self.epicsID, pv)), val)  # Write PV data
 
     def __init__(self, dev_ID):
         """Initializes the Libera BPM device object and assigns it an ID. 
@@ -93,8 +107,8 @@ class Electron_BPMDevice(Generic_BPMDevice):
             data (list): floats
         """
         sa_x_accum = Accumulator(''.join((self.epicsID, ':SA:X')), num_vals)
-        sa_x_times, sa_x_data = sa_x_accum.wait()
-        return sa_x_times, sa_x_data
+        times, data = sa_x_accum.wait()
+        return times, data
 
     def get_Y_SA_data(self, num_vals):
         """Gets the calculated X position SA data.
@@ -106,8 +120,87 @@ class Electron_BPMDevice(Generic_BPMDevice):
             data (list): floats
         """
         sa_y_accum = Accumulator(''.join((self.epicsID, ':SA:Y')), num_vals)
-        sa_y_times, sa_y_data = sa_y_accum.wait()
-        return sa_y_times, sa_y_data
+        times, data = sa_y_accum.wait()
+        return times, data
+
+    def get_SA_data(self, num_vals):
+        """Gets the ABCD SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        sa_a_accum = Accumulator(''.join((self.epicsID, ':SA:A')), num_vals)
+        sa_a_times, sa_a_data = sa_a_accum.wait()
+        sa_b_accum = Accumulator(''.join((self.epicsID, ':SA:B')), num_vals)
+        sa_b_times, sa_b_data = sa_b_accum.wait()
+        sa_c_accum = Accumulator(''.join((self.epicsID, ':SA:C')), num_vals)
+        sa_c_times, sa_c_data = sa_c_accum.wait()
+        sa_d_accum = Accumulator(''.join((self.epicsID, ':SA:D')), num_vals)
+        sa_d_times, sa_d_data = sa_d_accum.wait()
+
+        return sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data
+
+    def get_TT_data(self):
+        """ Gets the calculated ABCD TT data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+       Returns: 
+            times (list): floats
+            data (list): floats
+        """
+        self._write_epics_pv('TT:CAPLEN_S', 131072)
+        self._write_epics_pv('TT:DELAY_S', 0)
+        self._write_epics_pv('TT:ARM', 1)
+        data1 = self._read_epics_pv("TT:WFA")
+        data2 = self._read_epics_pv("TT:WFA")
+        data3 = self._read_epics_pv("TT:WFA")
+        data4 = self._read_epics_pv("TT:WFA")
+
+        times = np.arange(len(data1)) * 936./500e6 # Each tick is one turn
+        return times, data1, data2, data3, data4
+
+    def get_ADC_data(self):
+        """ Gets the ABCD ADC data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns: 
+            timestamps (list): floats
+            adc1_data (list): floats
+            adc2_data (list): floats
+            adc3_data (list): floats
+            adc4_data (list): floats
+        """
+        self._write_epics_pv('FT:ENABLE_S', 1)
+        adc1_data = self._read_epics_pv(':RAW1')
+        adc2_data = self._read_epics_pv(':RAW2')
+        adc3_data = self._read_epics_pv(':RAW3')
+        adc4_data = self._read_epics_pv(':RAW4')
+        self._write_epics_pv('FT:ENABLE_S', 0)
+        times = np.arange(len(adc1_data)) * 1/117E6 # Data rate is 117MHz
+        return times, adc1_data, adc2_data, adc3_data, adc4_data
+
+    def get_FT_data(self):
+        """ Gets the ABCD first turn data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+       Returns: 
+            timestamps (list): floats
+            data (list): floats
+        """
+        self._write_epics_pv('FT:ENABLE_S', 1)
+        fta_data = self._read_epics_pv(':WFA')
+        ftb_data = self._read_epics_pv(':WFB')
+        ftc_data = self._read_epics_pv(':WFC')
+        ftd_data = self._read_epics_pv(':WFD')
+        self._write_epics_pv('FT:ENABLE_S', 0)
+        times = np.arange(len(fta_data)) * 1/30E6 # Data rate is 30MHz
+        return times, fta_data, ftb_data, ftc_data, ftd_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 
@@ -193,9 +286,6 @@ class Electron_BPMDevice(Generic_BPMDevice):
         """
         return -20 # The maximum continuous input power the Electron can handle in dBm
 
-    def get_SA_data(self, PV):
-        camonitor()
-
     def get_performance_spec(self):
         """Override method, gets the factory performance specifications.
 
@@ -236,6 +326,11 @@ class Electron_BPMDevice(Generic_BPMDevice):
 
         specs['Fill_pattern_dependence_X'] = ([20, 100], 1)
         specs['Fill_pattern_dependence_Y'] = ([20, 100], 1)
+
+        specs['Beam_power_dependence_X'] = ([0, -2, -56, -68, -74, -80],
+                                            [0,  1,   2,  10,  20,  50])
+        specs['Beam_power_dependence_Y'] = ([0, -2, -56, -68, -74, -80],
+                                            [0,  1,   2,  10,  20,  50])
 
         return specs
 
