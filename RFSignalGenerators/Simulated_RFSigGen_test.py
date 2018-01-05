@@ -1,10 +1,11 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 from Simulated_RFSigGen import *
 import warnings
 
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
 
     RFSim = Simulated_RFSigGen()
 

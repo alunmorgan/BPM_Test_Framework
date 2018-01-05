@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import unittest
 import warnings
 from mock import patch
@@ -37,7 +38,7 @@ def mocked_rigol_writes(input):
     # the input string. This will then be used to set the globals listed above. Then they
     # can be read back using the 'mocked_rigol_replies' function.
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):

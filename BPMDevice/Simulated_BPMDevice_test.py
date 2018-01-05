@@ -1,10 +1,11 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 from Simulated_BPMDevice import *
 import RFSignalGenerators
 
 
-class ExpectedDataTestNoGateNoAttentuator(unittest.TestCase):
+class ExpectedDataTestNoGateNoAttentuator(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):
@@ -61,7 +62,7 @@ class ExpectedDataTestNoGateNoAttentuator(unittest.TestCase):
         self.assertEqual(self.simbpm.get_input_tolerance(), -40)
 
 
-class ExpectedDataTestWithGateNoAttentuator(unittest.TestCase):
+class ExpectedDataTestWithGateNoAttentuator(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):
@@ -125,7 +126,7 @@ class ExpectedDataTestWithGateNoAttentuator(unittest.TestCase):
         self.assertEqual(self.simbpm.get_input_tolerance(), -40)
 
 
-class ExpectedDataTestWithGateWithAttenuator(unittest.TestCase):
+class ExpectedDataTestWithGateWithAttenuator(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):

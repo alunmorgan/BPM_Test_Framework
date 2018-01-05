@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import BPMDevice
 import unittest
 from mock import patch
@@ -14,7 +15,7 @@ def mock_BPM_replies(message):
         return "1000 4000"
 
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):

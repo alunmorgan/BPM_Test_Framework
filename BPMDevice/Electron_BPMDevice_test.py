@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 import BPMDevice
@@ -31,7 +32,7 @@ def mocked_BPM_replies(pv):
     elif pv == "SA:Y":
         return -100.0
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):

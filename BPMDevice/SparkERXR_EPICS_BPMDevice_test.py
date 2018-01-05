@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 import BPMDevice
@@ -30,7 +31,7 @@ def mocked_BPM_replies(pv):
         print "none found"
 
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
     global daq
 
     @classmethod
