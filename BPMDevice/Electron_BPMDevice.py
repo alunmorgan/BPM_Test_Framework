@@ -176,10 +176,10 @@ class Electron_BPMDevice(Generic_BPMDevice):
             adc4_data (list): floats
         """
         self._write_epics_pv('FT:ENABLE_S', 1)
-        adc1_data = self._read_epics_pv('RAW1')
-        adc2_data = self._read_epics_pv('RAW2')
-        adc3_data = self._read_epics_pv('RAW3')
-        adc4_data = self._read_epics_pv('RAW4')
+        adc1_data = self._read_epics_pv('FT:RAW1')
+        adc2_data = self._read_epics_pv('FT:RAW2')
+        adc3_data = self._read_epics_pv('FT:RAW3')
+        adc4_data = self._read_epics_pv('FT:RAW4')
         self._write_epics_pv('FT:ENABLE_S', 0)
         times = np.arange(len(adc1_data)) * 1/117E6 # Data rate is 117MHz
         return times, adc1_data, adc2_data, adc3_data, adc4_data
