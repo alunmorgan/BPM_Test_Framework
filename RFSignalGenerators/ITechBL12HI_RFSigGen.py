@@ -1,65 +1,82 @@
 from Generic_RFSigGen import *
 import telnetlib
+import re
 from pkg_resources import require
 require("numpy")
 import numpy as np
 import warnings
 
-class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
-    """Rigol3030DSG RFSigGen, Child of Generic_RFSigGen.
 
-    This class is for communicating with the Rigol3030 over telnet. The specific API calls abstract the SCPI 
+class ITechBL12HI_RFSigGen(Generic_RFSigGen):
+    """ITechBL12HI RFSigGen, Child of Generic_RFSigGen.
+
+    This class is for communicating with the ITechBL12HI over telnet. The specific API calls abstract the SCPI 
     commands needed to speak with the instrument. Each of these calls is an override of the Generic_RFSigGen.
 
     Attributes:  
         *Inherited from parent.
     """
 
-    #Private Methods
+    # Private Methods
     def _telnet_query(self, message):
-        """Private method that will send a message over telnet to the Rigol3030 and return the reply
-
+        """Private method that will send a message over telnet to the ITechBL12HI and return the reply
+            This needs to open and close a connection in order to isolate the replies. If one connection is opened on
+            this hardware the responses do not block so several responses can arrive before the first read.
+            So the wrong data is read.
         Args:
-            message (str): SCPI message to be sent to the Rigol3030
+            message (str): SCPI message to be sent to the ITechBL12HI
 
         Returns:
-            str: Reply message from the Rigol3030
-        """
-        self._telnet_write(message)
-        return self._telnet_read()
-
-    def _telnet_write(self, message):
-        """Private method that will send a message over telnet to the Rigol3030 
-
-        Args:
-            message (str): SCPI message to be sent to the Rigol3030
-            
-        Returns:
-            
+            str: Reply message from the ITechBL12HI
         """
         # Checks that the telnet message is a string
         if type(message) != str:
             raise TypeError
-
+        self.tn = telnetlib.Telnet(self.ipaddress, self.port, self.timeout)  # Connects to the IP via telnet
+        self.tn.read_until("\n", self.timeout).rstrip('\n')
+        self.tn.read_until("\n", self.timeout).rstrip('\n')
+        self.tn.write("scpi>\r\n")  # putting the device into scpi mode.
         self.tn.write(message + "\r\n")  # Writes a telnet message with termination characters
+        r_str = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Telnet reply, with termination chars removed
+        message_pattern = re.compile('(?:scpi>)*\S*\s+(.*)')
+        message = re.match(message_pattern, r_str)
+        # Status line. Needs to be read to make the following read be at the correct place
+        check = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Status line
+        self.tn.close()  # Closes the telnet connection
+        print 'Sent command = ', r_str
+        print 'Return = ', message.group(1)
+        print 'Status = ', check
+        return message.group(1), check
+
+    def _telnet_write(self, message):
+        """Private method that will send a message over telnet to the ITechBL12HI
+
+        Args:
+            message (str): SCPI message to be sent to the ITechBL12HI
+
+        Returns:
+
+        """
+        pass
 
     def _telnet_read(self):
-        """Private method that will read a telnet reply from the Rigol3030
-        
+        """Private method that will read a telnet reply from the ITechBL12HI
+            NOT USED ON THIS HARDWARE.
+
         Args:
-        
+
         Returns:
-            str: Reply message from the Rigol3030
+            str: Reply message from the ITechBL12HI
         """
-        return self.tn.read_until("\n", self.timeout).rstrip('\n')  # Telnet reply, with termination chars removed
+        pass
 
-    #Constructor and Deconstructor
+    # Constructor and Deconstructor
 
-    def __init__(self, ipaddress, port = 5555, timeout = 1, limit=-40):
-        """Initialises and opens the connection to the Rigol3030 over telnet and informs the user 
+    def __init__(self, ipaddress, port=5555, timeout=1, limit=-40):
+        """Initialises and opens the connection to the ITechBL12HI over telnet and informs the user 
 
         Args:
-            ipaddress (str): The IP address of the Rigol3030 
+            ipaddress (str): The IP address of the ITechBL12HI 
             port (int/str): The port number for the messages to be sent on (default 5555)
             timeout (float): The timeout for telnet commands in seconds (default 1)
             
@@ -67,21 +84,23 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
             
         """
         self.timeout = timeout  # timeout for the telnet comms
-        self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # connects to the telnet device
-        self.get_device_ID()  # gerts the device of the telnet device, makes sure its the right one
+        self.ipaddress = ipaddress
+        self.port = port
+        self.get_device_ID()  # gets the device of the telnet device, makes sure its the right one
         self.turn_off_RF()  # turn off the RF output
-        self.set_output_power_limit(limit)  # set the RF output limit
+        self.limit = limit  # set the RF output limit
+        # self.set_output_power_limit(limit)  # set the RF output limit
 
-        print("Opened connection to RF source" + self.DeviceID)  # tells the user the device has been connected to
+        print("Opened connection to RF source " + self.DeviceID)  # tells the user the device has been connected to
 
     def __del__(self):
-        """Closes the telnet connection to the Rigol3030
+        """Closes the telnet connection to the ITechBL12HI
         """
-        self.turn_off_RF()  # make sure the RF output if off
+        self.turn_off_RF()  # make sure the RF output is off
         self.tn.close()  # close the telnet link
-        print("Closed connection to " + self.DeviceID)  # tell the user the telnet link has closed
+        print("Closed connection to RF source " + self.DeviceID)  # tell the user the telnet link has closed
 
-    #API Calls
+    # API Calls
     def get_device_ID(self):
         """Override method that will return the device ID.
         
@@ -92,15 +111,16 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
         Returns:
             str: The DeviceID of the SigGen.
         """
-        self.DeviceID = self._telnet_query("*IDN?")  # gets the device information
-        if self.DeviceID[0:26] != "Rigol Technologies,DSG3030":  # checks it's the right device
+        self.DeviceID, check = self._telnet_query("*IDN?\r\n")  # gets the device information
+        if "IT CLKGEN" not in self.DeviceID:  # checks it's the right device
+            print "ID= ", self.DeviceID
             raise Exception("Wrong hardware device connected")
-        return "RF Source "+self.DeviceID
+        return "RF Source " + self.DeviceID
 
     def get_output_power(self):
         """Override method that will return the output power.
         
-        Uses the "commands LEV?" amd "UNIT:POW?" to get the current output power level and units. 
+        Uses the "command POW:RF?"  to get the current output power level and units.
         
         Args:
         
@@ -108,8 +128,7 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
             float: The current power value as a float in dBm
             str: The current output power concatenated with the units.
         """
-
-        self.Output_Power = self._telnet_query("LEV?") + self._telnet_query("UNIT:POW?")  # get the power & power units
+        self.Output_Power = self._telnet_query("POW:RF?")
         return float(self._split_num_char(self.Output_Power)[0]), self.Output_Power
 
     def get_frequency(self):
@@ -124,8 +143,8 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
             str: The current output frequency concatenated with the units.
         """
 
-        self.Frequency = self._telnet_query("FREQ?")  # get the device frequency
-        return float(self._split_num_char(self.Frequency)[0]), self.Frequency
+        self.Frequency, check = self._telnet_query("FREQ:RF?")  # get the device frequency
+        return float(self.Frequency.replace(',', '.')[0:-4]), self.Frequency
 
     def set_frequency(self, frequency):
         """Override method that will set the output frequency.
@@ -146,8 +165,13 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
             raise ValueError
 
         self.Frequency = frequency
-        self._telnet_write("FREQ " + str(self.Frequency) + "MHz")  # Write the frequency value in MHz
-        return self.get_frequency()
+        f_str = str(frequency).replace('.', ',')
+        if len(f_str) == 6:
+            # Adding the truncated 0
+            f_str = f_str + '0'
+        freq_str = ''.join(("FREQ:RF " + f_str))
+        ret, check = self._telnet_query(freq_str)  # Write the frequency value in MHz
+        return check
 
     def set_output_power(self, power):
         """Override method that will set the output power.
@@ -164,75 +188,71 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
         # check the input is a numeric
         if type(power) != float and type(power) != int and np.float64 != np.dtype(power):
             raise TypeError
-        elif power > self.limit: # If a value that is too high is used, the hardware may break.
+        elif power > self.limit:  # If a value that is too high is used, the hardware may break.
             power = self.limit
             # tell the user the limit has been reached and cap the output level
             warnings.warn('Power limit has been reached, output will be capped')
-        self.Output_Power = power
-
-        self._telnet_write("UNIT:POW dBm")  # make sure the units are dBm
-        self._telnet_write("LEV " + str(power))  # write the new output power
-        return self.get_output_power()
+        elif power < -50:
+            power = -50
+            warnings.warn('Power level is too low setting to -50 dBm')
+        self.Output_Power = np.round(power)
+        print 'Power = ', self.Output_Power
+        ret, check = self._telnet_query("POW:RF " + str(self.Output_Power))  # write the new output power
+        return check
 
     def turn_on_RF(self):
         """Override method that will turn on the RF device output.
         
-        Uses SCPI command "OUTP ON" to turn on the device.
+        Set the level to the requested power. This hardware does not have the ability to turn the RF source on and off.
         
         Args:
         
         Returns:
             bool: Returns True if the output is enabled, False if it is not. 
         """
-        self._telnet_write("OUTP ON")  # turns on the output
+        ret, check = self._telnet_query("POW:RF " + str(self.Output_Power))  # turns on the output
+        ret, check = self._telnet_query("GATE:FILL 100")  # Turns on the modulation state output
         return self.get_output_state()
 
     def turn_off_RF(self):
         """Override method that will turn off the RF device output.
 
-        Uses SCPI command "OUTP OFF" to turn off the device. 
+        This device does not have the ability to turn off teh RF source.
+        Instead it is turned down to the lowest level.
         
         Args:
         
         Returns:
             bool: Returns True if the output is enabled, False if it is not.
         """
-        self._telnet_write("OUTP OFF")  # turns off the output
-        return self.get_output_state()
+        ret, check = self._telnet_query("POW:RF -50")  # turns off the output
+        ret, check = self._telnet_query("GATE:FILL 0")  # Turns on the modulation state output
 
     def get_output_state(self):
         """Override method that will get the current output state. 
     
-        This method send the SCPI command "OUTP?" to request the output state from
-        the Rigol3030. 
+        This method send the SCPI command "POW:RF?" to request the output state from
+        the ITechBL12HI. 
         
         Args:
         
         Returns:
             bool: Returns True if the output is enabled, False if it is not. 
         """
-        # checks output state
-        if self._telnet_query("OUTP?") == "1":
-            self.Output_State = True  # output must be on
-            return True
-        else:
-            self.Output_State = False  # output must be off
-            return False
+        pass
 
     def set_output_power_limit(self, limit):
         """Override method that will set a hardware limit for the output power
-        
+
         Args:
 
         Returns:
-            float: The power limit 
+            float: The power limit
         """
         # checks the input is a numeric
         if type(limit) != float and type(limit) != int and np.float64 != np.dtype(limit):
             raise TypeError
         self.limit = limit
-        self._telnet_write("UNIT:POW dBm")  # makes sure the limit units are in dBm
-        self._telnet_write("LEV:LIM "+ str(limit))  # sets the output level
         return self.get_output_power_limit()
 
     def get_output_power_limit(self):
@@ -243,6 +263,4 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
         Returns:
             float: The power limit 
         """
-        self.limit = float(self._telnet_query("LEV:LIM?"))  # gets the output limit
-        str_limit = self._telnet_query("LEV:LIM?") + self._telnet_query("UNIT:POW?")  # gets the limit and the units
-        return self.limit, str_limit
+        return self.limit, ''.join((self.limit, " dBm"))

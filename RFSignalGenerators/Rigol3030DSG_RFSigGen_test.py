@@ -36,7 +36,7 @@ def mocked_rigol_writes(input):
 
     # for set tests to be implimented, reg ex or something similar will go here, to scan
     # the input string. This will then be used to set the globals listed above. Then they
-    # can be read back using the 'mocked_rigol_replies' function.
+    # can be read back using the 'mocked_itech_replies' function.
 
 class ExpectedDataTest(BaseTestClass):
 
