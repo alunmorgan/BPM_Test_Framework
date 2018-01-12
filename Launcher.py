@@ -9,30 +9,50 @@ import ProgrammableAttenuator
 import Latex_Report
 import Tests
 
-
-RF = RFSignalGenerators.Rigol3030DSG_RFSigGen(
-    ipaddress="172.23.252.51",
-    port=5555,
-    timeout=1,
+# RF = RFSignalGenerators.Rigol3030DSG_RFSigGen(
+#     ipaddress="172.23.252.51",
+#     port=5555,
+#     timeout=1,
+#     limit=-40)
+#
+# GS = Gate_Source.Rigol3030DSG_GateSource(
+#     ipaddress="172.23.252.51",
+#     port=5555,
+#     timeout=1)
+#
+# Trigger = Trigger_Source.agilent33220a_wfmgen(
+#     ipaddress="172.23.252.204",
+#     port=5024,
+#     timeout=1)
+print 'Initialising RF source'
+RF = RFSignalGenerators.ITechBL12HI_RFSigGen(
+    ipaddress="172.23.252.102",
+    port=23,
+    timeout=10,
     limit=-40)
-
-GS = Gate_Source.Rigol3030DSG_GateSource(
-    ipaddress="172.23.252.51",
-    port=5555,
-    timeout=1)
-
-Trigger = Trigger_Source.agilent33220a_wfmgen(
-    ipaddress="172.23.252.204",
-    port=5024,
-    timeout=1)
-
+# time.sleep(10)
+print 'Initialising Gate'
+GS = Gate_Source.ITechBL12HI_GateSource(
+    ipaddress="172.23.252.102",
+    port=23,
+    timeout=10)
+# time.sleep(10)
+print 'Initialising Trigger'
+Trigger = Trigger_Source.ITechBL12HI_trigsrc(
+    ipaddress="172.23.252.102",
+    port=23,
+    timeout=10)
+# time.sleep(10)
+print 'Initialising programmable attenuator'
 ProgAtten = ProgrammableAttenuator.MC_RC4DAT6G95_Prog_Atten(
     ipaddress="172.23.244.105",
     port=23,
-    timeout=1)
-
+    timeout=2)
+# time.sleep(10)
+print 'Initialising BPM'
 BPM = BPMDevice.Electron_BPMDevice(
     dev_ID="TS-DI-EBPM-05:")
+# time.sleep(10)
 
 root_path = '/'.join((sys.argv[1], BPM.macaddress.replace(':', '-'), time.strftime("%d-%m-%Y_T_%H-%M")))
 print root_path
@@ -41,12 +61,13 @@ if not os.path.exists(root_path):
 
 report = Latex_Report.Tex_Report('/'.join((root_path, "BPMTestReport")), BPM.macaddress)
 
-dls_RF_frequency = 499.6817682  # MHz
-dls_bunch = 1.87319
+dls_RF_frequency = 499.654  # MHz. For the ITECH hardware you can only set RF in steps of 5kHz.
+dls_bunch = 1. / (dls_RF_frequency / 936.)  # us
 trigger_frequency = dls_RF_frequency / 100.  # used as Hz
 subdirectory = ''.join((root_path, '/'))
 settling_time = 0
 
+print 'Setting up triggers'
 # Initial setup of the triggers
 Trigger.set_up_trigger_pulse(freq=trigger_frequency)
 
@@ -75,43 +96,43 @@ Trigger.set_up_trigger_pulse(freq=trigger_frequency)
 #     settling_time=settling_time,
 #     ReportObject=report,
 #     sub_directory=subdirectory)
-#
-# ProgAtten.set_global_attenuation(0)
-#
-# Tests.Beam_Power_Dependence(
-#     RFObject=RF,
-#     BPMObject=BPM,
-#     frequency=dls_RF_frequency,
-#     start_power=-100,
-#     end_power=-40,
-#     samples=10,
-#     settling_time=settling_time,
-#     ReportObject=report,
-#     sub_directory=subdirectory)
-#
-# Tests.Fixed_voltage_amplitude_fill_pattern_test(
-#     RFObject=RF,
-#     BPMObject=BPM,
-#     GateSourceObject=GS,
-#     frequency=dls_RF_frequency,
-#     power=-40,
-#     samples=10,
-#     pulse_period=dls_bunch,
-#     settling_time=settling_time,
-#     ReportObject=report,
-#     sub_directory=subdirectory)
-#
-# Tests.Scaled_voltage_amplitude_fill_pattern_test(
-#     RFObject=RF,
-#     BPMObject=BPM,
-#     GateSourceObject=GS,
-#     frequency=dls_RF_frequency,
-#     desired_power=-70,
-#     samples=10,
-#     pulse_period=dls_bunch,
-#     settling_time=settling_time,
-#     ReportObject=report,
-#     sub_directory=subdirectory)
+
+ProgAtten.set_global_attenuation(0)
+
+Tests.Beam_Power_Dependence(
+    RFObject=RF,
+    BPMObject=BPM,
+    frequency=dls_RF_frequency,
+    start_power=-100,
+    end_power=-40,
+    samples=10,
+    settling_time=settling_time,
+    ReportObject=report,
+    sub_directory=subdirectory)
+
+Tests.Fixed_voltage_amplitude_fill_pattern_test(
+    RFObject=RF,
+    BPMObject=BPM,
+    GateSourceObject=GS,
+    frequency=dls_RF_frequency,
+    power=-40,
+    samples=10,
+    pulse_period=dls_bunch,
+    settling_time=settling_time,
+    ReportObject=report,
+    sub_directory=subdirectory)
+
+Tests.Scaled_voltage_amplitude_fill_pattern_test(
+    RFObject=RF,
+    BPMObject=BPM,
+    GateSourceObject=GS,
+    frequency=dls_RF_frequency,
+    desired_power=-70,
+    samples=10,
+    pulse_period=dls_bunch,
+    settling_time=settling_time,
+    ReportObject=report,
+    sub_directory=subdirectory)
 
 Tests.adc_test(
     rf_object=RF,
