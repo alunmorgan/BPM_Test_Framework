@@ -11,12 +11,14 @@ import matplotlib.pyplot as plt
 import time
 import itertools
 
+
 def calc_x_pos(a,b,c,d):
     diff = ((a+d)-(b+c))
     total = (a+b+c+d)
     kx = 10.0
     x = kx*(diff/total)
     return x
+
 
 def calc_y_pos(a,b,c,d):
     diff = ((a+b)-(c+d))
@@ -25,17 +27,18 @@ def calc_y_pos(a,b,c,d):
     y = ky*(diff/total)
     return y
 
-def Beam_position_attenuation_permutation_test(
-             RFObject,
-             BPMObject,
-             ProgAttenObject,
-             rf_power,
+
+def beam_position_attenuation_permutation_test(
+             rf_object,
+             bpm_object,
+             prog_atten_object,
              rf_frequency,
+             rf_power,
              attenuator_max,
              attenuator_min,
              attenuator_steps,
              settling_time,
-             ReportObject=None,
+             report_object=None,
              sub_directory=""):
 
     """Moves the beam position by changing the attenuator values with a series of different permutations
@@ -48,9 +51,9 @@ def Beam_position_attenuation_permutation_test(
     attenuation change.
 
         Args:
-            RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.
-            BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.
-            ProgAttenObject (Prog_Atten Obj): Object to interface with programmable attenuator hardware
+            rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
+            bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
+            prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
             rf_power (float): Output power of the RF system throughout the test, in dBm 
             rf_frequency (float): Frequency output of the RF throughout the test, in MHz
             attenuator_max (float): max value for the attenuators
@@ -58,7 +61,7 @@ def Beam_position_attenuation_permutation_test(
             attenuator_steps (float): steps between the min and max values
             settling_time (float): time in seconds to wait between changing an attenuator value and 
                 taking a reading from the BPM. 
-            ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
+            report_object (LaTeX Report Obj): Specific report that the test results will be recorded
                 to. If no report is sent to the test then it will just display the results in 
                 a graph. 
             sub_directory (str): String that can change where the graphs will be saved to
