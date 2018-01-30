@@ -23,18 +23,17 @@ def beam_power_dependence(
     and settling time between each measurement can be decided using the arguments. 
 
     Args:
-        RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.
-        BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.
-        frequency (float): Output frequency for the tests, set as a float that will 
+        rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
+        bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
+        prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
+        frequency (float): Output frequency for the tests, set as a float that will
             use the assumed units of MHz. 
-        start_power (float): Starting output power for the tests, default value is 
-            -100 dBm. The input values are floats and dBm is assumed. 
-        end_power (float): Final output power for the tests, default value is 0 dBm.
-            The input values are floats and dBm assumed. 
-        samples (int): Number of samples take is this value + 1.
+        power_levels (list): The desired power levels to run the test at.
+                             default value is [-40, -50, -60, -70, -80, -90].
+                             The values are floats and dBm is assumed.
         settling_time (float): Time in seconds, that the program will wait in between 
             setting an  output power on the RF, and reading the values of the BPM. 
-        ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
+        report_object (LaTeX Report Obj): Specific report that the test results will be recorded
             to. If no report is sent to the test then it will just display the results in 
             a graph. 
         sub_directory (str): String that can change where the graphs will be saved to.
