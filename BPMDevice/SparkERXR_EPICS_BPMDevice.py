@@ -53,7 +53,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         Returns: 
             variant: Value of requested process variable after writing to it
         """
-        caput(self.epicsID+pv, value)  # Write to EPICs PV
+        caput(self.epicsID + pv, value)  # Write to EPICs PV
         return self._read_epics_pv(pv)
 
     def __init__(self, database, daq_type):
@@ -80,9 +80,9 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         print "Opened link with" + self.get_device_ID()  # Tells the user they have connected to the device
 
     def __del__(self):
-        print "Closed link with" + self.get_device_ID()  # Tells the user they have connected to the device
+        print "Closed link with" + self.get_device_id()  # Tells the user they have connected to the device
 
-    def get_X_position(self):
+    def get_x_position(self):
         """Override method, gets the calculated X position of the beam.
 
         Args:
@@ -96,7 +96,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         x = x/1000000.0  # Converts from nm to mm
         return x
 
-    def get_Y_position(self):
+    def get_y_position(self):
         """Override method, gets the calculated X position of the beam.
 
         Args:
@@ -110,7 +110,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         y = y/1000000.0  # Converts from nm to mm
         return y
 
-    def get_X_SA_data(self, num_vals):
+    def get_x_sa_data(self, num_vals):
         """Override method, gets the calculated X position SA data.
 
         Args:
@@ -123,7 +123,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         sa_x_times, sa_x_data = sa_x_accum.wait()
         return sa_x_times, sa_x_data
 
-    def get_Y_SA_data(self, num_vals):
+    def get_y_sa_data(self, num_vals):
         """Override method, gets the calculated X position SA data.
 
         Args:
@@ -164,7 +164,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         daq_sum = np.mean(daq_sum)  # Gets the mean PV value
         return daq_sum
 
-    def get_ADC_sum(self):
+    def get_adc_sum(self):
         """Override method, gets the input power of the signals input to the device 
 
         Args:
@@ -178,7 +178,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         daq_sum = np.round(daq_sum)  # Rounds the mean to the nearest integer
         return daq_sum
 
-    def get_raw_BPM_buttons(self):
+    def get_raw_bpm_buttons(self):
         """Override method, gets the raw signal from each BPM.
 
         Args: 
@@ -204,7 +204,7 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         d = np.round(d)
         return a, b, c, d
 
-    def get_normalised_BPM_buttons(self):
+    def get_normalised_bpm_buttons(self):
         """Override method, gets the normalised signal from each BPM.
 
         Args: 
@@ -215,16 +215,16 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
             float: Normalised signal from BPM D
         """
         self._trigger_epics()  # Triggers the acquisition
-        a, b, c, d = self.get_raw_BPM_buttons()  # Gets the RAW bpm buttons
+        a, b, c, d = self.get_raw_bpm_buttons()  # Gets the RAW bpm buttons
         sum_button = a + b + c + d  # Calculates the BPM sum
         sum_button = sum_button/4.0  # Gets the average BPM sum
         a = a/sum_button  # Normalises the A button
         b = b/sum_button  # Normalises the B button
         c = c/sum_button  # Normalises the C button
         d = d/sum_button  # Normalises the D button
-        return (a,b,c,d)
+        return (a, b, c, d)
 
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method, gets the device's epics ID and MAC address 
 
         Args:

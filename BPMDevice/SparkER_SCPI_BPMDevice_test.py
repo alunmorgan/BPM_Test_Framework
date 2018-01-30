@@ -1,10 +1,12 @@
 from framework_requires import BaseTestClass
-import BPMDevice
 import unittest
 from mock import patch
+import BPMDevice
+
 
 def mock_get_device_ID():
     return "Libera BPM \"00:d0:50:31:03:b9\""
+
 
 def mock_BPM_replies(message):
     if message == "TBT_XY 100":

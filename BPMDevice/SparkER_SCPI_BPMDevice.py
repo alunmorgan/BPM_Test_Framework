@@ -6,7 +6,6 @@ require("numpy")
 import numpy as np
 
 
-
 class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
     """BPM Device class that uses SCPI commands to communicate with Libera SparkER
 
@@ -89,7 +88,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         self.tn.close()  # Disconnects telnet device
         print("Closed connection to " + self.DeviceID)  # Informs the user the device is disconnected
 
-    def get_X_position(self):
+    def get_x_position(self):
         """Override method, gets the calculated X position of the beam.
 
         Args:
@@ -106,7 +105,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         mean_x = mean_x / 1000  # convert um to mm
         return mean_x
 
-    def get_Y_position(self):
+    def get_y_position(self):
         """Override method, gets the calculated Y position of the beam.
 
         Args:
@@ -123,7 +122,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         mean_y = mean_y / 1000  # convert um to mm
         return mean_y
 
-    def get_X_SA_data(self, num_vals):
+    def get_x_sa_data(self, num_vals):
         """Override method, gets the calculated X position SA data.
 
         Args:
@@ -138,7 +137,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         sa_x_data = replies[0::2]  # Grab the X data only
         return sa_x_times, sa_x_data  #WHAT ABOUT THE TIMESTAMPS
 
-    def get_Y_SA_data(self, num_vals):
+    def get_y_sa_data(self, num_vals):
         """Override method, gets the calculated X position SA data.
 
         Args:
@@ -191,7 +190,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         mean_sum = np.mean(bpm_sum)
         return mean_sum
 
-    def get_raw_BPM_buttons(self):
+    def get_raw_bpm_buttons(self):
         """Override method, gets the raw signal from each BPM.
 
         Args: 
@@ -216,7 +215,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         rms_d = np.sqrt(np.mean(np.square(d)))  # Get the RMS value
         return rms_a, rms_b, rms_c, rms_d
 
-    def get_normalised_BPM_buttons(self):
+    def get_normalised_bpm_buttons(self):
         """Override method, gets the normalised signal from each BPM.
 
         Args: 
@@ -227,7 +226,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
             float: Normalised signal from BPM C
             float: Normalised signal from BPM D
         """
-        a, b, c, d = self.get_raw_BPM_buttons()  # Get the RAW ADC button values
+        a, b, c, d = self.get_raw_bpm_buttons()  # Get the RAW ADC button values
         sum = a + b + c + d  # Get the sum of these values
         sum = sum/4  # Get the average BPM value
         a = a/sum  # Normalise the BPM value
@@ -236,7 +235,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         d = d/sum  # Normalise the BPM value
         return a, b, c, d
 
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method, gets the device's epics ID and MAC address 
 
         Args:
@@ -252,7 +251,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         host_info = host_info[index - 2:index + 15]  # Return the MAC address
         return "Spark BPM \"" + host_info + "\""
 
-    def get_ADC_sum(self):
+    def get_adc_sum(self):
         """Override method, gets the maximum input power the device can take
 
         The devices will break if the input power is too high, as such, each device has their

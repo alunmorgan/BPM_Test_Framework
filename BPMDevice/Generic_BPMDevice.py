@@ -13,7 +13,7 @@ class Generic_BPMDevice():
     __metaclass__ = ABCMeta  # Allows for abstract methods to be created.
 
     @abstractmethod
-    def get_X_position (self):
+    def get_x_position (self):
         """Abstract method for override, gets the calculated X position of the beam.
         
         Args:
@@ -23,7 +23,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_Y_position(self):
+    def get_y_position(self):
         """Abstract method for override, gets the calculated X position of the beam.
         
         Args:
@@ -33,7 +33,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_X_SA_data(self, num_vals):
+    def get_x_sa_data(self, num_vals):
         """Abstract method for override, gets the calculated X position SA data.
 
         Args:
@@ -44,7 +44,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_Y_SA_data(self, num_vals):
+    def get_y_sa_data(self, num_vals):
         """Abstract method for override, gets the calculated Y position SA data.
 
         Args:
@@ -55,7 +55,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_SA_data(self, num_vals):
+    def get_sa_data(self, num_vals):
         """Abstract method for override, gets the ABCD SA data.
 
         Args:
@@ -66,7 +66,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_TT_data(self):
+    def get_tt_data(self):
         """Abstract method for override, gets the calculated X position TT data.
 
         Args:
@@ -77,7 +77,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_ADC_data(self):
+    def get_adc_data(self):
         """Abstract method for override, gets the ABCD ADC data.
 
         Args:
@@ -88,7 +88,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_FT_data(self):
+    def get_ft_data(self):
         """Abstract method for override, gets the ABCD first turn data.
 
         Args:
@@ -121,7 +121,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_raw_BPM_buttons(self):
+    def get_raw_bpm_buttons(self):
         """Abstract method for override, gets the raw signal from each BPM.
         
         Args:
@@ -135,7 +135,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_normalised_BPM_buttons(self):
+    def get_normalised_bpm_buttons(self):
         """Abstract method for override, gets the normalised signal from each BPM.
         
         Args:
@@ -148,7 +148,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_device_ID(self):
+    def get_device_id(self):
         """Abstract method for override, gets the device name or type of the BPM.
 
         Args:
@@ -168,7 +168,7 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_ADC_sum(self):
+    def get_adc_sum(self):
         """Abstract method for override, gets the sum of all of the buttons ADCs
         
         A+B+C+D

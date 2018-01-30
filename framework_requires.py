@@ -3,5 +3,6 @@ require("mock")
 
 import unittest
 
+
 class BaseTestClass(unittest.TestCase):
     pass
