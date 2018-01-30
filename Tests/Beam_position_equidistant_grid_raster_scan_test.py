@@ -8,7 +8,7 @@ import time
 import itertools
 
 
-def calc_x_pos(a,b,c,d):
+def calc_x_pos(a, b, c, d):
     diff = ((a+d)-(b+c))
     total = (a+b+c+d)
     kx = 10.0
@@ -16,7 +16,7 @@ def calc_x_pos(a,b,c,d):
     return x
 
 
-def calc_y_pos(a,b,c,d):
+def calc_y_pos(a, b, c, d):
     diff = ((a+b)-(c+d))
     total = (a+b+c+d)
     ky = 10.0
@@ -28,17 +28,17 @@ def quarter_round(x):
     return round(x * 4) / 4
 
 
-def Beam_position_equidistant_grid_raster_scan_test(
-             RFObject,
-             BPMObject,
-             ProgAttenObject,
+def beam_position_equidistant_grid_raster_scan_test(
+             rf_object,
+             bpm_object,
+             prog_atten_object,
              rf_power,
              rf_frequency,
              nominal_attenuation,
              x_points,
              y_points,
              settling_time,
-             ReportObject=None,
+             report_object=None,
              sub_directory=""):
     """Moves the beam position to -5 to 5 in the XY plane and recods beam position
 
@@ -49,9 +49,9 @@ def Beam_position_equidistant_grid_raster_scan_test(
     with the measured values of position. 
 
         Args:
-            RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.
-            BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.
-            ProgAttenObject (Prog_Atten Obj): Object to interface with programmable attenuator hardware
+            rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
+            bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
+            prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
             rf_power (float): Output power of the RF system throughout the test, in dBm 
             rf_frequency (float): Frequency output of the RF throughout the test, in MHz
             nominal_attenuation (float): starting attenuation values of each attenuator, in dB
@@ -59,7 +59,7 @@ def Beam_position_equidistant_grid_raster_scan_test(
             y_points (int) number of samples in the Y plane 
             settling_time (float): time in seconds to wait between changing an attenuator value and 
                 taking a reading from the BPM. 
-            ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
+            report_object (LaTeX Report Obj): Specific report that the test results will be recorded
                 to. If no report is sent to the test then it will just display the results in 
                 a graph. 
             sub_directory (str): String that can change where the graphs will be saved to
@@ -93,10 +93,10 @@ def Beam_position_equidistant_grid_raster_scan_test(
     b = inv_gradient
     c = inv_gradient
     d = gradient
-    a_total = []
-    b_total = []
-    c_total = []
-    d_total = []
+    a_total = np.array([])
+    b_total = np.array([])
+    c_total = np.array([])
+    d_total = np.array([])
     for index in np.linspace(-1, 1, y_points):  # number of Y samples
         offset = 1  # base power from the device
         a_total = np.append(a_total, (a + index) + offset)
@@ -105,7 +105,7 @@ def Beam_position_equidistant_grid_raster_scan_test(
         d_total = np.append(d_total, (d - index) + offset)
     #############################################################
 
-    for A, B, C, D in zip(a_total, b_total, c_total, d_total):
+    for a, b, c, d in zip(a_total, b_total, c_total, d_total):
         # Steps here go as follows:
         # - Take the four values given to the loop, and split them into ratios that will sum into 1
         # - Set a nominal attenuation on the attenuator, so amplification can be simulated if needed
@@ -118,14 +118,14 @@ def Beam_position_equidistant_grid_raster_scan_test(
         # - Converting these powers into dB with respect to the origional power delivered to the input, will give the
         #   change in dB value of each attenuator.
 
-        abcd_total = A + B + C + D  # Sum the values given by the loop before
-        A = A / abcd_total  # Normalise the A value into a ratio
-        B = B / abcd_total  # Normalise the B value into a ratio
-        C = C / abcd_total  # Normalise the C value into a ratio
-        D = D / abcd_total  # Normalise the D value into a ratio
+        abcd_total = a + b + c + d  # Sum the values given by the loop before
+        a = a / abcd_total  # Normalise the A value into a ratio
+        b = b / abcd_total  # Normalise the B value into a ratio
+        c = c / abcd_total  # Normalise the C value into a ratio
+        d = d / abcd_total  # Normalise the D value into a ratio
 
-        ProgAttenObject.set_global_attenuation(nominal_attenuation)  # sets nominal attenuation value on each channel
-        power_total = RFObject.get_output_power()[0] # Gets the power output by the RF, total power into the system
+        prog_atten_object.set_global_attenuation(nominal_attenuation)  # sets nominal attenuation value on each channel
+        power_total = rf_object.get_output_power()[0] # Gets the power output by the RF, total power into the system
         power_total = 10.0 ** (power_total / 10.0)  # converts power output from dBm into mW
         power_split = power_total / 4.0  # Divide the power by 4 as it goes through a four way splitter
 
@@ -135,47 +135,43 @@ def Beam_position_equidistant_grid_raster_scan_test(
         # Assuming no losses through cables etc...
         # Set the power delivered into each BPM as this value
         power_split = power_split * linear_nominal_attenuation
-        A_pwr = power_split
-        B_pwr = power_split
-        C_pwr = power_split
-        D_pwr = power_split
+        a_pwr = power_split
+        b_pwr = power_split
+        c_pwr = power_split
+        d_pwr = power_split
 
-        power_total = A_pwr + B_pwr + C_pwr + D_pwr  # Total power into the BPM after each signal is attenuated
+        power_total = a_pwr + b_pwr + c_pwr + d_pwr  # Total power into the BPM after each signal is attenuated
 
         # Desired power into the each input, given their power ratio, and power delivered under nominal attenuation
-        A_pwr = A * power_total
-        B_pwr = B * power_total
-        C_pwr = C * power_total
-        D_pwr = D * power_total
+        a_pwr = a * power_total
+        b_pwr = b * power_total
+        c_pwr = c * power_total
+        d_pwr = d * power_total
 
         # Calculate new attenuation values by converting the ratio of desired power and previous power into dB
         # Then set the attenuation as the difference between this and the nominal attenuation value.
-        A = nominal_attenuation - quarter_round(10*np.log10(A_pwr / power_split))
-        B = nominal_attenuation - quarter_round(10*np.log10(B_pwr / power_split))
-        C = nominal_attenuation - quarter_round(10*np.log10(C_pwr / power_split))
-        D = nominal_attenuation - quarter_round(10*np.log10(D_pwr / power_split))
+        a = nominal_attenuation - quarter_round(10*np.log10(a_pwr / power_split))
+        b = nominal_attenuation - quarter_round(10*np.log10(b_pwr / power_split))
+        c = nominal_attenuation - quarter_round(10*np.log10(c_pwr / power_split))
+        d = nominal_attenuation - quarter_round(10*np.log10(d_pwr / power_split))
 
         # Set the attenuation as the values just calculated.
-        ProgAttenObject.set_channel_attenuation("A", A)
-        ProgAttenObject.set_channel_attenuation("B", B)
-        ProgAttenObject.set_channel_attenuation("C", C)
-        ProgAttenObject.set_channel_attenuation("D", D)
+        prog_atten_object.set_channel_attenuation("A", a)
+        prog_atten_object.set_channel_attenuation("B", b)
+        prog_atten_object.set_channel_attenuation("C", c)
+        prog_atten_object.set_channel_attenuation("D", d)
 
         ######################################
         time.sleep(settling_time)  # Let the attenuator values settle
         ######################################
-        measured_x.append(BPMObject.get_X_position())  # Take a reading of X position
-        measured_y.append(BPMObject.get_Y_position())  # Take a reading of Y position
-
+        measured_x = np.append(measured_x, bpm_object.get_X_position())  # Take a reading of X position
+        measured_y = np.append(measured_y, bpm_object.get_Y_position())  # Take a reading of Y position
         # Given the power values of each input, calculate the expected position
-        predicted_x.append(calc_x_pos(A_pwr, B_pwr, C_pwr, D_pwr))
-        predicted_y.append(calc_y_pos(A_pwr, B_pwr, C_pwr, D_pwr))
+        predicted_x = np.append(predicted_x, calc_x_pos(a_pwr, b_pwr, c_pwr, d_pwr))
+        predicted_y = np.append(predicted_y, calc_y_pos(a_pwr, b_pwr, c_pwr, d_pwr))
 
-
-
-
-    plt.scatter(measured_x, measured_y, s=10)
-    plt.scatter(predicted_x, predicted_y, s=20, c='r', marker=u'+')
+    plt.plot(measured_x, measured_y, 'bo',
+             predicted_x, predicted_y, 'r+', markersize=10,)
     plt.xlim(-10.5, 10.5)
     plt.ylim(-10.5, 10.5)
 
