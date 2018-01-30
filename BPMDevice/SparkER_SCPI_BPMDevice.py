@@ -52,6 +52,14 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         """
         return self.tn.read_until('\r\n',timeout).rstrip('\n') # Gets the reply, removes termination characters
 
+    def _get_mac_address(self):
+        node = self.IP  # Get the devices IP address
+        host_info = Popen(["arp", "-n", node], stdout=PIPE).communicate()[0]  # arp with the device
+        host_info = host_info.split("\n")[1]  # split the information the host gives
+        index = host_info.find(":")  # find the index of the first ":" (used in the MAC address)
+        host_info = host_info[index - 2:index + 15]  # Return the MAC address
+        return host_info
+
     def _trigger_DAQ(self):
         """Private method to fire a software trigger to update the DAQ
 
@@ -79,7 +87,8 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         self.IP = IPaddress
         self.timeout = timeout
         self.tn = telnetlib.Telnet(IPaddress, port, self.timeout) # Opens telnet connection
-        self.DeviceID = self.get_device_ID()
+        self.mac_address = self._get_mac_address()
+        self.DeviceID = self.get_device_id()
         self._telnet_query("START") # starts the device
         self._trigger_DAQ()
         print("Opened connection to " + self.DeviceID)  # Informs the user the device is connected
@@ -151,6 +160,81 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
         replies = np.array(map(float, replies))  # Convert the data into a float array
         sa_y_data = replies[1::2]  # Grab the Y data only
         return sa_y_times, sa_y_data  #WHAT ABOUT THE TIMESTAMPS
+
+    def get_sa_data(self, num_vals):
+        """Gets the ABCD SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns:
+            timestamps (list): floats
+            data (list): floats
+        """
+
+        sa_a_times = None
+        sa_a_data = None
+        sa_b_times = None
+        sa_b_data = None
+        sa_c_times = None
+        sa_c_data = None
+        sa_d_times = None
+        sa_d_data = None
+
+        return sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data
+
+    def get_tt_data(self):
+        """ Gets the calculated ABCD TT data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+       Returns:
+            times (list): floats
+            data (list): floats
+        """
+        times = None
+        data1 = None
+        data2 = None
+        data3 = None
+        data4 = None
+
+        return times, data1, data2, data3, data4
+
+    def get_adc_data(self):
+        """ Gets the ABCD ADC data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns:
+            timestamps (list): floats
+            adc1_data (list): floats
+            adc2_data (list): floats
+            adc3_data (list): floats
+            adc4_data (list): floats
+        """
+        times = None
+        adc1_data = None
+        adc2_data = None
+        adc3_data = None
+        adc4_data = None
+
+        return times, adc1_data, adc2_data, adc3_data, adc4_data
+
+    def get_ft_data(self):
+        """ Gets the ABCD first turn data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+       Returns:
+            timestamps (list): floats
+            data (list): floats
+        """
+        times = None
+        fta_data = None
+        ftb_data = None
+        ftc_data = None
+        ftd_data = None
+
+        return times, fta_data, ftb_data, ftc_data, ftd_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 
@@ -244,12 +328,7 @@ class SparkER_SCPI_BPMDevice(Generic_BPMDevice):
             str: Device with epics channel ID and MAC address
         """
 
-        node = self.IP  # Get the devices IP address
-        host_info = Popen(["arp", "-n", node], stdout=PIPE).communicate()[0]  # arp with the device
-        host_info = host_info.split("\n")[1]  # split the information the host gives
-        index = host_info.find(":")  # find the index of the first ":" (used in the MAC address)
-        host_info = host_info[index - 2:index + 15]  # Return the MAC address
-        return "Spark BPM \"" + host_info + "\""
+        return "Spark BPM \"" + self.mac_address + "\""
 
     def get_adc_sum(self):
         """Override method, gets the maximum input power the device can take

@@ -1,14 +1,14 @@
 from pkg_resources import require
 require("cothread==2.14")
-from cothread.catools import *
-import cothread
+from cothread.catools import caget, caput, connect
+#import cothread
 from Generic_BPMDevice import *
 from subprocess import Popen, PIPE
 import numpy as np
 from BPM_helper_functions import Accumulator
 
 
-class Electron_BPMDevice(Generic_BPMDevice):
+class ElectronBPMDevice(Generic_BPMDevice):
     """Libera Electron BPM Device class that uses Epics to communicate with PVs.
 
     All of the methods here will attempt to be generic enough to work for Libera
@@ -18,7 +18,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
     access to the data buffers may be needed. 
 
     Attributes:
-        epicsID (str): Channel identifier string that will be used to access PVs.  
+        epics_id (str): Channel identifier string that will be used to access PVs.
     """
 
     def _read_epics_pv(self, pv):
@@ -32,7 +32,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         Returns: 
             variant: Value of requested process variable.
         """
-        return caget(''.join((self.epicsID, pv)))  # Get PV data
+        return caget(''.join((self.epics_id, pv)))  # Get PV data
 
     def _write_epics_pv(self, pv, val):
         """Private method to write to an Epics process variable.
@@ -46,29 +46,31 @@ class Electron_BPMDevice(Generic_BPMDevice):
         Returns: 
             variant: Value of requested process variable.
         """
-        return caput(''.join((self.epicsID, pv)), val)  # Write PV data
+        return caput(''.join((self.epics_id, pv)), val)  # Write PV data
 
-    def __init__(self, dev_ID):
-        """Initializes the Libera BPM device object and assigns it an ID. 
-        
-        Args:
-            dev_ID (str/int): The ID number assigned to that specific BPM device. 
-        Returns:
-.
-        """
-        if type(dev_ID) != str:  # Makes sure the ID is an integer
-            raise TypeError  # Raises a type error if integer is not used
-        else:
-            self.epicsID = dev_ID # TS-DI-EBPM-04:
-
+    def _get_mac_address(self):
         pv = "SA:X"  # Any PV hosts on the device could be used here
-        node = connect(self.epicsID + pv, cainfo=True).host.split(":")[0]  # Get the IP address of the host
+        node = connect(self.epics_id + pv, cainfo=True).host.split(":")[0]  # Get the IP address of the host
         host_info = Popen(["arp", "-n", node], stdout=PIPE).communicate()[0]  # Uses arp to get more info about the host
         host_info = host_info.split("\n")[1]  # Splits the data about the host
         index = host_info.find(":")  # Gets the first ":", used in the MAC address
         host_info = host_info[index - 2:index + 15]  # Gets the devices MAC address
-        self.macaddress = host_info
-        print "Opened connection to "+self.get_device_ID()  # Informs the user the device is now connected to
+        return host_info
+
+    def __init__(self, dev_id):
+        """Initializes the Libera BPM device object and assigns it an ID. 
+        
+        Args:
+            dev_id (str/int): The ID number assigned to that specific BPM device.
+        Returns:
+.
+        """
+        if type(dev_id) != str:  # Makes sure the ID is a string
+            raise TypeError  # Raises a type error if integer is not used
+        else:
+            self.epics_id = dev_id # TS-DI-EBPM-04:
+            self.mac_address = self._get_mac_address()
+        print "Opened connection to " + self.get_device_id()  # Informs the user the device is now connected to
 
     def __del__(self):
         """Informs the user that this object has been destroyed 
@@ -77,9 +79,10 @@ class Electron_BPMDevice(Generic_BPMDevice):
         Returns:
          
         """
-        print "Closed connection to "+self.get_device_ID()
+        print self.mac_address
+        print "Closed connection to " + self.get_device_id()
 
-    def get_X_position(self):
+    def get_x_position(self):
         """Override method, gets the calculated X position of the beam.
         
         Args:   
@@ -88,7 +91,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         """
         return self._read_epics_pv("SA:X")  # Reads the requested PV
 
-    def get_Y_position(self):
+    def get_y_position(self):
         """Override method, gets the calculated Y position of the beam.
         
         Args:  
@@ -97,7 +100,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         """
         return self._read_epics_pv("SA:Y")  # Reads the requested PV
 
-    def get_X_SA_data(self, num_vals):
+    def get_x_sa_data(self, num_vals):
         """Gets the calculated X position SA data.
 
         Args:
@@ -106,11 +109,11 @@ class Electron_BPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        sa_x_accum = Accumulator(''.join((self.epicsID, ':SA:X')), num_vals)
+        sa_x_accum = Accumulator(''.join((self.epics_id, ':SA:X')), num_vals)
         times, data = sa_x_accum.wait()
         return times, data
 
-    def get_Y_SA_data(self, num_vals):
+    def get_y_sa_data(self, num_vals):
         """Gets the calculated X position SA data.
 
         Args:
@@ -119,11 +122,11 @@ class Electron_BPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        sa_y_accum = Accumulator(''.join((self.epicsID, ':SA:Y')), num_vals)
+        sa_y_accum = Accumulator(''.join((self.epics_id, ':SA:Y')), num_vals)
         times, data = sa_y_accum.wait()
         return times, data
 
-    def get_SA_data(self, num_vals):
+    def get_sa_data(self, num_vals):
         """Gets the ABCD SA data.
 
         Args:
@@ -132,18 +135,18 @@ class Electron_BPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        sa_a_accum = Accumulator(''.join((self.epicsID, ':SA:A')), num_vals)
+        sa_a_accum = Accumulator(''.join((self.epics_id, ':SA:A')), num_vals)
         sa_a_times, sa_a_data = sa_a_accum.wait()
-        sa_b_accum = Accumulator(''.join((self.epicsID, ':SA:B')), num_vals)
+        sa_b_accum = Accumulator(''.join((self.epics_id, ':SA:B')), num_vals)
         sa_b_times, sa_b_data = sa_b_accum.wait()
-        sa_c_accum = Accumulator(''.join((self.epicsID, ':SA:C')), num_vals)
+        sa_c_accum = Accumulator(''.join((self.epics_id, ':SA:C')), num_vals)
         sa_c_times, sa_c_data = sa_c_accum.wait()
-        sa_d_accum = Accumulator(''.join((self.epicsID, ':SA:D')), num_vals)
+        sa_d_accum = Accumulator(''.join((self.epics_id, ':SA:D')), num_vals)
         sa_d_times, sa_d_data = sa_d_accum.wait()
 
         return sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data
 
-    def get_TT_data(self):
+    def get_tt_data(self):
         """ Gets the calculated ABCD TT data.
 
         Args:
@@ -163,7 +166,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         times = np.arange(len(data1)) * 936./500e6 # Each tick is one turn
         return times, data1, data2, data3, data4
 
-    def get_ADC_data(self):
+    def get_adc_data(self):
         """ Gets the ABCD ADC data.
 
         Args:
@@ -184,7 +187,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         times = np.arange(len(adc1_data)) * 1/117E6 # Data rate is 117MHz
         return times, adc1_data, adc2_data, adc3_data, adc4_data
 
-    def get_FT_data(self):
+    def get_ft_data(self):
         """ Gets the ABCD first turn data.
 
         Args:
@@ -220,7 +223,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
         """
         return self._read_epics_pv("SA:POWER")  # Reads the requested PV
 
-    def get_raw_BPM_buttons(self):
+    def get_raw_bpm_buttons(self):
         """Override method, gets the raw signal from each BPM.
         
         Args: 
@@ -235,7 +238,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
                 self._read_epics_pv("SA:C"),
                 self._read_epics_pv("SA:D"))  # Reads the requested PVs
 
-    def get_normalised_BPM_buttons(self):
+    def get_normalised_bpm_buttons(self):
         """Override method, gets the normalised signal from each BPM.
         
         Args: 
@@ -250,7 +253,7 @@ class Electron_BPMDevice(Generic_BPMDevice):
                 self._read_epics_pv("SA:CN"),
                 self._read_epics_pv("SA:DN"))  # Reads the requested PVs
 
-    def get_ADC_sum(self):
+    def get_adc_sum(self):
         """Override method, gets the sum of all of the buttons ADCs
 
         A+B+C+D
@@ -259,11 +262,11 @@ class Electron_BPMDevice(Generic_BPMDevice):
         Returns: 
             int: ADC sum in counts
         """
-        a, b, c, d = self.get_raw_BPM_buttons()  # Reads the requested PVs
+        a, b, c, d = self.get_raw_bpm_buttons()  # Reads the requested PVs
         sum = a + b + c + d  # Sums the values of the PVs
         return sum
 
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method, gets the device's epics ID and MAC address 
         
         Args:
@@ -271,7 +274,8 @@ class Electron_BPMDevice(Generic_BPMDevice):
             str: Device with epics channel ID and MAC address
         """
 
-        return "Libera Electron BPM with the Epics ID " + "\""+self.epicsID+"\" and the MAC Address \""+self.macaddress+"\""
+        return "Libera Electron BPM with the Epics ID " + "\"" + self.epics_id + \
+               "\" and the MAC Address \"" + self.mac_address + "\""
 
     def get_input_tolerance(self):
         """Override method, gets the maximum input power the device can take

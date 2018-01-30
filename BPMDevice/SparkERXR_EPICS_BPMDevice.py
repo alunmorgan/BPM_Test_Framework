@@ -1,7 +1,7 @@
 from pkg_resources import require
 require("cothread==2.14")
-from cothread.catools import *
-import cothread
+from cothread.catools import caget, caput, connect
+#import cothread
 from Generic_BPMDevice import *
 from subprocess import Popen, PIPE
 import numpy as np
@@ -56,6 +56,15 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         caput(self.epicsID + pv, value)  # Write to EPICs PV
         return self._read_epics_pv(pv)
 
+    def _get_mac_address(self):
+        pv = ".X"  # Pick a PV that is hosted on the device
+        node = connect(self.epicsID + pv, cainfo=True).host.split(":")[0]  # Get the IP address of the host
+        host_info = Popen(["arp", "-n", node], stdout=PIPE).communicate()[0]  # Get info about the host using arp
+        host_info = host_info.split("\n")[1]  # Split the info sent back
+        index = host_info.find(":")  # Find the first ":", used in the MAC address
+        host_info = host_info[index - 2:index + 15]  # Get the MAC address
+        return host_info
+
     def __init__(self, database, daq_type):
         """Initializes the Libera BPM device object and assigns it an ID. 
 
@@ -66,18 +75,11 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         """
         if type(database) and type(daq_type) != str:
             raise TypeError
-        self.epicsID = database+":signals:"+daq_type  # Different signal types can be used
+        self.epicsID = database + ":signals:" + daq_type  # Different signal types can be used
         self._write_epics_pv(".SCAN", 0)  # Required so that values can be read from he database
         self._trigger_epics()  # Triggers the first count
-
-        pv = ".X"  # Pick a PV that is hosted on the device
-        node = connect(self.epicsID + pv, cainfo=True).host.split(":")[0]  # Get the IP address of the host
-        host_info = Popen(["arp", "-n", node], stdout=PIPE).communicate()[0]  # Get info about the host using arp
-        host_info = host_info.split("\n")[1]  # Split the info sent back
-        index = host_info.find(":")  # Find the first ":", used in the MAC address
-        host_info = host_info[index - 2:index + 15]  # Get the MAC address
-        self.macaddress = host_info
-        print "Opened link with" + self.get_device_ID()  # Tells the user they have connected to the device
+        self.macaddress = self._get_mac_address()
+        print "Opened link with" + self.get_device_id()  # Tells the user they have connected to the device
 
     def __del__(self):
         print "Closed link with" + self.get_device_id()  # Tells the user they have connected to the device
@@ -135,6 +137,81 @@ class SparkERXR_EPICS_BPMDevice(Generic_BPMDevice):
         sa_y_accum = Accumulator(''.join((self.epicsID, ':SA:Y')), num_vals)
         sa_y_times, sa_y_data = sa_y_accum.wait()
         return sa_y_times, sa_y_data
+
+    def get_sa_data(self, num_vals):
+        """Gets the ABCD SA data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns:
+            timestamps (list): floats
+            data (list): floats
+        """
+
+        sa_a_times = None
+        sa_a_data = None
+        sa_b_times = None
+        sa_b_data = None
+        sa_c_times = None
+        sa_c_data = None
+        sa_d_times = None
+        sa_d_data = None
+
+        return sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data
+
+    def get_tt_data(self):
+        """ Gets the calculated ABCD TT data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+       Returns:
+            times (list): floats
+            data (list): floats
+        """
+        times = None
+        data1 = None
+        data2 = None
+        data3 = None
+        data4 = None
+
+        return times, data1, data2, data3, data4
+
+    def get_adc_data(self):
+        """ Gets the ABCD ADC data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+        Returns:
+            timestamps (list): floats
+            adc1_data (list): floats
+            adc2_data (list): floats
+            adc3_data (list): floats
+            adc4_data (list): floats
+        """
+        times = None
+        adc1_data = None
+        adc2_data = None
+        adc3_data = None
+        adc4_data = None
+
+        return times, adc1_data, adc2_data, adc3_data, adc4_data
+
+    def get_ft_data(self):
+        """ Gets the ABCD first turn data.
+
+        Args:
+            num_vals (int): The number of samples to capture
+       Returns:
+            timestamps (list): floats
+            data (list): floats
+        """
+        times = None
+        fta_data = None
+        ftb_data = None
+        ftc_data = None
+        ftd_data = None
+
+        return times, fta_data, ftb_data, ftc_data, ftd_data
 
     def get_beam_current(self):
         """Override method, gets the beam current read by the BPMs. 

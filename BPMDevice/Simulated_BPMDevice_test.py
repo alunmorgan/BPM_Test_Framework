@@ -27,10 +27,10 @@ class ExpectedDataTestNoGateNoAttentuator(BaseTestClass):
         pass
 
     def test_get_X_position(self):
-        self.assertEqual(self.simbpm.get_X_position(), 0.0)
+        self.assertEqual(self.simbpm.get_x_position(), 0.0)
 
     def test_get_Y_position(self):
-        self.assertEqual(self.simbpm.get_Y_position(), 0.0)
+        self.assertEqual(self.simbpm.get_y_position(), 0.0)
 
     def test_get_beam_curent(self):
         self.assertEqual(self.simbpm.get_beam_current(), self.current)
@@ -39,24 +39,24 @@ class ExpectedDataTestNoGateNoAttentuator(BaseTestClass):
         self.assertEqual(self.simbpm.get_input_power(), self.test_output_values[0] - self.simulator_attenuation)
 
     def test_get_raw_BPM_buttons(self):
-        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_raw_BPM_buttons()
+        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_raw_bpm_buttons()
         self.assertEqual(a_raw, 1000 * self.current)
         self.assertEqual(b_raw, 1000 * self.current)
         self.assertEqual(c_raw, 1000 * self.current)
         self.assertEqual(d_raw, 1000 * self.current)
 
     def test_get_normalised_BPM_buttons(self):
-        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_normalised_BPM_buttons()
+        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_normalised_bpm_buttons()
         self.assertEqual(a_raw, 1)
         self.assertEqual(b_raw, 1)
         self.assertEqual(c_raw, 1)
         self.assertEqual(d_raw, 1)
 
     def test_get_device_ID(self):
-        self.assertEqual(self.simbpm.get_device_ID(), "Simulated BPM Device")
+        self.assertEqual(self.simbpm.get_device_id(), "Simulated BPM Device")
 
     def test_get_ADC_sum(self):
-        self.assertEqual(self.simbpm.get_ADC_sum(), 4000 * self.current)
+        self.assertEqual(self.simbpm.get_adc_sum(), 4000 * self.current)
 
     def test_get_input_tolerance(self):
         self.assertEqual(self.simbpm.get_input_tolerance(), -40)
@@ -91,10 +91,10 @@ class ExpectedDataTestWithGateNoAttentuator(BaseTestClass):
         pass
 
     def test_get_X_position(self):
-        self.assertEqual(self.simbpm.get_X_position(), 0.0)
+        self.assertEqual(self.simbpm.get_x_position(), 0.0)
 
     def test_get_Y_position(self):
-        self.assertEqual(self.simbpm.get_Y_position(), 0.0)
+        self.assertEqual(self.simbpm.get_y_position(), 0.0)
 
     def test_get_beam_curent(self):
         self.assertEqual(self.simbpm.get_beam_current(), self.current)
@@ -103,24 +103,24 @@ class ExpectedDataTestWithGateNoAttentuator(BaseTestClass):
         self.assertEqual(self.simbpm.get_input_power(), self.expected_input_power)
 
     def test_get_raw_BPM_buttons(self):
-        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_raw_BPM_buttons()
+        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_raw_bpm_buttons()
         self.assertEqual(a_raw, 1000 * self.current)
         self.assertEqual(b_raw, 1000 * self.current)
         self.assertEqual(c_raw, 1000 * self.current)
         self.assertEqual(d_raw, 1000 * self.current)
 
     def test_get_normalised_BPM_buttons(self):
-        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_normalised_BPM_buttons()
+        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_normalised_bpm_buttons()
         self.assertEqual(a_raw, 1)
         self.assertEqual(b_raw, 1)
         self.assertEqual(c_raw, 1)
         self.assertEqual(d_raw, 1)
 
     def test_get_device_ID(self):
-        self.assertEqual(self.simbpm.get_device_ID(), "Simulated BPM Device")
+        self.assertEqual(self.simbpm.get_device_id(), "Simulated BPM Device")
 
     def test_get_ADC_sum(self):
-        self.assertEqual(self.simbpm.get_ADC_sum(), 4000 * self.current)
+        self.assertEqual(self.simbpm.get_adc_sum(), 4000 * self.current)
 
     def test_get_input_tolerance(self):
         self.assertEqual(self.simbpm.get_input_tolerance(), -40)
@@ -166,10 +166,10 @@ class ExpectedDataTestWithGateWithAttenuator(BaseTestClass):
         pass
 
     def test_get_X_position(self):
-        self.assertEqual(self.simbpm.get_X_position(), 0.0)
+        self.assertEqual(self.simbpm.get_x_position(), 0.0)
 
     def test_get_Y_position(self):
-        self.assertEqual(self.simbpm.get_Y_position(), 0.0)
+        self.assertEqual(self.simbpm.get_y_position(), 0.0)
 
     def test_get_beam_curent(self):
         self.assertLess(abs(self.simbpm.get_beam_current() - self.current),
@@ -180,7 +180,7 @@ class ExpectedDataTestWithGateWithAttenuator(BaseTestClass):
                         1E-6 * max(abs(self.simbpm.get_input_power()), abs(self.expected_input_power)))
 
     def test_get_raw_BPM_buttons(self):
-        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_raw_BPM_buttons()
+        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_raw_bpm_buttons()
         total_power_mW = self.a_pwr + self.b_pwr + self.c_pwr + self.d_pwr
         a_signal = 1000 * self.current * self.a_pwr / total_power_mW
         b_signal = 1000 * self.current * self.b_pwr / total_power_mW
@@ -196,14 +196,14 @@ class ExpectedDataTestWithGateWithAttenuator(BaseTestClass):
                         max(abs(d_raw), abs(d_signal)))
 
     def test_get_normalised_BPM_buttons(self):
-        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_normalised_BPM_buttons()
+        a_raw, b_raw, c_raw, d_raw = self.simbpm.get_normalised_bpm_buttons()
         self.assertEqual(a_raw, 1)
         self.assertEqual(b_raw, 1)
         self.assertEqual(c_raw, 1)
         self.assertEqual(d_raw, 1)
 
     def test_get_device_ID(self):
-        self.assertEqual(self.simbpm.get_device_ID(), "Simulated BPM Device")
+        self.assertEqual(self.simbpm.get_device_id(), "Simulated BPM Device")
 
     def test_get_ADC_sum(self):
         total_power_mW = self.a_pwr + self.b_pwr + self.c_pwr + self.d_pwr
@@ -211,8 +211,8 @@ class ExpectedDataTestWithGateWithAttenuator(BaseTestClass):
                     1000 * self.current * self.b_pwr / total_power_mW +
                     1000 * self.current * self.c_pwr / total_power_mW +
                     1000 * self.current * self.d_pwr / total_power_mW)
-        self.assertLess(abs(self.simbpm.get_ADC_sum() - total_adc),
-                        1E-6 * max(abs(self.simbpm.get_ADC_sum()), abs(total_adc)))
+        self.assertLess(abs(self.simbpm.get_adc_sum() - total_adc),
+                        1E-6 * max(abs(self.simbpm.get_adc_sum()), abs(total_adc)))
 
     def test_get_input_tolerance(self):
         self.assertEqual(self.simbpm.get_input_tolerance(), -40)

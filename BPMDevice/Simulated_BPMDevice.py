@@ -45,7 +45,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
         self.macaddress = 'SIMULATED'
         self.noise_mag = noise_mag
 
-    def get_X_position(self):
+    def get_x_position(self):
         """Override method, gets the calculated X position of the beam.
         
         Args:
@@ -61,7 +61,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             x_val = ((A_pwr + D_pwr) - (B_pwr + C_pwr)) / total_power
         return x_val * 10 + (random.random() - 0.5) * self.noise_mag  # Scaling to mm and adding noise
 
-    def get_Y_position(self):
+    def get_y_position(self):
         """Override method, gets the calculated X position of the beam.
         
         Args:
@@ -77,7 +77,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             y_val = ((A_pwr + B_pwr) - (C_pwr + D_pwr)) / total_power
         return y_val * 10 + (random.random() - 0.5) * self.noise_mag  # Scaling to mm and adding noise
 
-    def get_X_SA_data(self, num_vals):
+    def get_x_sa_data(self, num_vals):
         """Override method, gets the calculated X position SA data.
 
         Args:
@@ -93,7 +93,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             sa_x_times.append(m * 0.1)
         return sa_x_times, sa_x_data
 
-    def get_Y_SA_data(self, num_vals):
+    def get_y_sa_data(self, num_vals):
         """Override method, gets the calculated Y position SA data.
 
         Args:
@@ -109,7 +109,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             sa_y_times.append(m * 0.1)
         return sa_y_times, sa_y_data
 
-    def get_SA_data(self, num_vals):
+    def get_sa_data(self, num_vals):
         """Override method, gets the calculated Y position SA data.
 
         Args:
@@ -125,7 +125,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             times.append(m * 0.1)
         return times, data, data, data, data
 
-    def get_TT_data(self):
+    def get_tt_data(self):
         """Override method, gets the ABCD TT data.
 
         Args:
@@ -140,7 +140,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             tt_y_times.append(m * 936./500e6)
         return tt_y_times, tt_y_data
 
-    def get_ADC_data(self):
+    def get_adc_data(self):
         """Override method, gets the ABCD ADC data.
 
         Args:
@@ -156,7 +156,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
         data = (np.sin(angles) + 1) * adc_max_counts / 2   # ADD power sensitivity to sin amplitude?
         return times, data, data, data, data
 
-    def get_FT_data(self):
+    def get_ft_data(self):
         """Override method, gets the ABCD first turn data.
 
         Args:
@@ -216,7 +216,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
 
         return power_total - self.attenuation
 
-    def get_raw_BPM_buttons(self):
+    def get_raw_bpm_buttons(self):
         """Override method, gets the raw signal from each BPM.
         
         Args:
@@ -240,7 +240,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
 
         return raw_A, raw_B, raw_C, raw_D
 
-    def get_normalised_BPM_buttons(self):
+    def get_normalised_bpm_buttons(self):
         """Override method, gets the normalised signal from each BPM.
         
         Args:
@@ -263,7 +263,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             norm_D = D_pwr / total_power * 4
         return norm_A, norm_B, norm_C, norm_D  # Assumes all BPM pickups are equal
 
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method, gets the type of BPM device that the device is
         
         Args:
@@ -273,7 +273,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
         """
         return "Simulated BPM Device"
 
-    def get_ADC_sum(self):
+    def get_adc_sum(self):
         """Override method, sum of the raw signals
 
         Returns the sum signal, comprised of the sum of all four raw ADC channels.        
@@ -282,7 +282,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
         Returns: 
             int: Total ADC counts
         """
-        a, b, c, d = self.get_raw_BPM_buttons()
+        a, b, c, d = self.get_raw_bpm_buttons()
         ADC_sum = a + b + c + d  # Sums the BPM values used in the simulator
         return ADC_sum
 
