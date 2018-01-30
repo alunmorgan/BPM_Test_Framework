@@ -10,9 +10,10 @@ from math import floor
 
 def adc_test(rf_object,
              bpm_object,
+             prog_atten_object,
              frequency,
              samples=10,
-             power_levels=(-60., -45.),
+             power_levels=(-45., -60.),
              settling_time=1,
              report_object=None,
              sub_directory=""):
@@ -23,6 +24,7 @@ def adc_test(rf_object,
     Args:
         rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
         bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
+        prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
         frequency (float): Output frequency for the tests, set as a float that will use the assumed units of MHz. 
         power_levels (tuple of floats): output power levels for the tests. dBm is assumed. 
         samples (int): Number of samples take.
@@ -59,10 +61,11 @@ def adc_test(rf_object,
     data4 = []
     times = []
     for index in power_levels:
-        rf_object.set_output_power(index)  # Set next output power value
-        rf_object.turn_on_RF()
+        # Set attenuator value to give desired power level.
+        prog_atten_object.set_global_attenuation(power_levels[0] - index)
         time.sleep(settling_time)  # Wait for signal to settle
         time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_ADC_data()  # record data
+        rf_object.turn_off_RF()
         times.append(time_tmp)
         data1.append(data1_tmp)
         data2.append(data2_tmp)
