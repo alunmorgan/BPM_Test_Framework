@@ -10,16 +10,17 @@ import matplotlib.pyplot as plt
 import time
 
 
-def Fixed_voltage_amplitude_fill_pattern_test(
-                                   RFObject,
-                                   BPMObject,
-                                   GateSourceObject,
+def fixed_voltage_amplitude_fill_pattern_test(
+                                   rf_object,
+                                   bpm_object,
+                                   prog_atten_object,
+                                   gate_source_object,
                                    frequency,
-                                   power=0,
-                                   samples=10,
+                                   max_power=-40,
+                                   duty_cycles=np.arange(1, 0, -0.1),
                                    pulse_period=1.87319,
                                    settling_time=1,
-                                   ReportObject=None,
+                                   report_object=None,
                                    sub_directory=""):
     """
         This test imitates a fill pattern by modulation the RF signal with a square wave. The up time 
@@ -31,20 +32,21 @@ def Fixed_voltage_amplitude_fill_pattern_test(
         
 
         Args:
-            RFObject (RFSignalGenerator Obj): Object to interface with the RF hardware.
-            BPMObject (BPMDevice Obj): Object to interface with the BPM hardware.
-            GateSourceObject: (GateSource Obj): Object used to interface with the gate source
+            rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
+            bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
+            prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
+            gate_source_object: (GateSource Obj): Object used to interface with the gate source
                 hardware. 
             frequency (float/str): Output frequency for the tests, set as a float that will 
                 use the assumed units of MHz. 
-            power (float): Starting output power for the tests, default value is 
+            max_power (float): Starting output power for the tests, default value is
                 -100 dBm. The input values are floats and dBm is assumed. 
-            samples (int): Number of samples take is this value + 1.
+            duty_cycles (list): The duty cycles to be used in the test. Values need to be in descending order.
             pulse_period (float): The pulse period for the modulation signal, i.e. the bunch length, 
                 this is a float that is in micro seconds.
             settling_time (float): Time in seconds, that the program will wait in between 
                 setting an  output power on the RF, and reading the values of the BPM. 
-            ReportObject (LaTeX Report Obj): Specific report that the test results will be recorded 
+            report_object (LaTeX Report Obj): Specific report that the test results will be recorded
                 to. If no report is sent to the test then it will just display the results in 
                 a graph. 
             sub_directory (str): String that can change where the graphs will be saved to
