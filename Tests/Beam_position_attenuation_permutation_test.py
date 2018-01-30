@@ -70,46 +70,36 @@ def Beam_position_attenuation_permutation_test(
             float array: predicted Y values of position
     """
 
-    # Readies text that will introduce this test in the report
-    intro_text = r""""Moves the beam position by changing the attenuator values with a series of different permutations.
-    The calc\_x\_pos and calc\_y\_pos functions are used to measure the theoretical beam position values.
-    The attenuator\_max, attenuator\_min and attenuator\_steps are used to create a series of different 
-    combinations of attenuator values. A linear space will be made from the min to the max value of 
-    attenuation. These values will then be put into all possible permutations with four values. Each 
-    permutation will be fed to the four attenuators, and the BPM position recoded after each 
-    attenuation change. \\~\\
-    """
-
-    # Formats the name of plot that is saved as, and also informs the user that the test has started
+    # Informs the user that the test has started
     test_name = __name__
     test_name = test_name.rsplit("Tests.")[1]
     test_name = test_name.replace("_", " ")
     print("Starting test \"" + test_name + "\"")
-
-    RFObject.set_output_power(rf_power)
-    RFObject.set_frequency(rf_frequency)
-    RFObject.turn_on_RF()
+    rf_object.turn_off_RF()
+    rf_object.set_output_power(rf_power)
+    rf_object.set_frequency(rf_frequency)
+    rf_object.turn_on_RF()
 
     predicted_x = []
     predicted_y = []
     measured_x = []
     measured_y = []
 
-    attenuation_map = np.linspace(attenuator_min,attenuator_max,attenuator_steps)
+    attenuation_map = np.linspace(attenuator_min, attenuator_max, attenuator_steps)
 
     attenuation_map = itertools.product(attenuation_map, repeat=4)
 
     count = 0
 
     for index in attenuation_map:
-        ProgAttenObject.set_channel_attenuation("A", index[0])
-        ProgAttenObject.set_channel_attenuation("B", index[1])
-        ProgAttenObject.set_channel_attenuation("C", index[2])
-        ProgAttenObject.set_channel_attenuation("D", index[3])
+        prog_atten_object.set_channel_attenuation("A", index[0])
+        prog_atten_object.set_channel_attenuation("B", index[1])
+        prog_atten_object.set_channel_attenuation("C", index[2])
+        prog_atten_object.set_channel_attenuation("D", index[3])
         time.sleep(settling_time)
-        measured_x.append(BPMObject.get_X_position())
-        measured_y.append(BPMObject.get_Y_position())
-        power_out = RFObject.get_output_power()[0]
+        measured_x.append(bpm_object.get_X_position())
+        measured_y.append(bpm_object.get_Y_position())
+        power_out = rf_object.get_output_power()[0]
         power_out = power_out - 6  # Reduce signal by a factor of four as it goes through a 4 way splitter
         predicted_a = power_out - index[0]
         predicted_b = power_out - index[1]
@@ -123,38 +113,47 @@ def Beam_position_attenuation_permutation_test(
         predicted_y.append(calc_y_pos(predicted_a, predicted_b, predicted_c, predicted_d))
         count = count + 1
 
-    plt.scatter(measured_x, measured_y, s=50)
-    plt.scatter(predicted_x, predicted_y, s=100, c='r', marker=u'+')
+    plt.plot(measured_x, measured_y, 'bo',
+             predicted_x, predicted_y, 'r+', markersize=10,)
     plt.xlim(-11, 11)
     plt.ylim(-11, 11)
 
-    # Readies devices that are used in the test so that they can be added to the report
-    device_names = []
-    device_names.append(RFObject.get_device_ID())
-    device_names.append(BPMObject.get_device_ID())
-    device_names.append(ProgAttenObject.get_device_ID())
-
-    # # Readies parameters that are used in the test so that they can be added to the report
-    parameter_names = []
-    parameter_names.append("Fixed RF Output Power: " + str(rf_power) +" dBm")
-    parameter_names.append("Fixed Rf Output Frequency: " + str(rf_frequency)+" MHz")
-    parameter_names.append("Maximum Attenuation: " + str(attenuator_max)+"dB")
-    parameter_names.append("Minimum Attenuation: " + str(attenuator_min)+"dB")
-    parameter_names.append("Steps between min and max attenuations: " + str(attenuator_steps))
-    parameter_names.append("Settling time: " + str(settling_time)+"s")
     plt.xlabel("Horizontal Beam Position (mm)")
     plt.ylabel("Vertical Beam Position (mm)")
     plt.grid(True)
 
-    if ReportObject is None:
+    if report_object is None:
         # If no report is entered as an input to the test, simply display the results
         plt.show()
     else:
         # If there is a report for the data to be copied to, do so.
+
+        # Readies text that will introduce this test in the report
+        intro_text = r""""Moves the beam position by changing the attenuator values with a series of different permutations.
+        The calc\_x\_pos and calc\_y\_pos functions are used to measure the theoretical beam position values.
+        The attenuator\_max, attenuator\_min and attenuator\_steps are used to create a series of different 
+        combinations of attenuator values. A linear space will be made from the min to the max value of 
+        attenuation. These values will then be put into all possible permutations with four values. Each 
+        permutation will be fed to the four attenuators, and the BPM position recoded after each 
+        attenuation change. \\~\\
+        """
+        # Readies devices that are used in the test so that they can be added to the report
+        device_names = []
+        device_names.append(rf_object.get_device_ID())
+        device_names.append(bpm_object.get_device_ID())
+        device_names.append(prog_atten_object.get_device_ID())
+        # # Readies parameters that are used in the test so that they can be added to the report
+        parameter_names = []
+        parameter_names.append("Fixed RF Output Power: " + str(rf_power) + " dBm")
+        parameter_names.append("Fixed Rf Output Frequency: " + str(rf_frequency) + " MHz")
+        parameter_names.append("Maximum Attenuation: " + str(attenuator_max) + "dB")
+        parameter_names.append("Minimum Attenuation: " + str(attenuator_min) + "dB")
+        parameter_names.append("Steps between min and max attenuations: " + str(attenuator_steps))
+        parameter_names.append("Settling time: " + str(settling_time) + "s")
+
         plt.savefig(sub_directory+"beam_position_attenuation_permutation" + ".pdf")
-        ReportObject.setup_test("beam_position_attenuation_permutation", intro_text, device_names, parameter_names)
-        ReportObject.add_figure_to_test(image_name=''.join((sub_directory,"beam_position_attenuation_permutation")),
-                                        caption="beam_position_attenuation_permutation")
+        report_object.setup_test("beam_position_attenuation_permutation", intro_text, device_names, parameter_names)
+        report_object.add_figure_to_test(image_name=''.join((sub_directory, "beam_position_attenuation_permutation")),
+                                         caption="beam_position_attenuation_permutation")
 
     return measured_x, measured_y, predicted_x, predicted_y
-

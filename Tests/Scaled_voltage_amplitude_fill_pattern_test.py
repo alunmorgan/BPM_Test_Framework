@@ -52,18 +52,9 @@ def Scaled_voltage_amplitude_fill_pattern_test(
             float array: duty cycle of the modulation signal
             float array: power set at the rf output
             float array: power read from the BPM
-            float array: current read fro mthe BPM
+            float array: current read from the BPM
             float array: X position read from the BPM
             float array: Y position read from the BPM
-    """
-
-    intro_text = r"""
-        This test imitates a fill pattern by modulation the RF signal with a square wave. The up time 
-        of the square wave represents when a bunch goes passed, and the downtime the gaps between the 
-        bunches. This test will take the pulse length in micro seconds, and then linearly step up the 
-        duty cycle of the pulse, from 0.1 to 1. Readings on the BPM are then recorded as the duty cycle
-        is changed. While the duty cycle is increased, the peak RF voltage increases, meaning that 
-        the average power will be constant with duty cycle change. \\~\\
     """
 
     test_name = __name__
@@ -71,68 +62,81 @@ def Scaled_voltage_amplitude_fill_pattern_test(
     test_name = test_name.replace("_", " ")
     print("Starting test \"" + test_name + "\"")
 
-    device_names = []
-    device_names.append(RFObject.get_device_ID())
-    device_names.append(GateSourceObject.get_device_ID())
-    device_names.append(BPMObject.get_device_ID())
+    rf_object.set_frequency(frequency)
+    rf_object.set_output_power(max_power)
+    prog_atten_object.set_global_attenuation(0)
+    gate_source_object.set_pulse_period(pulse_period)
+    gate_source_object.turn_on_modulation()
+    gate_source_object.set_pulse_dutycycle(duty_cycles[0])
+    rf_object.turn_on_RF()
+    time.sleep(settling_time)
 
-    RFObject.set_frequency(frequency)
-    RFObject.set_output_power(desired_power)
-    RFObject.turn_on_RF()
-    GateSourceObject.set_pulse_period(pulse_period)
-    cycle = np.linspace(0.1, 1, samples)  # Creates samples to test
-    GateSourceObject.turn_on_modulation()
-    GateSourceObject.set_pulse_dutycycle(cycle[0])
-
-    parameter_names = []
-    parameter_names.append("Frequency: " + RFObject.get_frequency()[1])
-    parameter_names.append("Desired Power: " + str(desired_power)+"dBm")
-    parameter_names.append("Pulse Period: " + GateSourceObject.get_pulse_period()[1])
-    parameter_names.append("Samples: " + str(samples))
-    parameter_names.append("Settling time: "+ str(settling_time)+"s")
-
-    dutycycle = np.array([])
     bpm_power = np.array([])
-    bpm_Xpos = np.array([])
-    bpm_Ypos = np.array([])
+    bpm_xpos = np.array([])
+    bpm_ypos = np.array([])
     bpm_current = np.array([])
     rf_output = np.array([])
-    ADC_sum = np.array([])
+    adc_sum = np.array([])
 
-
-    time.sleep(settling_time)
-    for index in cycle:
-        current_cycle = GateSourceObject.set_pulse_dutycycle(index)
-        dutycycle = np.append(dutycycle, current_cycle)
-        log_cycle = 20*np.log10(current_cycle)
-        RFObject.set_output_power(desired_power + np.absolute(log_cycle))
+    for index in duty_cycles:
+        gate_source_object.set_pulse_dutycycle(index)
+        power_adjustment = np.absolute(20*np.log10(index))
+        prog_atten_object.set_global_attenuation(power_adjustment)
         time.sleep(settling_time)
-        rf_output = np.append(rf_output, RFObject.get_output_power()[0])
-        bpm_power = np.append(bpm_power, BPMObject.get_input_power())
-        bpm_current = np.append(bpm_current, BPMObject.get_beam_current())
-        bpm_Xpos = np.append(bpm_Xpos, BPMObject.get_X_position())
-        bpm_Ypos = np.append(bpm_Ypos, BPMObject.get_Y_position())
-        ADC_sum = np.append(ADC_sum, BPMObject.get_ADC_sum())
+        rf_output = np.append(rf_output, max_power - power_adjustment)
+        bpm_power = np.append(bpm_power, bpm_object.get_input_power())
+        bpm_current = np.append(bpm_current, bpm_object.get_beam_current())
+        bpm_xpos = np.append(bpm_xpos, bpm_object.get_X_position())
+        bpm_ypos = np.append(bpm_ypos, bpm_object.get_Y_position())
+        adc_sum = np.append(adc_sum, bpm_object.get_ADC_sum())
 
-    ReportObject.setup_test(test_name, intro_text, device_names, parameter_names)
-
-    # make a caption and headings for a table of results
-    caption = "Changing gate duty cycle, with fixed RF amplitude "
-    headings = [["Duty Cycle","Output Power" , "Input Power", "BPM Current", "X Position", "Y Position", "ADC Sum"],
-                ["(0-1)","(dBm)", "(dBm)", "(mA)", "(mm)", "(mm)", "(Counts)"]]
-    data = [dutycycle, rf_output ,bpm_power, bpm_current, bpm_Xpos, bpm_Ypos, ADC_sum]
-
-    # copy the values to the report
-    ReportObject.add_table_to_test('|c|c|c|c|c|c|c|', data, headings, caption)
+    rf_object.turn_off_RF()
+    gate_source_object.turn_off_modulation()
 
     # Get the plot values in a format thats easy to iterate
-    format_plot = []# x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append((dutycycle, rf_output, 'Gating signal duty cycle (0-1)', 'RF power ar source (dBm)', "scaled_DC_vs_Out_power.pdf"))
-    format_plot.append((dutycycle, bpm_power,'Gating signal duty cycle (0-1)', 'Power input at BPM (dBm)',"scaled_DC_vs_In_power.pdf"))
-    format_plot.append((dutycycle, bpm_current, 'Gating signal duty cycle (0-1)', 'Beam Current at BPM (mA)', "scaled_DC_vs_current.pdf"))
-    format_plot.append((dutycycle, bpm_Xpos, 'Gating signal duty cycle (0-1)', 'Horizontal Beam Position (mm)', "scaled_DC_vs_X.pdf"))
-    format_plot.append((dutycycle, bpm_Ypos, 'Gating signal duty cycle (0-1)', 'Vertical Beam Position (mm)', "scaled_DC_vs_Y.pdf"))
-    format_plot.append((dutycycle, ADC_sum, 'Gating signal duty cycle (0-1)', 'ADC Sum (counts)', "scaled_DC_vs_ADC_Sum.pdf"))
+    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
+    format_plot.append((duty_cycles, rf_output, 'Gating signal duty cycle (0-1)', 'RF power ar source (dBm)',
+                        "scaled_DC_vs_Out_power.pdf"))
+    format_plot.append((duty_cycles, bpm_power, 'Gating signal duty cycle (0-1)', 'Power input at BPM (dBm)',
+                        "scaled_DC_vs_In_power.pdf"))
+    format_plot.append((duty_cycles, bpm_current, 'Gating signal duty cycle (0-1)', 'Beam Current at BPM (mA)',
+                        "scaled_DC_vs_current.pdf"))
+    format_plot.append((duty_cycles, bpm_xpos, 'Gating signal duty cycle (0-1)', 'Horizontal Beam Position (mm)',
+                        "scaled_DC_vs_X.pdf"))
+    format_plot.append((duty_cycles, bpm_ypos, 'Gating signal duty cycle (0-1)', 'Vertical Beam Position (mm)',
+                        "scaled_DC_vs_Y.pdf"))
+    format_plot.append((duty_cycles, adc_sum, 'Gating signal duty cycle (0-1)', 'ADC Sum (counts)',
+                        "scaled_DC_vs_ADC_Sum.pdf"))
+
+    if report_object is not None:
+        intro_text = r"""
+            This test imitates a fill pattern by modulation the RF signal with a square wave. The up time 
+            of the square wave represents when a bunch goes passed, and the downtime the gaps between the 
+            bunches. This test will take the pulse length in micro seconds, and then linearly step up the 
+            duty cycle of the pulse, from 0.1 to 1. Readings on the BPM are then recorded as the duty cycle
+            is changed. While the duty cycle is increased, the peak RF voltage increases, meaning that 
+            the average power will be constant with duty cycle change. \\~\\
+        """
+        device_names = []
+        device_names.append(rf_object.get_device_ID())
+        device_names.append(gate_source_object.get_device_ID())
+        device_names.append(bpm_object.get_device_ID())
+
+        # Get the parameter values for the report
+        parameter_names = []
+        parameter_names.append("Frequency: " + rf_object.get_frequency()[1])
+        parameter_names.append("Maximum Power: " + str(max_power) + "dBm")
+        parameter_names.append("Pulse Period: " + gate_source_object.get_pulse_period()[1])
+        parameter_names.append("Settling time: " + str(settling_time) + "s")
+        # add the test details to the report
+        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
+        # make a caption and headings for a table of results
+        caption = "Changing gate duty cycle, with fixed RF amplitude "
+        headings = [["Duty Cycle", "Output Power", "Input Power", "BPM Current", "X Position", "Y Position", "ADC Sum"],
+                    ["(0-1)", "(dBm)", "(dBm)", "(mA)", "(mm)", "(mm)", "(Counts)"]]
+        data = [duty_cycles, rf_output, bpm_power, bpm_current, bpm_xpos, bpm_ypos, adc_sum]
+        # copy the values to the report
+        report_object.add_table_to_test('|c|c|c|c|c|c|c|', data, headings, caption)
 
     # plot all of the graphs
     for index in format_plot:
@@ -140,11 +144,15 @@ def Scaled_voltage_amplitude_fill_pattern_test(
         plt.xlabel(index[2])
         plt.ylabel(index[3])
         plt.grid(True)
-        plt.savefig(''.join((sub_directory, index[4])))
+        if report_object is None:
+            # If no report is entered as an input to the test, simply display the results
+            plt.show()
+        else:
+            plt.savefig(''.join((sub_directory, index[4])))
+            report_object.add_figure_to_test(image_name=''.join((sub_directory, index[4])), caption=index[4])
+
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
-        ReportObject.add_figure_to_test(image_name=''.join((sub_directory, index[4])),
-                                        caption=index[4])
 
     # return the full data sets
-    return dutycycle, rf_output, bpm_power, bpm_current, bpm_Xpos, bpm_Ypos
+    return duty_cycles, rf_output, bpm_power, bpm_current, bpm_xpos, bpm_ypos

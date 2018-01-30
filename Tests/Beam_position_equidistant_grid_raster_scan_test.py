@@ -71,29 +71,20 @@ def Beam_position_equidistant_grid_raster_scan_test(
             float array: predicted Y values of position
     """
 
-    # Readies text that will introduce this test in the report
-    intro_text = r"""Moves the beam position to -5 to 5 in the XY plane and recods beam position.
-    The calc\_x\_pos and calc\_y\_pos functions are used to measure the theoretical beam position values.
-    A set of ABCD values are created that will move the beam position from -5 to 5 in both the X and Y
-    plane. This is then converted into attenuation values to put into the attenuator. A fixed RF frequency 
-    and power is used while the attenuator values are changed. Finally the predicted values are compared 
-    with the measured values of position. \\~\\
-    """
-
-    # Formats the name of plot that is saved as, and also informs the user that the test has started
+    # Informs the user that the test has started
     test_name = __name__
     test_name = test_name.rsplit("Tests.")[1]
     test_name = test_name.replace("_", " ")
     print("Starting test \"" + test_name + "\"")
 
-    RFObject.set_output_power(rf_power)
-    RFObject.set_frequency(rf_frequency)
-    RFObject.turn_on_RF()
+    rf_object.set_output_power(rf_power)
+    rf_object.set_frequency(rf_frequency)
+    rf_object.turn_on_RF()
 
-    predicted_x = []
-    predicted_y = []
-    measured_x = []
-    measured_y = []
+    predicted_x = np.array([])
+    predicted_y = np.array([])
+    measured_x = np.array([])
+    measured_y = np.array([])
 
     ###########################################################
     gradient = np.linspace(0.0001, 2, x_points)
@@ -188,35 +179,42 @@ def Beam_position_equidistant_grid_raster_scan_test(
     plt.xlim(-10.5, 10.5)
     plt.ylim(-10.5, 10.5)
 
-    # Readies devices that are used in the test so that they can be added to the report
-    device_names = []
-    device_names.append(RFObject.get_device_ID())
-    device_names.append(BPMObject.get_device_ID())
-    device_names.append(ProgAttenObject.get_device_ID())
-
-    # # Readies parameters that are used in the test so that they can be added to the report
-    parameter_names = []
-    parameter_names.append("Fixed RF Output Power: " + str(rf_power) +"dBm")
-    parameter_names.append("Fixed Rf Output Frequency: " + str(rf_frequency)+"MHz")
-    parameter_names.append("Nominal Attenuation: " + str(nominal_attenuation)+"dB")
-    parameter_names.append("Number of X points: " + str(x_points))
-    parameter_names.append("Nunber of Y points: " + str(y_points))
-    parameter_names.append("Settling time: "+str(settling_time)+"s")
     plt.xlabel("Horizontal Beam Position (mm)")
     plt.ylabel("Vertical Beam Position (mm)")
     plt.grid(True)
 
-    if ReportObject is None:
+    if report_object is None:
         # If no report is entered as an input to the test, simply display the results
         plt.show()
     else:
         # If there is a report for the data to be copied to, do so.
+
+        # Readies text that will introduce this test in the report
+        intro_text = r"""Moves the beam position to -5 to 5 in the XY plane and recods beam position.
+        The calc\_x\_pos and calc\_y\_pos functions are used to measure the theoretical beam position values.
+        A set of ABCD values are created that will move the beam position from -5 to 5 in both the X and Y
+        plane. This is then converted into attenuation values to put into the attenuator. A fixed RF frequency 
+        and power is used while the attenuator values are changed. Finally the predicted values are compared 
+        with the measured values of position. \\~\\
+        """
+        # Readies devices that are used in the test so that they can be added to the report
+        device_names = []
+        device_names.append(rf_object.get_device_ID())
+        device_names.append(bpm_object.get_device_ID())
+        device_names.append(prog_atten_object.get_device_ID())
+        # # Readies parameters that are used in the test so that they can be added to the report
+        parameter_names = []
+        parameter_names.append("Fixed RF Output Power: " + str(rf_power) + "dBm")
+        parameter_names.append("Fixed Rf Output Frequency: " + str(rf_frequency) + "MHz")
+        parameter_names.append("Nominal Attenuation: " + str(nominal_attenuation) + "dB")
+        parameter_names.append("Number of X points: " + str(x_points))
+        parameter_names.append("Nunber of Y points: " + str(y_points))
+        parameter_names.append("Settling time: " + str(settling_time) + "s")
+
         plt.savefig(''.join((sub_directory, "Beam_position_equidistant_grid_raster_scan_test" + ".pdf")))
-        ReportObject.setup_test(test_name, intro_text, device_names, parameter_names)
-        ReportObject.add_figure_to_test(image_name=''.join((sub_directory,
+        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
+        report_object.add_figure_to_test(image_name=''.join((sub_directory,
                                                             "Beam_position_equidistant_grid_raster_scan_test")),
-                                        caption="Beam_position_equidistant_grid_raster_scan_test")
+                                         caption="Beam_position_equidistant_grid_raster_scan_test")
 
     return measured_x, measured_y, predicted_x, predicted_y
-
-

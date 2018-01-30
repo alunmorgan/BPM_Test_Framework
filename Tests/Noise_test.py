@@ -52,25 +52,11 @@ def noise_test(rf_object,
         float array: Y Positions read from the BPM
     """
 
-    intro_text = r"""Compares the noise generated.
-
-    The RF signal is turned off, and then different parameters are measured from the BPM.  \\~\\
-    """
-
     # Formats the test name and tells the user the test has started
     test_name = __name__
     test_name = test_name.rsplit("Tests.")[1]
     test_name = test_name.replace("_", " ")
     print("Starting test \"" + test_name + "\"")
-
-    # Get the device names for the report
-    device_names = []
-    device_names.append(rf_object.get_device_ID())
-    device_names.append(bpm_object.get_device_ID())
-
-    # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append("Samples: " + str(samples))
 
     # Set the initial state of the RF device
     rf_object.turn_off_RF()
@@ -106,17 +92,6 @@ def noise_test(rf_object,
     # turn off the RF
     rf_object.turn_off_RF()
 
-    # add the test details to the report
-    report_object.setup_test(test_name, intro_text, device_names, parameter_names)
-
-    # make a caption and headings for a table of results
-    caption = "Noise Results"
-    headings = [["X Position", "Y Position", ], ["(mm)", "(mm)"]]
-    data = [x_pos_baseline, y_pos_baseline]
-
-    # copy the values to the report
-    report_object.add_table_to_test('|c|c|', data, headings, caption)
-
     specs = bpm_object.get_performance_spec()
 
     # Get the plot values in a format that is easy to iterate
@@ -134,6 +109,27 @@ def noise_test(rf_object,
     format_plot.append(((y_time, y_pos),
                        ('Time (s)', 'Vertical Beam Position (mm)', "signal_to_noise_y.pdf")))
 
+    if report_object is not None:
+        intro_text = r"""Compares the noise generated.
+
+            The RF signal is turned off, and then different parameters are measured from the BPM.  \\~\\
+            """
+        # Get the device names for the report
+        device_names = []
+        device_names.append(rf_object.get_device_ID())
+        device_names.append(bpm_object.get_device_ID())
+        # Get the parameter values for the report
+        parameter_names = []
+        parameter_names.append("Samples: " + str(samples))
+        # add the test details to the report
+        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
+        # make a caption and headings for a table of results
+        caption = "Noise Results"
+        headings = [["X Position", "Y Position", ], ["(mm)", "(mm)"]]
+        data = [x_pos_baseline, y_pos_baseline]
+        # copy the values to the report
+        report_object.add_table_to_test('|c|c|', data, headings, caption)
+
     # plot all of the graphs
     for index in format_plot:
         if type(index[0][0]) is list:
@@ -148,12 +144,14 @@ def noise_test(rf_object,
         if len(index) == 3:
             # There is a specification line. Add this.
             plt.plot(index[2][0], index[2][1], 'r')
+        if report_object is None:
+            # If no report is entered as an input to the test, simply display the results
+            plt.show()
+        else:
+            plt.savefig(''.join((sub_directory, index[1][2])))
+            report_object.add_figure_to_test(image_name=''.join((sub_directory, index[1][2])), caption=index[1][2])
 
-        plt.savefig(''.join((sub_directory, index[1][2])))
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
-        report_object.add_figure_to_test(image_name=''.join((sub_directory, index[1][2])),
-                                         caption=index[1][2])
-
     # return the full data sets
     return x_time, x_pos, y_time, y_pos
