@@ -7,15 +7,14 @@ import matplotlib.pyplot as plt
 import time
 
 
-def Beam_Power_Dependence(
-                          RFObject,
-                          BPMObject,
+def beam_power_dependence(
+                          rf_object,
+                          bpm_object,
+                          prog_atten_object,
                           frequency,
-                          start_power=-100,
-                          end_power=0,
-                          samples=10,
+                          power_levels=range(-40, -100, -10),
                           settling_time=1,
-                          ReportObject=None,
+                          report_object=None,
                           sub_directory=""):
     """Tests the relationship between RF output power and values read from the BPM.
 
