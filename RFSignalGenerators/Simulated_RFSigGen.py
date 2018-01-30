@@ -91,7 +91,8 @@ class Simulated_RFSigGen(Generic_RFSigGen):
             float: The current power value as a float and assumed units. 
         """
         # Checks the input is a numeric
-        if type(power) != float and type(power) != int and np.float64 != np.dtype(power):
+        if type(power) != float and type(power) != int \
+                and np.float64 != np.dtype(power) and np.int64 != np.dtype(power):
             raise TypeError
         # Checks the power set is lower than the output limit
         elif power > self.limit: # If a value that is too high is used, the hardware may break.

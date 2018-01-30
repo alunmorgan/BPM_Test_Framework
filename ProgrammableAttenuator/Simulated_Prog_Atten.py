@@ -17,7 +17,8 @@ class Simulated_Prog_Atten(Generic_Prog_Atten):
         pass
 
     def _check_attenuation(self, attenuation):
-        if type(attenuation) != float and type(attenuation) != int and np.float64 != np.dtype(attenuation):
+        if type(attenuation) != float and type(attenuation) != int \
+                and np.float64 != np.dtype(attenuation) and np.int64 != np.dtype(attenuation):
             raise TypeError
         elif attenuation > 95 or attenuation < 0:
             raise ValueError
