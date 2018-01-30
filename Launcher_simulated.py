@@ -7,6 +7,7 @@ import Gate_Source
 import ProgrammableAttenuator
 import Latex_Report
 import Tests
+import numpy as np
 
 
 RF = RFSignalGenerators.Simulated_RFSigGen(limit=-40, noise_mag=1)
@@ -26,68 +27,69 @@ dls_bunch = 1.87319
 subdirectory = ''.join((root_path, '/'))
 settling_time = 0
 
-Tests.Beam_position_equidistant_grid_raster_scan_test(
-    RFObject=RF,
-    BPMObject=BPM,
-    ProgAttenObject=ProgAtten,
+Tests.beam_position_equidistant_grid_raster_scan_test(
+    rf_object=RF,
+    bpm_object=BPM,
+    prog_atten_object=ProgAtten,
     rf_frequency=dls_RF_frequency,
     rf_power=-40,
     nominal_attenuation=10,
     x_points=3,
     y_points=3,
     settling_time=settling_time,
-    ReportObject=report,
+    report_object=report,
     sub_directory=subdirectory)
 
-Tests.Beam_position_attenuation_permutation_test(
-    RFObject=RF,
-    BPMObject=BPM,
-    ProgAttenObject=ProgAtten,
+Tests.beam_position_attenuation_permutation_test(
+    rf_object=RF,
+    bpm_object=BPM,
+    prog_atten_object=ProgAtten,
     rf_frequency=dls_RF_frequency,
     rf_power=-40,
     attenuator_max=50,
     attenuator_min=10,
     attenuator_steps=2,
     settling_time=settling_time,
-    ReportObject=report,
+    report_object=report,
+    sub_directory=subdirectory)
+
+Tests.beam_power_dependence(
+    rf_object=RF,
+    bpm_object=BPM,
+    prog_atten_object=ProgAtten,
+    frequency=dls_RF_frequency,
+    power_levels=np.arange(-40, -100, -10),
+    settling_time=settling_time,
+    report_object=report,
+    sub_directory=subdirectory)
+
+Tests.fixed_voltage_amplitude_fill_pattern_test(
+    rf_object=RF,
+    bpm_object=BPM,
+    prog_atten_object=ProgAtten,
+    gate_source_object=GS,
+    frequency=dls_RF_frequency,
+    max_power=-40,
+    duty_cycles=np.arange(1, 0, -0.1),
+    pulse_period=dls_bunch,
+    settling_time=settling_time,
+    report_object=report,
+    sub_directory=subdirectory)
+
+Tests.scaled_voltage_amplitude_fill_pattern_test(
+    rf_object=RF,
+    bpm_object=BPM,
+    prog_atten_object=ProgAtten,
+    gate_source_object=GS,
+    frequency=dls_RF_frequency,
+    max_power=-40,
+    duty_cycles=np.arange(1, 0, -0.1),
+    pulse_period=dls_bunch,
+    settling_time=settling_time,
+    report_object=report,
     sub_directory=subdirectory)
 
 ProgAtten.set_global_attenuation(0)
-
-Tests.Beam_Power_Dependence(
-    RFObject=RF,
-    BPMObject=BPM,
-    frequency=dls_RF_frequency,
-    start_power=-100,
-    end_power=-40,
-    samples=10,
-    settling_time=settling_time,
-    ReportObject=report,
-    sub_directory=subdirectory)
-
-Tests.Fixed_voltage_amplitude_fill_pattern_test(
-    RFObject=RF,
-    BPMObject=BPM,
-    GateSourceObject=GS,
-    frequency=dls_RF_frequency,
-    power=-40,
-    samples=10,
-    pulse_period=dls_bunch,
-    settling_time=settling_time,
-    ReportObject=report,
-    sub_directory=subdirectory)
-
-Tests.Scaled_voltage_amplitude_fill_pattern_test(
-    RFObject=RF,
-    BPMObject=BPM,
-    GateSourceObject=GS,
-    frequency=dls_RF_frequency,
-    desired_power=-70,
-    samples=10,
-    pulse_period=dls_bunch,
-    settling_time=settling_time,
-    ReportObject=report,
-    sub_directory=subdirectory)
 
 Tests.noise_test(rf_object=RF,
                  bpm_object=BPM,
@@ -101,9 +103,10 @@ Tests.noise_test(rf_object=RF,
 
 Tests.adc_test(rf_object=RF,
                bpm_object=BPM,
+               prog_atten_object=ProgAtten,
                frequency=1,
                samples=1000,
-               power_levels=(-50., -40.),
+               power_levels=(-40., -50.),
                settling_time=1,
                report_object=report,
                sub_directory=subdirectory)
