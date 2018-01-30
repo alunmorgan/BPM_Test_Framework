@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 import Gate_Source
@@ -34,7 +35,7 @@ def mocked_rigol_writes(input):
     # the input string. This will then be used to set the globals listed above. Then they
     # can be read back using the 'mocked_itech_replies' function.
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):
@@ -85,6 +86,7 @@ class ExpectedDataTest(unittest.TestCase):
     @patch("Gate_Source.Rigol3030DSG_GateSource._telnet_query", side_effect=mocked_rigol_replies)
     def test_get_pulse_period_return_values_if_expected_input_types_used(self, mock_query, mock_write):
         self.assertEqual(self.GS_test_inst.get_pulse_period(), (3,"3uS"))
+
 
 if __name__ == "__main__":
         unittest.main()

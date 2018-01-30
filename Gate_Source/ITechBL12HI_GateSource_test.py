@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 import Gate_Source
@@ -23,11 +24,11 @@ def mocked_itech_replies(input):
         return "Rigol Technologies,DSG3030"
 
 
-def mocked_itech_writes(input):
+def mocked_itech_writes(value_input):
     global output, period, dutycycle
-    if input == "PULM:OUT:STAT OFF":
+    if value_input == "PULM:OUT:STAT OFF":
         output = "0"
-    elif input == "PULM:OUT:STAT ON":
+    elif value_input == "PULM:OUT:STAT ON":
         output = "1"
 
     # for set tests to be implemented, reg ex or something similar will go here, to scan
@@ -35,7 +36,7 @@ def mocked_itech_writes(input):
     # can be read back using the 'mocked_itech_replies' function.
 
 
-class ExpectedDataTest(unittest.TestCase):
+class ExpectedDataTest(BaseTestClass):
 
     @classmethod
     def setUpClass(cls):
@@ -45,7 +46,9 @@ class ExpectedDataTest(unittest.TestCase):
     @patch("Gate_Source.ITechBL12HI_GateSource._telnet_write")
     @patch("Gate_Source.ITechBL12HI_GateSource._telnet_query", side_effect=mocked_itech_replies)
     @patch("telnetlib.Telnet")
-    def setUp(self, mock_telnet, mock_telnet_query, mock_telnet_write):
+    @patch("Gate_Source.ITechBL12HI_GateSource.get_device_id", return_value="IT CLKGEN")
+    @patch("Gate_Source.ITechBL12HI_GateSource.set_pulse_dutycycle")
+    def setUp(self, mock_pulse, mock_device, mock_telnet, mock_telnet_query, mock_telnet_write):
         # Stuff you run before each test
         self.GS_test_inst = Gate_Source.ITechBL12HI_GateSource("0", 0, 0)
         unittest.TestCase.setUp(self)

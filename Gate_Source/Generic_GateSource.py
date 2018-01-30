@@ -38,7 +38,7 @@ class Generic_GateSource():
         return (number, unit)
 
     @abstractmethod
-    def get_device_ID(self):
+    def get_device_id(self):
         """Abstract method for override that will return device ID.
         
         Args:

@@ -164,8 +164,8 @@ def beam_position_equidistant_grid_raster_scan_test(
         ######################################
         time.sleep(settling_time)  # Let the attenuator values settle
         ######################################
-        measured_x = np.append(measured_x, bpm_object.get_X_position())  # Take a reading of X position
-        measured_y = np.append(measured_y, bpm_object.get_Y_position())  # Take a reading of Y position
+        measured_x = np.append(measured_x, bpm_object.get_x_position())  # Take a reading of X position
+        measured_y = np.append(measured_y, bpm_object.get_y_position())  # Take a reading of Y position
         # Given the power values of each input, calculate the expected position
         predicted_x = np.append(predicted_x, calc_x_pos(a_pwr, b_pwr, c_pwr, d_pwr))
         predicted_y = np.append(predicted_y, calc_y_pos(a_pwr, b_pwr, c_pwr, d_pwr))
@@ -195,9 +195,9 @@ def beam_position_equidistant_grid_raster_scan_test(
         """
         # Readies devices that are used in the test so that they can be added to the report
         device_names = []
-        device_names.append(rf_object.get_device_ID())
-        device_names.append(bpm_object.get_device_ID())
-        device_names.append(prog_atten_object.get_device_ID())
+        device_names.append(rf_object.get_device_id())
+        device_names.append(bpm_object.get_device_id())
+        device_names.append(prog_atten_object.get_device_id())
         # # Readies parameters that are used in the test so that they can be added to the report
         parameter_names = []
         parameter_names.append("Fixed RF Output Power: " + str(rf_power) + "dBm")

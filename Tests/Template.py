@@ -47,8 +47,8 @@ def Template(RF,
 
     # Readies devices that are used in the test so that they can be added to the report
     device_names = []
-    device_names.append(RF.get_device_ID())
-    device_names.append(BPM.get_device_ID())
+    device_names.append(RF.get_device_id())
+    device_names.append(BPM.get_device_id())
 
     # Readies parameters that are used in the test so that they can be added to the report
     parameter_names = []

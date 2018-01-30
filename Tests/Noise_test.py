@@ -62,8 +62,8 @@ def noise_test(rf_object,
     rf_object.turn_off_RF()
 
     # Perform the test
-    x_time_baseline, x_pos_baseline = bpm_object.get_X_SA_data(samples)  # record X pos
-    y_time_baseline, y_pos_baseline = bpm_object.get_Y_SA_data(samples)  # record Y pos
+    x_time_baseline, x_pos_baseline = bpm_object.get_x_sa_data(samples)  # record X pos
+    y_time_baseline, y_pos_baseline = bpm_object.get_y_sa_data(samples)  # record Y pos
     x_f_freq_baseline, x_f_data_baseline = change_to_freq_domain(x_time_baseline, x_pos_baseline)
     y_f_freq_baseline, y_f_data_baseline = change_to_freq_domain(y_time_baseline, y_pos_baseline)
 
@@ -80,8 +80,8 @@ def noise_test(rf_object,
     for index in power:
         rf_object.set_output_power(index)  # Set next output power value
         time.sleep(settling_time)  # Wait for signal to settle
-        x_time_tmp, x_pos_tmp = bpm_object.get_X_SA_data(samples)  # record X pos
-        y_time_tmp, y_pos_tmp = bpm_object.get_Y_SA_data(samples)  # record Y pos
+        x_time_tmp, x_pos_tmp = bpm_object.get_x_sa_data(samples)  # record X pos
+        y_time_tmp, y_pos_tmp = bpm_object.get_y_sa_data(samples)  # record Y pos
         x_time.append(x_time_tmp)
         x_pos.append(x_pos_tmp)
         y_time.append(y_time_tmp)
@@ -116,8 +116,8 @@ def noise_test(rf_object,
             """
         # Get the device names for the report
         device_names = []
-        device_names.append(rf_object.get_device_ID())
-        device_names.append(bpm_object.get_device_ID())
+        device_names.append(rf_object.get_device_id())
+        device_names.append(bpm_object.get_device_id())
         # Get the parameter values for the report
         parameter_names = []
         parameter_names.append("Samples: " + str(samples))

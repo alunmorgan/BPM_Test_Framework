@@ -43,9 +43,10 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         # Status line. Needs to be read to make the following read be at the correct place
         check = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Status line
         self.tn.close()  # Closes the telnet connection
-        print 'Sent command = ', r_str
-        print 'Return = ', message.group(1)
-        print 'Status = ', check
+        if 'OK' not in check:
+            print 'Bad status  STATUS = ', check, type(check)
+            print 'Sent command = ', r_str
+            print 'Return = ', message.group(1)
         return message.group(1), check
 
     def _telnet_write(self, message):
@@ -86,19 +87,19 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         self.timeout = timeout  # timeout for the telnet comms
         self.ipaddress = ipaddress
         self.port = port
-        self.get_device_ID()  # gets the device of the telnet device, makes sure its the right one
+        self.device_id = self.get_device_ID()  # gets the device of the telnet device, makes sure its the right one
         self.turn_off_RF()  # turn off the RF output
         self.limit = limit  # set the RF output limit
         # self.set_output_power_limit(limit)  # set the RF output limit
 
-        print("Opened connection to RF source " + self.DeviceID)  # tells the user the device has been connected to
+        print("Opened connection to RF source " + self.device_id)  # tells the user the device has been connected to
 
     def __del__(self):
         """Closes the telnet connection to the ITechBL12HI
         """
         self.turn_off_RF()  # make sure the RF output is off
         self.tn.close()  # close the telnet link
-        print("Closed connection to RF source " + self.DeviceID)  # tell the user the telnet link has closed
+        print("Closed connection to RF source " + self.device_id)  # tell the user the telnet link has closed
 
     # API Calls
     def get_device_ID(self):
@@ -111,11 +112,11 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         Returns:
             str: The DeviceID of the SigGen.
         """
-        self.DeviceID, check = self._telnet_query("*IDN?\r\n")  # gets the device information
-        if "IT CLKGEN" not in self.DeviceID:  # checks it's the right device
-            print "ID= ", self.DeviceID
+        self.device_id, check = self._telnet_query("*IDN?\r\n")  # gets the device information
+        if "IT CLKGEN" not in self.device_id:  # checks it's the right device
+            print "ID= ", self.device_id
             raise Exception("Wrong hardware device connected")
-        return "RF Source " + self.DeviceID
+        return self.device_id
 
     def get_output_power(self):
         """Override method that will return the output power.
@@ -144,7 +145,7 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         """
 
         self.Frequency, check = self._telnet_query("FREQ:RF?")  # get the device frequency
-        return float(self.Frequency.replace(',', '.')[0:-4]), self.Frequency
+        return float(self.Frequency.replace(',', '.')[0:-3]), self.Frequency
 
     def set_frequency(self, frequency):
         """Override method that will set the output frequency.
@@ -158,7 +159,8 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             str: The current output frequency concatenated with the units.
         """
         # check the input is a numeric
-        if type(frequency) != float and type(frequency) != int and np.float64 != np.dtype(frequency):
+        if type(frequency) != float and type(frequency) != int \
+                and np.float64 != np.dtype(frequency) and np.int64 != np.dtype(frequency):
             raise TypeError
         # check the output is a positive number
         elif frequency < 0:
@@ -186,7 +188,8 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             str: The current output power concatenated with the units. 
         """
         # check the input is a numeric
-        if type(power) != float and type(power) != int and np.float64 != np.dtype(power):
+        if type(power) != float and type(power) != int \
+                and np.float64 != np.dtype(power) and np.int64 != np.dtype(power):
             raise TypeError
         elif power > self.limit:  # If a value that is too high is used, the hardware may break.
             power = self.limit
@@ -250,7 +253,8 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             float: The power limit
         """
         # checks the input is a numeric
-        if type(limit) != float and type(limit) != int and np.float64 != np.dtype(limit):
+        if type(limit) != float and type(limit) != int \
+                and np.float64 != np.dtype(limit) and np.int64 != np.dtype(limit):
             raise TypeError
         self.limit = limit
         return self.get_output_power_limit()
@@ -263,4 +267,4 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         Returns:
             float: The power limit 
         """
-        return self.limit, ''.join((self.limit, " dBm"))
+        return self.limit, ''.join((str(self.limit), " dBm"))

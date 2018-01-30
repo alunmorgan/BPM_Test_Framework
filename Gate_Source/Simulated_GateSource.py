@@ -38,7 +38,7 @@ class Simulated_GateSource(Generic_GateSource):
         """
         print("Closed connection to \"Simulated GateSource\"") # informs the user the object has been deconstructed
 
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method, that will return device ID.
 
         Args:

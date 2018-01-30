@@ -45,9 +45,10 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
         # Status line. Needs to be read to make the following read be at the correct place
         check = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Status line
         self.tn.close()  # Closes the telnet connection
-        print 'Sent command = ', r_str
-        print 'Return = ', message.group(1)
-        print 'Status = ', check
+        if 'OK' not in check:
+            print 'Bad status  STATUS = ', check, type(check)
+            print 'Sent command = ', r_str
+            print 'Return = ', message.group(1)
         return message.group(1), check
 
     def _telnet_write(self, message):

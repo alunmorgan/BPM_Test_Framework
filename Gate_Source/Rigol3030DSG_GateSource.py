@@ -58,7 +58,7 @@ class Rigol3030DSG_GateSource(Generic_GateSource):
         """
         self.timeout = timeout  # Sets timeout for the telnet calls
         self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # Connects to the IP via telnet
-        self.get_device_ID()  # Gets the device ID, checks connection is made
+        self.get_device_id()  # Gets the device ID, checks connection is made
         self.modulation_state = False  # Default parameter for the modulation state
         self.turn_off_modulation()  # Turns off the signal modulation
         self._telnet_write("PULM:SOUR INT")  # Sets the trigger source for the pulse
@@ -80,7 +80,7 @@ class Rigol3030DSG_GateSource(Generic_GateSource):
         print("Closed connection to gate source " + self.DeviceID)  # Lets the user know connection is closed
 
     # API Methods
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method, Gets the Device Id of the Rigol3030
         
         Args:

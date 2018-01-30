@@ -100,8 +100,8 @@ def beam_position_attenuation_permutation_test(
         prog_atten_object.set_channel_attenuation("C", index[2])
         prog_atten_object.set_channel_attenuation("D", index[3])
         time.sleep(settling_time)
-        measured_x.append(bpm_object.get_X_position())
-        measured_y.append(bpm_object.get_Y_position())
+        measured_x.append(bpm_object.get_x_position())
+        measured_y.append(bpm_object.get_y_position())
         power_out = rf_object.get_output_power()[0]
         power_out = power_out - 6  # Reduce signal by a factor of four as it goes through a 4 way splitter
         predicted_a = power_out - index[0]
@@ -142,9 +142,9 @@ def beam_position_attenuation_permutation_test(
         """
         # Readies devices that are used in the test so that they can be added to the report
         device_names = []
-        device_names.append(rf_object.get_device_ID())
-        device_names.append(bpm_object.get_device_ID())
-        device_names.append(prog_atten_object.get_device_ID())
+        device_names.append(rf_object.get_device_id())
+        device_names.append(bpm_object.get_device_id())
+        device_names.append(prog_atten_object.get_device_id())
         # # Readies parameters that are used in the test so that they can be added to the report
         parameter_names = []
         parameter_names.append("Fixed RF Output Power: " + str(rf_power) + " dBm")

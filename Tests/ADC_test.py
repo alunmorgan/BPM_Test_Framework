@@ -64,7 +64,7 @@ def adc_test(rf_object,
         # Set attenuator value to give desired power level.
         prog_atten_object.set_global_attenuation(power_levels[0] - index)
         time.sleep(settling_time)  # Wait for signal to settle
-        time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_ADC_data()  # record data
+        time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_adc_data()  # record data
         rf_object.turn_off_RF()
         times.append(time_tmp)
         data1.append(data1_tmp)
@@ -93,8 +93,8 @@ def adc_test(rf_object,
         """
         # Get the device names for the report
         device_names = []
-        device_names.append(rf_object.get_device_ID())
-        device_names.append(bpm_object.get_device_ID())
+        device_names.append(rf_object.get_device_id())
+        device_names.append(bpm_object.get_device_id())
 
         # Get the parameter values for the report
         parameter_names = []

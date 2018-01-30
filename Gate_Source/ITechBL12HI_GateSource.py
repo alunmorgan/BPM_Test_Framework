@@ -39,9 +39,10 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         # Status line. Needs to be read to make the following read be at the correct place
         check = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Status line
         self.tn.close()  # Closes the telnet connection
-        print 'Sent command = ', r_str
-        print 'Return = ', message.group(1)
-        print 'Status = ', check
+        if 'OK' not in check:
+            print 'Bad status  STATUS = ', check
+            print 'Sent command = ', r_str
+            print 'Return = ', message.group(1)
         return message.group(1), check
 
     def _telnet_write(self, message):
@@ -81,12 +82,12 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         self.timeout = timeout  # Sets timeout for the telnet calls
         self.ipaddress = ipaddress
         self.port = port
-        self.get_device_ID()  # Gets the device ID, checks connection is made
+        self.device_id = self.get_device_id()  # Gets the device ID, checks connection is made
         self.modulation_state = False  # Default parameter for the modulation state
         #self.turn_off_modulation()  # Turns off the signal modulation
         #self.pulse_period = self.get_pulse_period()  # Not setable on this hardware.
         self.set_pulse_dutycycle(0)  # Sets the duty cycle to 0 by default
-        print("Opened connection to gate source " + self.DeviceID)  # Inform the user the device is connected to
+        print("Opened connection to gate source " + self.device_id)  # Inform the user the device is connected to
 
     def __del__(self):
         """Closes the telnet connection to the ITechBL12HI
@@ -98,10 +99,10 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         """
         self.turn_off_modulation()  # Turns off the signal modulation
         self.tn.close()  # Closes the telnet connection
-        print("Closed connection to gate source " + self.DeviceID)  # Lets the user know connection is closed
+        print("Closed connection to gate source " + self.device_id)  # Lets the user know connection is closed
 
     # API Methods
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method that will return the device ID.
 
         Uses the SCPI command "*IDN?" to get the device ID.
@@ -111,11 +112,11 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
             str: The DeviceID of the SigGen.
         """
-        self.DeviceID, check = self._telnet_query("*IDN?\r\n")  # gets the device information
-        if "IT CLKGEN" not in self.DeviceID:  # checks it's the right device
-            print "ID= ", self.DeviceID
+        self.device_id, check = self._telnet_query("*IDN?\r\n")  # gets the device information
+        if "IT CLKGEN" not in self.device_id:  # checks it's the right device
+            print "ID= ", self.device_id
             raise Exception("Wrong hardware device connected")
-        return "RF Source " + self.DeviceID
+        return "RF Source " + self.device_id
 
     def turn_on_modulation(self):
         """Override method, Turns on the pulse modulation.
@@ -192,9 +193,12 @@ class ITechBL12HI_GateSource(Generic_GateSource):
             period (float): The period of the pulse modulation signal is uS.
 
         Returns:
-            float: The pulse period in float form.
+            check(str): The status of the command.
         """
-        ret, check = self._telnet_query("FREQ:MC " + str(1. / period))
+        command = "FREQ:MC " + str(1. / period)
+        command = command.replace('.', ',')
+        print command
+        ret, check = self._telnet_query(command)
         return check
 
     def get_pulse_dutycycle(self):

@@ -11,11 +11,12 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         self.DeviceID = ""
         self.timeout = timeout  # timeout for the telnet comms
         self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # connects to the telnet device
-        print "Connected to "+ self.get_device_ID()  # gets the device of the telnet device, makes sure its the right one
+        # gets the device of the telnet device, makes sure its the right one
+        print "Connected to " + self.get_device_ID()
 
     def __del__(self):
         self.tn.close()
-        print "Closed connection to "+ self.DeviceID
+        print "Closed connection to " + self.DeviceID
 
     def _telnet_query(self, message):
         """Private method that will send a message over telnet to the device
@@ -52,14 +53,15 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         Returns:
             str: Reply message from the device
         """
-        string_1 =  self.tn.read_until("\r\n", self.timeout)
+        string_1 = self.tn.read_until("\r\n", self.timeout)
         string_2 = self.tn.read_until("\r\n", self.timeout)
         string_total = string_1+string_2
         string_total = string_total.replace('\r\n', "")  # Telnet reply, with termination chars removed
         return string_total
 
     def _check_attenuation(self, attenuation):
-        if type(attenuation) != float and type(attenuation) != int and np.float64 != np.dtype(attenuation):
+        if type(attenuation) != float and type(attenuation) != int \
+                and np.float64 != np.dtype(attenuation) and np.int64 != np.dtype(attenuation):
             raise TypeError
         elif attenuation > 95 or attenuation < 0:
             raise ValueError
@@ -70,7 +72,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             while channel not in ["A", "B", "C", "D"]:
                 raise ValueError
         elif type(channel) == int:
-            while channel not in [1,2,3,4]:
+            while channel not in [1, 2, 3, 4]:
                 raise ValueError
         else:
             raise TypeError
@@ -123,11 +125,14 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             command = ''.join((":CHAN:" + str(atten_channel) + ":Att?"))
         else:
             command = ''.join((":CHAN:" + str(bpm_channel) + ":Att?"))
-        print 'Command = ', command
+        # print 'Command = ', command
         reply = self._telnet_query(command)
-        if not reply:  # Checking for an empty string.
-            print 'Got nothing back .... Trying again.'
-            reply = self._telnet_query(command)
-        print 'Get Channel reply = ', reply
+        for md in range(10):
+            if not reply:  # Checking for an empty string.
+                print 'Got nothing back .... Trying again.'
+                reply = self._telnet_query(command)
+            else:
+                if md > 0:
+                    print 'Get Channel reply = ', reply
+                break
         return float(reply)
-

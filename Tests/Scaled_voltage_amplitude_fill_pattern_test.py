@@ -87,9 +87,9 @@ def scaled_voltage_amplitude_fill_pattern_test(
         rf_output = np.append(rf_output, max_power - power_adjustment)
         bpm_power = np.append(bpm_power, bpm_object.get_input_power())
         bpm_current = np.append(bpm_current, bpm_object.get_beam_current())
-        bpm_xpos = np.append(bpm_xpos, bpm_object.get_X_position())
-        bpm_ypos = np.append(bpm_ypos, bpm_object.get_Y_position())
-        adc_sum = np.append(adc_sum, bpm_object.get_ADC_sum())
+        bpm_xpos = np.append(bpm_xpos, bpm_object.get_x_position())
+        bpm_ypos = np.append(bpm_ypos, bpm_object.get_y_position())
+        adc_sum = np.append(adc_sum, bpm_object.get_adc_sum())
 
     rf_object.turn_off_RF()
     gate_source_object.turn_off_modulation()
@@ -119,9 +119,9 @@ def scaled_voltage_amplitude_fill_pattern_test(
             the average power will be constant with duty cycle change. \\~\\
         """
         device_names = []
-        device_names.append(rf_object.get_device_ID())
-        device_names.append(gate_source_object.get_device_ID())
-        device_names.append(bpm_object.get_device_ID())
+        device_names.append(rf_object.get_device_id())
+        device_names.append(gate_source_object.get_device_id())
+        device_names.append(bpm_object.get_device_id())
 
         # Get the parameter values for the report
         parameter_names = []

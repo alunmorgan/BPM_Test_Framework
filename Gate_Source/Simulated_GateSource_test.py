@@ -1,3 +1,4 @@
+from framework_requires import BaseTestClass
 import unittest
 from mock import patch
 from Simulated_GateSource import *
@@ -21,7 +22,7 @@ class ExpectedDataTest(unittest.TestCase):
         pass
 
     def test_get_device_ID(self):
-        self.assertEqual(self.GSSim.get_device_ID(), "Simulated GateSource")
+        self.assertEqual(self.GSSim.get_device_id(), "Simulated GateSource")
 
     def test_set_pulse_dutycycle_with_invalid_input(self):
         self.assertRaises(ValueError,self.GSSim.set_pulse_dutycycle, -0.1)

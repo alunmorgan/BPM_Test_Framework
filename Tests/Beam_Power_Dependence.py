@@ -74,10 +74,10 @@ def beam_power_dependence(
         prog_atten_object.set_global_attenuation(power_levels[0] - index)
         time.sleep(settling_time)  # Wait for signal to settle
         beam_current = np.append(beam_current, bpm_object.get_beam_current())  # record beam current
-        x_pos = np.append(x_pos, bpm_object.get_X_position())  # record X pos
-        y_pos = np.append(y_pos, bpm_object.get_Y_position())  # record Y pos
+        x_pos = np.append(x_pos, bpm_object.get_x_position())  # record X pos
+        y_pos = np.append(y_pos, bpm_object.get_y_position())  # record Y pos
         input_power = np.append(input_power, bpm_object.get_input_power())
-        adc_sum = np.append(adc_sum, bpm_object.get_ADC_sum())
+        adc_sum = np.append(adc_sum, bpm_object.get_adc_sum())
 
     # turn off the RF
     rf_object.turn_off_RF()
@@ -107,8 +107,8 @@ def beam_power_dependence(
         """
         # Get the device names for the report
         device_names = []
-        device_names.append(rf_object.get_device_ID())
-        device_names.append(bpm_object.get_device_ID())
+        device_names.append(rf_object.get_device_id())
+        device_names.append(bpm_object.get_device_id())
         # Get the parameter values for the report
         parameter_names = []
         parameter_names.append("Frequency: " + str(frequency) + "MHz")
