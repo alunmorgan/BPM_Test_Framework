@@ -142,9 +142,9 @@ def beam_position_attenuation_permutation_test(
         """
         # Readies devices that are used in the test so that they can be added to the report
         device_names = []
-        device_names.append(rf_object.get_device_id())
-        device_names.append(bpm_object.get_device_id())
-        device_names.append(prog_atten_object.get_device_id())
+        device_names.append('RF source is ' + rf_object.get_device_id())
+        device_names.append('BPM is ' + bpm_object.get_device_id())
+        device_names.append('Attenuator is ' + prog_atten_object.get_device_id())
         # # Readies parameters that are used in the test so that they can be added to the report
         parameter_names = []
         parameter_names.append("Fixed RF Output Power: " + str(rf_power) + " dBm")
