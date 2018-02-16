@@ -13,19 +13,13 @@ power = "-100.0DBM"
 frequency = "499,6817682MHz"
 
 
-def id_return():
-    return"IT CLKGEN", "OK"
+def return_ok_values(input_string):
+    return input_string, "OK"
 
 
-def freq_return():
-    return frequency, "OK"
+def return_bad_values(input_string):
+    return input_string, "ERR"
 
-
-def output_return():
-    return power
-
-def power_return():
-    return "-40,00DBM", "OK"
 
 def mocked_itech_replies(input):
     global output, power_units, power, frequency
@@ -58,7 +52,7 @@ class ExpectedDataTest(BaseTestClass):
         # Stuff you only run once
         super(ExpectedDataTest, cls).setUpClass()
 
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query", side_effect=mocked_itech_replies)
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", side_effect=mocked_itech_replies)
     @patch("RFSignalGenerators.ITechBL12HI_RFSigGen.get_device_ID", return_value="ITCLKGEN")
     @patch("RFSignalGenerators.ITechBL12HI_RFSigGen.turn_off_RF")
     def setUp(self, mock_rf, mock_device, mock_telnet_query):
@@ -71,26 +65,31 @@ class ExpectedDataTest(BaseTestClass):
         # Stuff you want to run after each test
         pass
 
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query")
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query")
     def test_set_frequency_if_invalid_input_types_used(self, mock_telnet_query):
         self.assertRaises(ValueError, self.RF_test_inst.set_frequency, -100)
         self.assertRaises(TypeError, self.RF_test_inst.set_frequency, "100")
 
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query", return_value=power_return())
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_ok_values('-100DBM'))
     def test_set_power_if_invalid_input_types_used(self, mock_telnet_query):
         self.assertRaises(TypeError, self.RF_test_inst.set_output_power, "0")
         self.assertWarns(UserWarning, self.RF_test_inst.set_output_power, -39)
 
-    ################################Simple Get requests################################
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query", return_value=id_return())
-    def test_get_device_ID(self, mock_telnet_query):
-        self.assertEqual(self.RF_test_inst.get_device_ID(), "IT CLKGEN")
+    # ###############################Simple Get requests################################
 
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query", return_value=output_return())
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_ok_values("IT CLKGEN"))
+    def test_get_device_ID_with_expected_input(self, mock_telnet_query):
+        self.assertEqual(self.RF_test_inst.get_device_id(), "IT CLKGEN")
+
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_bad_values("BAD_INPUT"))
+    def test_get_device_ID_with_incorrect_input_string(self, mock_telnet_query):
+        self.assertRaises(ValueError, self.RF_test_inst.get_device_id)
+
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_ok_values('-100DBM'))
     def test_get_output_power(self, mock_telnet_query):
-        self.assertEqual(self.RF_test_inst.get_output_power(), (-100.0, "-100.0DBM"))
+        self.assertEqual(self.RF_test_inst.get_output_power(), (-100.0, ("-100DBM", "OK")))
 
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query", return_value=freq_return())
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_ok_values("499,6817682MHz"))
     def test_get_frequency(self, mock_telnet_query):
         self.assertEqual(self.RF_test_inst.get_frequency(), (499.6817682, "499,6817682MHz"))
 
@@ -102,8 +101,12 @@ class ExpectedDataTest(BaseTestClass):
     # def test_turn_on_output_state(self, mock_telnet_query):
     #     self.assertEqual(self.RF_test_inst.turn_on_RF(), True)
 
-    @patch("RFSignalGenerators.ITechBL12HI_RFSigGen._telnet_query", side_effect=mocked_itech_replies)
-    def test_set_output_power_limit(self, mock_telnet_query):
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_ok_values("-40 dBm"))
+    def test_set_output_power_raises_error_with_invalid_input(self, mock_telnet_query):
+        self.assertRaises(TypeError, self.RF_test_inst.set_output_power, "0")
+
+    @patch("common_device_functions.ITechBL12HI_common.telnet_query", return_value=return_ok_values("-40 dBm"))
+    def test_set_output_power_limit_raises_error_with_invalid_input(self, mock_telnet_query):
         self.assertRaises(TypeError, self.RF_test_inst.set_output_power, "0")
 
     def test_get_output_power_limit(self):
@@ -116,6 +119,7 @@ class ExpectedDataTest(BaseTestClass):
             result = callable(*args, **kwds)
 
             self.assertTrue(any(item.category == warning for item in warning_list))
+
 
 if __name__ == "__main__":
         unittest.main()

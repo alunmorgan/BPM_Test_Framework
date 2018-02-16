@@ -1,6 +1,5 @@
 from Generic_GateSource import *
-import telnetlib
-import re
+import common_device_functions.ITechBL12HI_common as common
 from pkg_resources import require
 require("numpy")
 import numpy as np
@@ -11,61 +10,6 @@ class CustomException(Exception):
 
 
 class ITechBL12HI_GateSource(Generic_GateSource):
-
-    # Private Methods
-    def _telnet_query(self, message):
-        """Private method that will send a message over telnet to the ITechBL12HI and return the reply.
-            This needs to open and close a connection in order to isolate the replies. If one connection is opened on
-            this hardware the responses do not block so several responses can arrive before the first read.
-            So the wrong data is read.
-
-        Args:
-            message (str): SCPI message to be sent to the ITechBL12HI
-
-        Returns:
-            str: Reply message from the ITechBL12HI
-        """
-        # Checks that the telnet message is a string
-        if type(message) != str:
-            raise TypeError
-        self.tn = telnetlib.Telnet(self.ipaddress, self.port, self.timeout)  # Connects to the IP via telnet
-        self.tn.read_until("\n", self.timeout).rstrip('\n')
-        self.tn.read_until("\n", self.timeout).rstrip('\n')
-        self.tn.write("scpi>\r\n")  # putting the device into scpi mode.
-        self.tn.write(message + "\r\n")  # Writes a telnet message with termination characters
-        r_str = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Telnet reply, with termination chars removed
-        message_pattern = re.compile('(?:scpi>)*\S*\s+(.*)')
-        message = re.match(message_pattern, r_str)
-        # Status line. Needs to be read to make the following read be at the correct place
-        check = self.tn.read_until("\n", self.timeout).rstrip('\n')  # Status line
-        self.tn.close()  # Closes the telnet connection
-        if 'OK' not in check:
-            print 'Bad status  STATUS = ', check
-            print 'Sent command = ', r_str
-            print 'Return = ', message.group(1)
-        return message.group(1), check
-
-    def _telnet_write(self, message):
-        """Private method that will send a message over telnet to the ITechBL12HI
-
-        Args:
-            message (str): SCPI message to be sent to the ITechBL12HI
-
-        Returns:
-
-        """
-        pass
-
-    def _telnet_read(self):
-        """Private method that will read a telnet reply from the ITechBL12HI
-            NOT USED ON THIS HARDWARE.
-        Args:
-
-        Returns:
-            str: Reply message from the ITechBL12HI
-        """
-        pass
-
     # Constructor and Deconstructor
 
     def __init__(self, ipaddress, port=5555, timeout=1):
@@ -83,7 +27,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         self.ipaddress = ipaddress
         self.port = port
         self.device_id = self.get_device_id()  # Gets the device ID, checks connection is made
-        self.modulation_state = False  # Default parameter for the modulation state
+        self.modulation_state = self.get_modulation_state()
         #self.turn_off_modulation()  # Turns off the signal modulation
         #self.pulse_period = self.get_pulse_period()  # Not setable on this hardware.
         self.set_pulse_dutycycle(0)  # Sets the duty cycle to 0 by default
@@ -98,25 +42,15 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         
         """
         self.turn_off_modulation()  # Turns off the signal modulation
-        self.tn.close()  # Closes the telnet connection
+        #self.tn.close()  # Closes the telnet connection
         print("Closed connection to gate source " + self.device_id)  # Lets the user know connection is closed
 
     # API Methods
     def get_device_id(self):
-        """Override method that will return the device ID.
-
-        Uses the SCPI command "*IDN?" to get the device ID.
-
-        Args:
-
-        Returns:
-            str: The DeviceID of the SigGen.
-        """
-        self.device_id, check = self._telnet_query("*IDN?\r\n")  # gets the device information
-        if "IT CLKGEN" not in self.device_id:  # checks it's the right device
-            print "ID= ", self.device_id
-            raise Exception("Wrong hardware device connected")
-        return "RF Source " + self.device_id
+        #     """Override method that will return the device ID.
+        return common.get_device_identity(ipaddress=self.ipaddress,
+                                          port=self.port,
+                                          timeout=self.timeout)
 
     def turn_on_modulation(self):
         """Override method, Turns on the pulse modulation.
@@ -129,11 +63,13 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        ret, check = self._telnet_query("GATE:FILL 0")  # Turns on the modulation state output
-        if check == 'OK':
+        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL 0")  # Turns on the modulation state output
+        if 'OK' in check:
             self.modulation_state = True
         else:
-            self.modulation_state = False
+            self.modulation_state = None
+            raise IOError("Gate modulation in unknown state")
+
         return self.modulation_state
 
     def turn_off_modulation(self):
@@ -147,11 +83,13 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        ret, check = self._telnet_query("GATE:FILL 100")  # Turns off the modulation state output
-        if check == 'OK':
+        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL 100")  # Turns off the modulation state output
+        if 'OK' in check:
             self.modulation_state = False
         else:
-            self.modulation_state = True
+            self.modulation_state = None
+            raise IOError("Gate modulation in unknown state")
+
         return self.modulation_state
 
     def get_modulation_state(self):
@@ -162,12 +100,12 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        modulation, check = self._telnet_query("GATE:FILL?")  # Checks the modulation state
+        modulation, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL?")  # Checks the modulation state
         if modulation == "100 %":
-            self.modulation_state = False  # If it isn't, return a False
-        elif modulation != "100 %":
-            self.modulation_state = True  # If it is, return a True
-        return self.modulation_state
+            modulation_state = False  # If it isn't, return a False
+        else:
+            modulation_state = True  # If it is, return a True
+        return modulation_state
 
     def get_pulse_period(self):
         """Override method, Gets the total pulse period of the modulation signal
@@ -179,7 +117,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
             str: The units that the pulse period is measured in 
 
         """
-        m_clk, check = self._telnet_query("FREQ:MC?")
+        m_clk, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "FREQ:MC?")
         m_num = m_clk[0:-4]
         m_num2 = float(m_num.replace(',', '.'))  # MHz
         self.pulse_period = 1. / m_num2  # Gets the pulse period of the device
@@ -195,11 +133,19 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
             check(str): The status of the command.
         """
-        command = "FREQ:MC " + str(1. / period)
-        command = command.replace('.', ',')
-        print command
-        ret, check = self._telnet_query(command)
-        return check
+        # if type(period) != float and type(period) != int \
+        #         and np.float64 != np.dtype(period) and np.int64 != np.dtype(period):
+        #     raise TypeError
+        #
+        # if period < 0:
+        #     raise ValueError("Pulse period must have a positive value.")
+        #
+        # command = "FREQ:MC " + str(1. / period) # IN Hz or MHz?
+        # command = command.replace('.', ',')
+        # print command
+        # ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "DEV:MODE RF")
+        # ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, command)
+        return True
 
     def get_pulse_dutycycle(self):
         """Override method, Gets the duty cycle of the modulation signal
@@ -214,7 +160,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
          Returns:
              float: decimal value (0-1) of the duty cycle of the pulse modulation
          """
-        fill, check = self._telnet_query("GATE:FILL?")  # calculates the duty cycle and returns it
+        fill, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL?")  # calculates the duty cycle and returns it
         g_fill = float(fill[0:-2])
         return g_fill / 100.
 
@@ -235,8 +181,9 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         # makes sure the duty cycle value is a decimal between 0 and 1
         elif dutycycle > 1 or dutycycle < 0:
             raise ValueError
-        duty_str = "GATE:FILL " + str(dutycycle * 100) + '\r\n'
-        ret, check = self._telnet_query(duty_str)  # writes the calculated pulse width
+        duty_str = "GATE:FILL " + str(int(np.round(dutycycle * 100))) + '\r\n'
+        # writes the calculated pulse width
+        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, duty_str)
         return check
 
     def invert_pulse_polarity(self, polarity):
