@@ -3,16 +3,17 @@ import telnetlib
 from pkg_resources import require
 require("numpy")
 import numpy as np
+from time import sleep
 
 
 class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
 
     def __init__(self, ipaddress, port, timeout):
-        self.DeviceID = ""
         self.timeout = timeout  # timeout for the telnet comms
         self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # connects to the telnet device
         # gets the device of the telnet device, makes sure its the right one
-        print "Connected to " + self.get_device_ID()
+        self.DeviceID = self.get_device_id()
+        print "Connected to Programmable attenuator" + self.DeviceID
 
     def __del__(self):
         self.tn.close()
@@ -63,7 +64,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         if type(attenuation) != float and type(attenuation) != int \
                 and np.float64 != np.dtype(attenuation) and np.int64 != np.dtype(attenuation):
             raise TypeError
-        elif attenuation > 95 or attenuation < 0:
+        if attenuation > 95 or attenuation < 0:
             raise ValueError
 
     def _check_channel(self, channel):
@@ -77,15 +78,20 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         else:
             raise TypeError
 
-    def get_device_ID(self):
+    def get_device_id(self):
         model = self._telnet_query("MN?")  # gets the device information
         model = model.replace("MN=", "")
         if model != "RC4DAT-6G-95":
-            raise Exception("Wrong device connected")
-        self.DeviceID = model
-        return "Programmable Attenuator "+model
+            raise ValueError("Wrong device connected")
+        return model
 
     def set_global_attenuation(self, attenuation):
+        if type(attenuation) != float and type(attenuation) != int \
+                and np.float64 != np.dtype(attenuation) and np.int64 != np.dtype(attenuation):
+            raise TypeError
+        if attenuation > 95 or attenuation < 0:
+            print 'Odd attenuation value ', attenuation
+            raise ValueError
         self._check_attenuation(attenuation)
         self._telnet_query(":CHAN:1:2:3:4:SetAtt:"+str(attenuation))
         return self.get_global_attenuation()
@@ -103,6 +109,8 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             channel_dict = {"D": 1, "C": 2, "B": 3, "A": 4}
             channel = channel.upper()
             channel = channel_dict[channel]
+        else:
+            raise TypeError
         channel = str(channel)
         self._telnet_query(":CHAN:"+channel+":SetAtt:" + str(attenuation))
         channel = int(channel)
@@ -131,6 +139,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             if not reply:  # Checking for an empty string.
                 print 'Got nothing back .... Trying again.'
                 reply = self._telnet_query(command)
+                sleep(0.5)
             else:
                 if md > 0:
                     print 'Get Channel reply = ', reply

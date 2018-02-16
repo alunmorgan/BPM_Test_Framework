@@ -5,7 +5,7 @@ class Generic_Prog_Atten():
     __metaclass__ = ABCMeta  # Allows for abstract methods to be created.
     
     @abstractmethod
-    def get_device_ID(self):
+    def get_device_id(self):
         pass
 
     @abstractmethod
