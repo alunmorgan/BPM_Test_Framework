@@ -29,7 +29,7 @@ class Template_RFSigGen(Generic_RFSigGen):
         """
 
     # API Calls
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method that will return the device ID.
 
         Returns:

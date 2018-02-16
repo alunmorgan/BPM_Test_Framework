@@ -75,7 +75,7 @@ class ExpectedDataTest(BaseTestClass):
     def test_get_device_ID(self, mock_telnet_write, mock_telnet_read):
         DeviceID = "Rigol Technologies,DSG3030"
         mock_telnet_read.return_value = DeviceID
-        self.assertEqual(self.RF_test_inst.get_device_ID(), "RF Source " +DeviceID)
+        self.assertEqual(self.RF_test_inst.get_device_id(), "RF Source " + DeviceID)
 
     @patch("RFSignalGenerators.Rigol3030DSG_RFSigGen._telnet_query", side_effect = mocked_rigol_replies)
     def test_get_output_power(self, mock_telnet_query):

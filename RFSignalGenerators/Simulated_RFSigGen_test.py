@@ -24,7 +24,7 @@ class ExpectedDataTest(BaseTestClass):
         pass
 
     def test_get_device_ID(self):
-        self.assertEqual(self.RFSim.get_device_ID(), "Simulated RF Device")
+        self.assertEqual(self.RFSim.get_device_id(), "Simulated RF Device")
 
     def test_get_set_output_power_return_values_if_expected_input_types_used(self):
         sent = (-40, -80)

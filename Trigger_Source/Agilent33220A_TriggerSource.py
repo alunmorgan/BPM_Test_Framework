@@ -70,7 +70,7 @@ class agilent33220a_wfmgen(Generic_TrigSource):
         """
         self.timeout = timeout  # timeout for the telnet comms
         self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # connects to the telnet device
-        self.get_device_ID()  # gets the device of the telnet device, makes sure its the right one
+        self.DeviceID = self.get_device_id()  # gets the device of the telnet device, makes sure its the right one
         self.turn_off_RF()  # turn off the RF output
 
         print("Opened connection to Trigger source" + self.DeviceID)  # tells the user the device has been connected to
@@ -83,7 +83,7 @@ class agilent33220a_wfmgen(Generic_TrigSource):
         print("Closed connection to " + self.DeviceID)  # tell the user the telnet link has closed
 
     # API Calls
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method that will return the device ID.
 
         Uses the SCPI command "*IDN?" to get the device ID. 
@@ -91,13 +91,13 @@ class agilent33220a_wfmgen(Generic_TrigSource):
         Args:
 
         Returns:
-            str: The DeviceID of the SigGen.
+            str: The device_id of the SigGen.
         """
-        self.DeviceID = self._telnet_query("*IDN?")  # gets the device information
+        device_id = self._telnet_query("*IDN?")  # gets the device information
         test_string = "Welcome to Agilent's 33220A Waveform Generator"
-        if self.DeviceID[0:len(test_string)] != test_string:  # checks it's the right device
-            raise Exception("Wrong hardware device connected")
-        return "Trigger Source " + self.DeviceID
+        if device_id[0:len(test_string)] != test_string:  # checks it's the right device
+            raise ValueError("Wrong hardware device connected")
+        return device_id
 
     def set_up_trigger_pulse(self, freq):
         """Override method that will set up a pulse suitable for a trigger signal.
@@ -105,6 +105,9 @@ class agilent33220a_wfmgen(Generic_TrigSource):
                 Args:
                     freq (float)
                 """
+        if type(freq) != float and type(freq) != int \
+                and np.float64 != np.dtype(freq) and np.int64 != np.dtype(freq):
+            raise TypeError
         self._telnet_write("FUNC:PULS:DCYC 50")
         self._telnet_write(''.join(("APPL:PULS ", str(freq), ', 1, 0')))
         self.turn_on_RF()

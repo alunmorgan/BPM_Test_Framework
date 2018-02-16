@@ -68,7 +68,7 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
         """
         self.timeout = timeout  # timeout for the telnet comms
         self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # connects to the telnet device
-        self.get_device_ID()  # gerts the device of the telnet device, makes sure its the right one
+        self.get_device_id()  # gerts the device of the telnet device, makes sure its the right one
         self.turn_off_RF()  # turn off the RF output
         self.set_output_power_limit(limit)  # set the RF output limit
 
@@ -82,7 +82,7 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
         print("Closed connection to " + self.DeviceID)  # tell the user the telnet link has closed
 
     #API Calls
-    def get_device_ID(self):
+    def get_device_id(self):
         """Override method that will return the device ID.
         
         Uses the SCPI command "*IDN?" to get the device ID. 
