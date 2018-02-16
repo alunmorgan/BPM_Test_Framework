@@ -13,6 +13,25 @@ class Generic_BPMDevice():
     __metaclass__ = ABCMeta  # Allows for abstract methods to be created.
 
     @abstractmethod
+    def get_attenuation(self):
+        """Abstract method for override, gets the calculated X position of the beam.
+
+        Args:
+        Returns:
+            float: attenuation (dB)
+        """
+        pass
+
+    @abstractmethod
+    def set_attenuation(self, atten):
+        """Abstract method for override, gets the calculated X position of the beam.
+
+        Args:
+            atten (float): Attenuation (dB)
+        """
+        pass
+
+    @abstractmethod
     def get_x_position (self):
         """Abstract method for override, gets the calculated X position of the beam.
         

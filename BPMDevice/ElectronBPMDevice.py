@@ -6,6 +6,7 @@ from Generic_BPMDevice import *
 from subprocess import Popen, PIPE
 import numpy as np
 from BPM_helper_functions import Accumulator
+import time
 
 
 class ElectronBPMDevice(Generic_BPMDevice):
@@ -70,6 +71,20 @@ class ElectronBPMDevice(Generic_BPMDevice):
         else:
             self.epics_id = dev_id # TS-DI-EBPM-04:
             self.mac_address = self._get_mac_address()
+            # Initial setup of the BPM system.
+            self.agc = self._read_epics_pv("CF:ATTEN:AGC_S")
+            print self.agc
+            self._write_epics_pv("CF:ATTEN:AGC_S", 'AGC off')  # Turn AGC off.
+            self.delta = self._read_epics_pv("CF:ATTEN:DISP_S")
+            self._write_epics_pv("CF:ATTEN:DISP_S", 0)  # Set delta to zero.
+            self.attn_wfm = self._read_epics_pv("CF:ATTEN:OFFSET_S")
+            self._write_epics_pv("CF:ATTEN:OFFSET_S", np.zeros_like(self.attn_wfm))  # Set attenuation waveform to zeros.
+            self.switches = self._read_epics_pv("CF:AUTOSW_S")
+            self._write_epics_pv("CF:AUTOSW_S", 'Manual')  # Set switches to manual.
+            self.switch_val = self._read_epics_pv("CF:SETSW_S")
+            self._write_epics_pv("CF:SETSW_S", 3)  # Choose a switch setting to define a switch pattern.
+            self.attn = self.get_attenuation()
+            self._write_epics_pv("CF:ATTEN_S", 0)  # Set initial attenuation
         print "Opened connection to " + self.get_device_id()  # Informs the user the device is now connected to
 
     def __del__(self):
@@ -79,8 +94,36 @@ class ElectronBPMDevice(Generic_BPMDevice):
         Returns:
          
         """
-        print self.mac_address
+        # restore the BPM system.
+        if self.agc == 0:
+            agc = 'AGC off'
+        elif self.agc == 1:
+            agc = 'AGC on'
+        self._write_epics_pv("CF:ATTEN:AGC_S", agc)  # Restore AGC.
+        self._write_epics_pv("CF:ATTEN:DISP_S", self.delta)  # Restore delta.
+        self._write_epics_pv("CF:ATTEN:OFFSET_S", self.attn_wfm)  # Restore attenuation waveform.
+        self._write_epics_pv("CF:AUTOSW_S", self.switches)  # Restore switches state.
+        self._write_epics_pv("CF:SETSW_S", self.switch_val)  # Restore switch setting.
+        self.set_attenuation(self.attn)  # Restore attenuation setting.
         print "Closed connection to " + self.get_device_id()
+
+    def get_attenuation(self):
+        """Override method, gets the internal attenuation setting.
+
+
+                Returns:
+                    float: Attenuation (dB)
+                    """
+        return self._read_epics_pv("CF:ATTEN_S")
+
+    def set_attenuation(self, attn):
+        """Override method, sets the internal attenuation setting.
+
+
+                Args:
+                    attn (float): Attenuation (dB)
+                    """
+        self._write_epics_pv("CF:ATTEN_S", attn)
 
     def get_x_position(self):
         """Override method, gets the calculated X position of the beam.
@@ -109,9 +152,10 @@ class ElectronBPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        sa_x_accum = Accumulator(''.join((self.epics_id, ':SA:X')), num_vals)
+        sa_x_accum = Accumulator(''.join((self.epics_id, 'SA:X')), num_vals)
         times, data = sa_x_accum.wait()
-        return times, data
+        times_rel = [x - times[0] for x in times]
+        return times_rel, data
 
     def get_y_sa_data(self, num_vals):
         """Gets the calculated X position SA data.
@@ -122,9 +166,10 @@ class ElectronBPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        sa_y_accum = Accumulator(''.join((self.epics_id, ':SA:Y')), num_vals)
+        sa_y_accum = Accumulator(''.join((self.epics_id, 'SA:Y')), num_vals)
         times, data = sa_y_accum.wait()
-        return times, data
+        times_rel = [x - times[0] for x in times]
+        return times_rel, data
 
     def get_sa_data(self, num_vals):
         """Gets the ABCD SA data.
@@ -135,13 +180,13 @@ class ElectronBPMDevice(Generic_BPMDevice):
             timestamps (list): floats
             data (list): floats
         """
-        sa_a_accum = Accumulator(''.join((self.epics_id, ':SA:A')), num_vals)
+        sa_a_accum = Accumulator(''.join((self.epics_id, 'SA:A')), num_vals)
         sa_a_times, sa_a_data = sa_a_accum.wait()
-        sa_b_accum = Accumulator(''.join((self.epics_id, ':SA:B')), num_vals)
+        sa_b_accum = Accumulator(''.join((self.epics_id, 'SA:B')), num_vals)
         sa_b_times, sa_b_data = sa_b_accum.wait()
-        sa_c_accum = Accumulator(''.join((self.epics_id, ':SA:C')), num_vals)
+        sa_c_accum = Accumulator(''.join((self.epics_id, 'SA:C')), num_vals)
         sa_c_times, sa_c_data = sa_c_accum.wait()
-        sa_d_accum = Accumulator(''.join((self.epics_id, ':SA:D')), num_vals)
+        sa_d_accum = Accumulator(''.join((self.epics_id, 'SA:D')), num_vals)
         sa_d_times, sa_d_data = sa_d_accum.wait()
 
         return sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data
@@ -169,8 +214,6 @@ class ElectronBPMDevice(Generic_BPMDevice):
     def get_adc_data(self):
         """ Gets the ABCD ADC data.
 
-        Args:
-            num_vals (int): The number of samples to capture
         Returns: 
             timestamps (list): floats
             adc1_data (list): floats
@@ -179,13 +222,22 @@ class ElectronBPMDevice(Generic_BPMDevice):
             adc4_data (list): floats
         """
         self._write_epics_pv('FT:ENABLE_S', 1)
+        time.sleep(1)
         adc1_data = self._read_epics_pv('FT:RAW1')
         adc2_data = self._read_epics_pv('FT:RAW2')
         adc3_data = self._read_epics_pv('FT:RAW3')
         adc4_data = self._read_epics_pv('FT:RAW4')
+        time.sleep(1)
         self._write_epics_pv('FT:ENABLE_S', 0)
-        times = np.arange(len(adc1_data)) * 1/117E6 # Data rate is 117MHz
-        return times, adc1_data, adc2_data, adc3_data, adc4_data
+        # The data is centred on the middle bits. Shift it so all values are positive.
+        num_bits = 16
+        half_range = np.power(2, num_bits) / 2
+        adc1_data[:] = [x + half_range for x in adc1_data]
+        adc2_data[:] = [x + half_range for x in adc2_data]
+        adc3_data[:] = [x + half_range for x in adc3_data]
+        adc4_data[:] = [x + half_range for x in adc4_data]
+        times = np.arange(len(adc1_data)) * 1/117E6  # Data rate is 117MHz
+        return list(times), list(adc1_data), list(adc2_data), list(adc3_data), list(adc4_data)
 
     def get_ft_data(self):
         """ Gets the ABCD first turn data.

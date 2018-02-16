@@ -12,12 +12,11 @@ def adc_test(rf_object,
              bpm_object,
              prog_atten_object,
              frequency,
-             samples=10,
-             power_levels=(-45., -60.),
+             power_levels=np.arange(-20, -50, -5),
              settling_time=1,
              report_object=None,
              sub_directory=""):
-    """Compares the noise generated.
+    """Compares the signals from the ADCs while a sine wave excitation is input.
 
     The RF signal is turned off, and then different parameters are measured from the BPM. 
 
@@ -27,8 +26,7 @@ def adc_test(rf_object,
         prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
         frequency (float): Output frequency for the tests, set as a float that will use the assumed units of MHz. 
         power_levels (tuple of floats): output power levels for the tests. dBm is assumed. 
-        samples (int): Number of samples take.
-        settling_time (float): Time in seconds, that the program will wait in between 
+        settling_time (float): Time in seconds, that the program will wait in between
             setting an  output power on the RF, and reading the values of the BPM. 
         report_object (LaTeX Report Obj): Specific report that the test results will be recorded 
             to. If no report is sent to the test then it will just display the results in a graph. 
@@ -45,13 +43,19 @@ def adc_test(rf_object,
     test_name = test_name.replace("_", " ")
     print("Starting test \"" + test_name + "\"")
 
-    # Initial setup of the RF system
+    # Initial setup of the RF system.
     rf_object.turn_off_RF()
     rf_object.set_frequency(frequency)
-    rf_object.set_output_power(power_levels[0])
+    # Forcing to be an int as decimal points will cause the command sent to fail
+    rf_object.set_output_power(int(power_levels[0]))
+    prog_atten_object.set_global_attenuation(0)
     rf_object.turn_on_RF()
     time.sleep(settling_time)
     adc_n_bits = 16
+
+    adc_max_counts = np.power(2, adc_n_bits)
+    adc_step = adc_max_counts / adc_n_bits
+    bin_edges = range(adc_n_bits + 1)
 
     input_power = []
     output_power = []
@@ -60,30 +64,41 @@ def adc_test(rf_object,
     data3 = []
     data4 = []
     times = []
+    graph_legend = []
+    #  Gradually reducing the power level
     for index in power_levels:
         # Set attenuator value to give desired power level.
-        prog_atten_object.set_global_attenuation(power_levels[0] - index)
+        atten_setting = power_levels[0] - index
+        prog_atten_object.set_global_attenuation(atten_setting)
         time.sleep(settling_time)  # Wait for signal to settle
+        # Gets 1024 samples for each ADC.
         time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_adc_data()  # record data
-        rf_object.turn_off_RF()
         times.append(time_tmp)
+        #  Identifying which bit bin a value is in.
+        data1_tmp[:] = [x / adc_step for x in data1_tmp]
+        data2_tmp[:] = [x / adc_step for x in data2_tmp]
+        data3_tmp[:] = [x / adc_step for x in data3_tmp]
+        data4_tmp[:] = [x / adc_step for x in data4_tmp]
         data1.append(data1_tmp)
         data2.append(data2_tmp)
         data3.append(data3_tmp)
         data4.append(data4_tmp)
-        output_power = np.append(output_power, rf_object.get_output_power()[0])
-        input_power = np.append(input_power, bpm_object.get_input_power())
+        output_power.append(index)
+        input_power.append(bpm_object.get_input_power())
+        graph_legend.append(str(index))
 
     # turn off the RF
     rf_object.turn_off_RF()
-
-
     # Get the plot values in a format that is easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append(((times, data1), ('bit number', 'counts', "ADC1_histogram.pdf")))
-    format_plot.append(((times, data2), ('bit number', 'counts', "ADC2_histogram.pdf")))
-    format_plot.append(((times, data3), ('bit number', 'counts', "ADC3_histogram.pdf")))
-    format_plot.append(((times, data4), ('bit number', 'counts', "ADC4_histogram.pdf")))
+    format_plot.append(((times, data1), ('bit number', 'counts',
+                                         "ADC1_histogram_varying_external_signal_amplitude.pdf", graph_legend)))
+    format_plot.append(((times, data2), ('bit number', 'counts',
+                                         "ADC2_histogram_varying_external_signal_amplitude.pdf", graph_legend)))
+    format_plot.append(((times, data3), ('bit number', 'counts',
+                                         "ADC3_histogram_varying_external_signal_amplitude.pdf", graph_legend)))
+    format_plot.append(((times, data4), ('bit number', 'counts',
+                                         "ADC4_histogram_varying_external_signal_amplitude.pdf", graph_legend)))
 
     if report_object is not None:
         intro_text = r"""Excites with a sine wave and then gets the ADC data from each channel. 
@@ -93,21 +108,22 @@ def adc_test(rf_object,
         """
         # Get the device names for the report
         device_names = []
-        device_names.append(rf_object.get_device_id())
-        device_names.append(bpm_object.get_device_id())
+        device_names.append('RF source is ' + rf_object.get_device_id())
+        device_names.append('BPM is ' + bpm_object.get_device_id())
 
         # Get the parameter values for the report
         parameter_names = []
-        parameter_names.append("Samples: " + str(samples))
         # add the test details to the report
         report_object.setup_test(test_name, intro_text, device_names, parameter_names)
 
     # plot all of the graphs
-    adc_max_counts = np.power(2, adc_n_bits)
-    adc_step = adc_max_counts / adc_n_bits
-    bin_edges = range(adc_n_bits + 1)
+
     for index in format_plot:
-        plt.hist(np.transpose(np.floor(index[0][1] / adc_step)), bins=bin_edges)
+        #if len(index[1]) == 4:
+        plt.hist(np.transpose(np.array(index[0][1])), bins=bin_edges, label=index[1][3])
+        #else:
+        #    plt.hist(np.transpose(np.array(index[0][1])), bins=bin_edges)
+        plt.legend()
         plt.xlabel(index[1][0])
         plt.ylabel(index[1][1])
         if report_object is None:
