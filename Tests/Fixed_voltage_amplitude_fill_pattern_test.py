@@ -117,9 +117,9 @@ def fixed_voltage_amplitude_fill_pattern_test(
         """
 
         device_names = []
-        device_names.append(rf_object.get_device_id())
-        device_names.append(gate_source_object.get_device_id())
-        device_names.append(bpm_object.get_device_id())
+        device_names.append('RF source is ' + rf_object.get_device_id())
+        device_names.append('Gate is ' + gate_source_object.get_device_id())
+        device_names.append('BPM is ' + bpm_object.get_device_id())
         # Get the parameter values for the report
         parameter_names = []
         parameter_names.append("Frequency: " + rf_object.get_frequency()[1])

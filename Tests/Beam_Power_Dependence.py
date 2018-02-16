@@ -107,8 +107,8 @@ def beam_power_dependence(
         """
         # Get the device names for the report
         device_names = []
-        device_names.append(rf_object.get_device_id())
-        device_names.append(bpm_object.get_device_id())
+        device_names.append('RF source is ' + rf_object.get_device_id())
+        device_names.append('BPM is ' + bpm_object.get_device_id())
         # Get the parameter values for the report
         parameter_names = []
         parameter_names.append("Frequency: " + str(frequency) + "MHz")
