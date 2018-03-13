@@ -35,6 +35,7 @@ def scaled_voltage_amplitude_fill_pattern_test(
 
 
         Args:
+            test_system_object (System Obj): Object capturing the system losses and hardware ids.
             rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
             bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
             prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
@@ -60,25 +61,20 @@ def scaled_voltage_amplitude_fill_pattern_test(
             float array: X position read from the BPM
             float array: Y position read from the BPM
     """
+    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
+                                                       frequency, max_power)
+    # Set up BPM for normal operation
+    bpm_object.set_internal_state()
 
-    test_name = __name__
-    test_name = test_name.rsplit("Tests.")[1]
-    test_name = test_name.replace("_", " ")
-    print("Starting test \"" + test_name + "\"")
-
-    rf_object.set_frequency(frequency)
-    rf_object.set_output_power(max_power)
-    prog_atten_object.set_global_attenuation(0)
     gate_source_object.set_pulse_period(pulse_period)
     gate_source_object.turn_on_modulation()
     gate_source_object.set_pulse_dutycycle(duty_cycles[0])
-    rf_object.turn_on_RF()
+    # Wait for system to settle
     time.sleep(settling_time)
 
     bpm_power = np.array([])
     bpm_xpos = np.array([])
     bpm_ypos = np.array([])
-    bpm_current = np.array([])
     rf_output = np.array([])
     adc_sum = np.array([])
 

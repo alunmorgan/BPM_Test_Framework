@@ -73,16 +73,13 @@ def beam_position_equidistant_grid_raster_scan_test(
             float array: predicted X values of position
             float array: predicted Y values of position
     """
-
-    # Informs the user that the test has started
-    test_name = __name__
-    test_name = test_name.rsplit("Tests.")[1]
-    test_name = test_name.replace("_", " ")
-    print("Starting test \"" + test_name + "\"")
-
-    rf_object.set_output_power(rf_power)
-    rf_object.set_frequency(rf_frequency)
-    rf_object.turn_on_RF()
+    # Initialise test
+    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
+                                                       rf_frequency, power_level)
+    # Set up BPM for normal operation
+    bpm_object.set_internal_state()
+    # Wait for system to settle
+    time.sleep(settling_time)
 
     predicted_x = np.array([])
     predicted_y = np.array([])

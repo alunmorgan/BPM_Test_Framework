@@ -39,6 +39,9 @@ def adc_test(
     Returns:
     """
     test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object, frequency, power_level)
+    bpm_object.set_internal_state(agc='AGC off', delta=0, offset=0, switches='Manual',
+                                  switch_state=15, attenuation=0, dsc='Unity gains',
+                                  ft_state='Enabled')
     # Wait for signal to settle
     time.sleep(settling_time)
 

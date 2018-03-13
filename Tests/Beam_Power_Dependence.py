@@ -17,6 +17,7 @@ def beam_power_dependence(
                           frequency,
                           power_levels=range(-40, -100, -10),
                           settling_time=1,
+                          samples=1000,
                           report_object=None,
                           sub_directory=""):
     """Tests the relationship between RF output power and values read from the BPM.
@@ -26,6 +27,7 @@ def beam_power_dependence(
     and settling time between each measurement can be decided using the arguments. 
 
     Args:
+        test_system_object (System Obj): Object capturing the system losses and hardware ids.
         rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
         bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
         prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
@@ -35,52 +37,50 @@ def beam_power_dependence(
                              default value is [-40, -50, -60, -70, -80, -90].
                              The values are floats and dBm is assumed.
         settling_time (float): Time in seconds, that the program will wait in between 
-            setting an  output power on the RF, and reading the values of the BPM. 
+            setting an  output power on the RF, and reading the values of the BPM.
+        samples (int): The number of samples to capture at each data point.
         report_object (LaTeX Report Obj): Specific report that the test results will be recorded
             to. If no report is sent to the test then it will just display the results in 
             a graph. 
         sub_directory (str): String that can change where the graphs will be saved to.
 
     Returns:
-        float array: Power output from the RF
         float array: Power read at the BPM
-        float array: Beam Current read at the BPM
         float array: X Positions read from the BPM
         float array: Y Positions read from the BPM
+        float array: Standard deviation of X Positions read from the BPM
+        float array: Standard deviation Y Positions read from the BPM
     """
 
-    # Informs the user the test has started
-    test_name = __name__
-    test_name = test_name.rsplit("Tests.")[1]
-    test_name = test_name.replace("_", " ")
-    print("Starting test \"" + test_name + "\"")
-
-    # Set the initial state of the RF device and programmable attenuator.
-    rf_object.turn_off_RF()
-    rf_object.set_frequency(frequency)
-    rf_object.set_output_power(power_levels[0])
-    prog_atten_object.set_global_attenuation(0)
-    rf_object.turn_on_RF()
+    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
+                                                       frequency, power_levels[0])
+    # Wait for signal to settle
     time.sleep(settling_time)
+    # Set up BPM for normal operation
+    bpm_object.set_internal_state()
 
     # Build up the arrays where the final values will be saved
-    x_pos = np.array([])
-    y_pos = np.array([])
-    beam_current = np.array([])
-    output_power = np.array([])
+    x_pos_mean = np.array([])
+    y_pos_mean = np.array([])
+    x_pos_std = np.array([])
+    y_pos_std = np.array([])
     input_power = np.array([])
-    adc_sum = np.array([])
 
     # Perform the test
     for index in power_levels:
         # Set attenuator value to give desired power level.
         prog_atten_object.set_global_attenuation(power_levels[0] - index)
         time.sleep(settling_time)  # Wait for signal to settle
-        beam_current = np.append(beam_current, bpm_object.get_beam_current())  # record beam current
-        x_pos = np.append(x_pos, bpm_object.get_x_position())  # record X pos
-        y_pos = np.append(y_pos, bpm_object.get_y_position())  # record Y pos
+
+        # Perform the test
+        x_time, x_pos_data = bpm_object.get_x_sa_data(samples)  # record X pos
+        y_time, y_pos_data = bpm_object.get_y_sa_data(samples)  # record Y pos
+
+        x_pos_mean = np.append(x_pos_mean, np.mean(x_pos_data))  # record X pos
+        y_pos_mean = np.append(y_pos_mean, np.mean(y_pos_data))  # record Y pos
+        x_pos_std = np.append(x_pos_std, np.std(x_pos_data))  # record X pos
+        y_pos_std = np.append(y_pos_std, np.std(y_pos_data))  # record Y pos
         input_power = np.append(input_power, bpm_object.get_input_power())
-        adc_sum = np.append(adc_sum, bpm_object.get_adc_sum())
 
     # turn off the RF
     rf_object.turn_off_RF()
@@ -117,8 +117,8 @@ def beam_power_dependence(
         """
         # Get the device names for the report
         device_names = []
-        device_names.append('RF source is ' + rf_object.get_device_id())
-        device_names.append('BPM is ' + bpm_object.get_device_id())
+        device_names.append('RF source is ' + test_system_object.rf_hw)
+        device_names.append('BPM is ' + test_system_object.bpm_hw)
         # Get the parameter values for the report
         parameter_names = []
         parameter_names.append("Frequency: " + str(frequency) + "MHz")
