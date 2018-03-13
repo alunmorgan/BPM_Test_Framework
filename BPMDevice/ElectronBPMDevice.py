@@ -69,23 +69,22 @@ class ElectronBPMDevice(Generic_BPMDevice):
         if type(dev_id) != str:  # Makes sure the ID is a string
             raise TypeError  # Raises a type error if integer is not used
         else:
+            self.adc_n_bits = 16
+            self.num_adcs = 4
             self.epics_id = dev_id # TS-DI-EBPM-04:
             self.mac_address = self._get_mac_address()
+            self.device_id = self.get_device_id()
             # Initial setup of the BPM system.
+            self.kx = self._read_epics_pv("CF:KX_S")
+            self.ky = self._read_epics_pv("CF:KY_S")
             self.agc = self._read_epics_pv("CF:ATTEN:AGC_S")
-            print self.agc
-            self._write_epics_pv("CF:ATTEN:AGC_S", 'AGC off')  # Turn AGC off.
             self.delta = self._read_epics_pv("CF:ATTEN:DISP_S")
-            self._write_epics_pv("CF:ATTEN:DISP_S", 0)  # Set delta to zero.
             self.attn_wfm = self._read_epics_pv("CF:ATTEN:OFFSET_S")
-            self._write_epics_pv("CF:ATTEN:OFFSET_S", np.zeros_like(self.attn_wfm))  # Set attenuation waveform to zeros.
             self.switches = self._read_epics_pv("CF:AUTOSW_S")
-            self._write_epics_pv("CF:AUTOSW_S", 'Manual')  # Set switches to manual.
             self.switch_val = self._read_epics_pv("CF:SETSW_S")
-            self._write_epics_pv("CF:SETSW_S", 3)  # Choose a switch setting to define a switch pattern.
             self.attn = self.get_attenuation()
-            self._write_epics_pv("CF:ATTEN_S", 0)  # Set initial attenuation
-        print "Opened connection to " + self.get_device_id()  # Informs the user the device is now connected to
+            self.dsc = self._read_epics_pv("CF:DSC_S")
+        print "Opened connection to " + self.device_id  # Informs the user the device is now connected to
 
     def __del__(self):
         """Informs the user that this object has been destroyed 
@@ -99,13 +98,27 @@ class ElectronBPMDevice(Generic_BPMDevice):
             agc = 'AGC off'
         elif self.agc == 1:
             agc = 'AGC on'
+        else:
+            raise IOError('AGC value is invalid')
         self._write_epics_pv("CF:ATTEN:AGC_S", agc)  # Restore AGC.
         self._write_epics_pv("CF:ATTEN:DISP_S", self.delta)  # Restore delta.
         self._write_epics_pv("CF:ATTEN:OFFSET_S", self.attn_wfm)  # Restore attenuation waveform.
         self._write_epics_pv("CF:AUTOSW_S", self.switches)  # Restore switches state.
         self._write_epics_pv("CF:SETSW_S", self.switch_val)  # Restore switch setting.
+        self._write_epics_pv("CF:DSC_S", self.dsc)  # Restore DSC setting.
         self.set_attenuation(self.attn)  # Restore attenuation setting.
         print "Closed connection to " + self.get_device_id()
+
+    def set_internal_state(self, agc='AGC on', delta=0, offset=0, switches='Auto',
+                           switch_state=15, attenuation=33, dsc='Automatic'):
+        self._write_epics_pv("CF:ATTEN:AGC_S", agc)  # Turn AGC off.
+        self._write_epics_pv("CF:ATTEN:DISP_S", delta)  # Set delta to zero.
+        # Set attenuation waveform to offset.
+        self._write_epics_pv("CF:ATTEN:OFFSET_S", [x * offset for x in np.ones_like(self.attn_wfm)])
+        self._write_epics_pv("CF:AUTOSW_S", switches)  # Set switches to manual.
+        self._write_epics_pv("CF:SETSW_S", switch_state)  # Choose a switch setting to define a switch pattern.
+        self._write_epics_pv("CF:ATTEN_S", attenuation)  # Set initial attenuation
+        self._write_epics_pv("CF:DSC_S", dsc)  # Set digital signal conditioning
 
     def get_attenuation(self):
         """Override method, gets the internal attenuation setting.
