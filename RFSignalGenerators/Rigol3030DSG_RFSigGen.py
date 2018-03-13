@@ -39,7 +39,7 @@ class Rigol3030DSG_RFSigGen(Generic_RFSigGen):
         """
         # Checks that the telnet message is a string
         if type(message) != str:
-            raise TypeError
+            raise TypeError('Message is not a string')
 
         self.tn.write(message + "\r\n")  # Writes a telnet message with termination characters
 
