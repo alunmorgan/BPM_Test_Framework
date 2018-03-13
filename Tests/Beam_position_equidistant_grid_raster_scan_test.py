@@ -35,7 +35,7 @@ def beam_position_equidistant_grid_raster_scan_test(
              rf_object,
              bpm_object,
              prog_atten_object,
-             rf_power,
+             power_level,
              rf_frequency,
              nominal_attenuation,
              x_points,
@@ -55,7 +55,7 @@ def beam_position_equidistant_grid_raster_scan_test(
             rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
             bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
             prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
-            rf_power (float): Output power of the RF system throughout the test, in dBm 
+            power_level (float): Output power of the RF system throughout the test, in dBm
             rf_frequency (float): Frequency output of the RF throughout the test, in MHz
             nominal_attenuation (float): starting attenuation values of each attenuator, in dB
             x_points (int): number of samples in the X plane
@@ -156,10 +156,11 @@ def beam_position_equidistant_grid_raster_scan_test(
         d = nominal_attenuation - quarter_round(10*np.log10(d_pwr / power_split))
 
         # Set the attenuation as the values just calculated.
-        prog_atten_object.set_channel_attenuation("A", a)
-        prog_atten_object.set_channel_attenuation("B", b)
-        prog_atten_object.set_channel_attenuation("C", c)
-        prog_atten_object.set_channel_attenuation("D", d)
+        map_atten_bpm = {'A': 4, 'B': 3, 'C': 2, 'D': 1}
+        prog_atten_object.set_channel_attenuation(map_atten_bpm['A'], a)
+        prog_atten_object.set_channel_attenuation(map_atten_bpm['B'], b)
+        prog_atten_object.set_channel_attenuation(map_atten_bpm['C'], c)
+        prog_atten_object.set_channel_attenuation(map_atten_bpm['D'], d)
 
         ######################################
         time.sleep(settling_time)  # Let the attenuator values settle
@@ -172,8 +173,8 @@ def beam_position_equidistant_grid_raster_scan_test(
 
     plt.plot(measured_x, measured_y, 'bo',
              predicted_x, predicted_y, 'r+', markersize=10,)
-    plt.xlim(-10.5, 10.5)
-    plt.ylim(-10.5, 10.5)
+    #plt.xlim(-10.5, 10.5)
+    #plt.ylim(-10.5, 10.5)
 
     plt.xlabel("Horizontal Beam Position (mm)")
     plt.ylabel("Vertical Beam Position (mm)")
@@ -200,7 +201,7 @@ def beam_position_equidistant_grid_raster_scan_test(
         device_names.append('Attenuator is ' + prog_atten_object.get_device_id())
         # # Readies parameters that are used in the test so that they can be added to the report
         parameter_names = []
-        parameter_names.append("Fixed RF Output Power: " + str(rf_power) + "dBm")
+        parameter_names.append("Fixed RF Output Power: " + str(power_level) + "dBm")
         parameter_names.append("Fixed Rf Output Frequency: " + str(rf_frequency) + "MHz")
         parameter_names.append("Nominal Attenuation: " + str(nominal_attenuation) + "dB")
         parameter_names.append("Number of X points: " + str(x_points))
