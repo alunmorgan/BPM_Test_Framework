@@ -41,21 +41,25 @@ def adc_test(
         float array: Y ADC data read from the BPM
     """
     test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object, frequency, power_level)
-    # # Formats the test name and tells the user the test has started
-    # test_name = __name__
-    # test_name = test_name.rsplit("Tests.")[1]
-    # test_name = test_name.replace("_", " ")
-    # print("Starting test \"" + test_name + "\"")
-    #
-    # # Initial setup of the RF system.
-    # rf_object.turn_off_RF()
-    # rf_object.set_frequency(frequency)
-    # # Forcing to be an int as decimal points will cause the command sent to fail
-    # rf_object.set_output_power(int(floor(power_level + test_system_object.loss)))
-    # prog_atten_object.set_global_attenuation(0)
-    # rf_object.turn_on_RF()
     # Wait for signal to settle
     time.sleep(settling_time)
+
+    if report_object is not None:
+        intro_text = r"""Excites with a sine wave and then gets the ADC data from each channel. 
+        Plots the histogram to that any missing bits can be identified. The expected value is 0.5. 
+        Any value 0.1 away from this indicates a problem.
+
+        The RF signal is a sine wave.  \\~\\
+        """
+        # Get the device names for the report
+        device_names = []
+        device_names.append('RF source is ' + test_system_object.rf_hw)
+        device_names.append('BPM is ' + test_system_object.bpm_hw)
+
+        # Get the parameter values for the report
+        parameter_names = []
+        # add the test details to the report
+        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
 
     # Setting up variables.
     data = np.empty((1024, bpm_object.adc_n_bits, bpm_object.num_adcs))
@@ -83,45 +87,34 @@ def adc_test(
             data_std[wn, kw] = np.std(data[:, wn, kw])
         format_plot.append(((np.arange(1, bpm_object.adc_n_bits + 1), data_std[:, kw]),
                             ('bit number', 'Standard deviation', ' '.join(('ADC', str(kw + 1))),
-                             '_'.join(('ADC', str(kw + 1), 'bit_check.pdf')))))
+                             'ADC_bit_check.pdf')))
 
     savemat(''.join((sub_directory, 'ADC_bit_check', '_data.mat')),
             {'data': data,
              'data_std': data_std})
 
-    if report_object is not None:
-        intro_text = r"""Excites with a sine wave and then gets the ADC data from each channel. 
-        Plots the histogram to that any missing bits can be identified.
-
-        The RF signal is a sine wave.  \\~\\
-        """
-        # Get the device names for the report
-        device_names = []
-        device_names.append('RF source is ' + test_system_object.rf_hw)
-        device_names.append('BPM is ' + test_system_object.bpm_hw)
-
-        # Get the parameter values for the report
-        parameter_names = []
-        # add the test details to the report
-        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
-
     # plot all of the graphs
-
+    cols = ['k', 'r', 'g', 'b']
+    x_shift = 0
+    cols_ind = 0
     for index in format_plot:
-        #if len(index[1]) == 4:
-        plt.bar(index[0][0], index[0][1], align='center', label=index[1][2])
-        #else:
-        #    plt.hist(np.transpose(np.array(index[0][1])), bins=bin_edges)
-        plt.legend()
-        plt.xlabel(index[1][0])
-        plt.ylabel(index[1][1])
-        if report_object is None:
-            # If no report is entered as an input to the test, simply display the results
-            plt.show()
-        else:
-            plt.savefig(''.join((sub_directory, index[1][3])))
-            report_object.add_figure_to_test(image_name=''.join((sub_directory, index[1][3])), caption=index[1][2])
-        plt.cla()  # Clear axis
-        plt.clf()  # Clear figure
+        plt.bar(index[0][0] + x_shift, index[0][1], align='center', width=0.15, label=index[1][2], color=cols[cols_ind])
+        x_shift = x_shift + 0.1
+        cols_ind = cols_ind + 1
+    plt.legend(loc='upper right')
+    plt.xlabel(format_plot[0][1][0])
+    plt.ylabel(format_plot[0][1][1])
+    plt.xlim(0.5, bpm_object.adc_n_bits + 1)
+    plt.ylim(0, 1)
+
+    if report_object is None:
+        # If no report is entered as an input to the test, simply display the results
+        plt.show()
+    else:
+        plt.savefig(''.join((sub_directory, format_plot[0][1][3])))
+        report_object.add_figure_to_test(image_name=''.join((sub_directory, format_plot[0][1][3])),
+                                         caption='ADC bit test. All should be close to 0.5')
+    plt.cla()  # Clear axis
+    plt.clf()  # Clear figure
 
 
