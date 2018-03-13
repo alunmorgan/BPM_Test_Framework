@@ -16,21 +16,16 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         """Initialises and opens the connection to the ITechBL12HI over telnet and informs the user 
 
         Args:
-            ipaddress (str): The IP address of the ITechBL12HI
-            port (int/str): The port number for the messages to be sent on (default 5555)
+            tn (Obj): telnet object for the device
             timeout (float): The timeout for telnet commands in seconds (default 1)
             
         Returns:
             
         """
         self.timeout = timeout  # Sets timeout for the telnet calls
-        #self.ipaddress = ipaddress
-        #self.port = port
         self.tn = tn
         self.device_id = self.get_device_id()  # Gets the device ID, checks connection is made
         self.modulation_state = self.get_modulation_state()
-        #self.turn_off_modulation()  # Turns off the signal modulation
-        #self.pulse_period = self.get_pulse_period()  # Not setable on this hardware.
         self.set_pulse_dutycycle(0)  # Sets the duty cycle to 0 by default
         print("Opened connection to gate source " + self.device_id)  # Inform the user the device is connected to
 
@@ -43,8 +38,8 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         
         """
         self.turn_off_modulation()  # Turns off the signal modulation
-        #self.tn.close()  # Closes the telnet connection
-        print("Closed connection to gate source " + self.device_id)  # Lets the user know connection is closed
+        # Lets the user know connection is closed
+        print("Closed connection to gate source " + self.device_id)
 
     # API Methods
     def get_device_id(self):
