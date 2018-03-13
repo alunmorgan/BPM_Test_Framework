@@ -82,6 +82,13 @@ def beam_power_dependence(
     # turn off the RF
     rf_object.turn_off_RF()
 
+    savemat(sub_directory + "beam_power_dependence_data" + ".mat",
+            {'input_power': input_power,
+             'x_pos_mean': x_pos_mean,
+             'x_pos_std': x_pos_std,
+             'y_pos_mean': y_pos_mean,
+             'y_pos_std': y_pos_std})
+
     specs = bpm_object.get_performance_spec()
 
     # Get the plot values in a format that's easy to iterate

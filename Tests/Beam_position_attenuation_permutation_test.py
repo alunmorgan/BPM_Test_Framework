@@ -158,5 +158,9 @@ def beam_position_attenuation_permutation_test(
         report_object.setup_test("beam_position_attenuation_permutation", intro_text, device_names, parameter_names)
         report_object.add_figure_to_test(image_name=''.join((sub_directory, "beam_position_attenuation_permutation")),
                                          caption="beam_position_attenuation_permutation")
-
+        savemat(sub_directory+"beam_position_attenuation_permutation_data" + ".mat",
+                {'measured_x':measured_x,
+                 'measured_y':measured_y,
+                 'predicted_x':predicted_x,
+                 'predicted_y':predicted_y})
     return measured_x, measured_y, predicted_x, predicted_y

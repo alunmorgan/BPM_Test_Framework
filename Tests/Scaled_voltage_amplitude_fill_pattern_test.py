@@ -155,5 +155,10 @@ def scaled_voltage_amplitude_fill_pattern_test(
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
 
-    # return the full data sets
-    return duty_cycles, rf_output, bpm_power, bpm_current, bpm_xpos, bpm_ypos
+    savemat(sub_directory + "constant_bunch_charge_fill_sweep_data" + ".mat",
+            {'duty_cycles': duty_cycles,
+             'bpm_power': bpm_power,
+             'bpm_current': bpm_current,
+             'bpm_xpos': bpm_xpos,
+             'bpm_ypos':bpm_ypos})
+

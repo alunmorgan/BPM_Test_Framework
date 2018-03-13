@@ -137,5 +137,6 @@ def adc_int_atten_sweep_test(rf_object,
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
 
-    # return the full data sets
-    return
+    savemat(sub_directory + "ADC_int_atten_sweep_data" + ".mat",
+            {'data': data,
+             'data_std': data_std})

@@ -212,5 +212,9 @@ def beam_position_equidistant_grid_raster_scan_test(
         report_object.add_figure_to_test(image_name=''.join((sub_directory,
                                                             "Beam_position_equidistant_grid_raster_scan_test")),
                                          caption="Beam_position_equidistant_grid_raster_scan_test")
+        savemat(sub_directory+"beam_position_raster_scan_data" + ".mat",
+                {'measured_x': measured_x,
+                 'measured_y': measured_y,
+                 'predicted_x': predicted_x,
+                 'predicted_y': predicted_y})
 
-    return measured_x, measured_y, predicted_x, predicted_y
