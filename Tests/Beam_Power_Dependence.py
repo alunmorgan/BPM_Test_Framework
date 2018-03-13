@@ -10,6 +10,7 @@ from scipy.io import savemat
 
 
 def beam_power_dependence(
+                          test_system_object,
                           rf_object,
                           bpm_object,
                           prog_atten_object,

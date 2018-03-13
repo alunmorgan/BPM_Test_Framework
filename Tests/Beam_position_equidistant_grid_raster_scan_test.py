@@ -31,6 +31,7 @@ def quarter_round(x):
 
 
 def beam_position_equidistant_grid_raster_scan_test(
+             test_system_object,
              rf_object,
              bpm_object,
              prog_atten_object,

@@ -14,6 +14,7 @@ from scipy.io import savemat
 
 
 def fixed_voltage_amplitude_fill_pattern_test(
+                                   test_system_object,
                                    rf_object,
                                    bpm_object,
                                    prog_atten_object,
