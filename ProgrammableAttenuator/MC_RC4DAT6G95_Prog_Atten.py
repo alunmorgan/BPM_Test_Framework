@@ -54,10 +54,14 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         Returns:
             str: Reply message from the device
         """
-        string_1 = self.tn.read_until("\r\n", self.timeout)
-        string_2 = self.tn.read_until("\r\n", self.timeout)
-        string_total = string_1+string_2
-        string_total = string_total.replace('\r\n', "")  # Telnet reply, with termination chars removed
+        prev_status = self.tn.read_until("\r\n", self.timeout)
+        ret_val = self.tn.read_until("\r\n", self.timeout)
+        # Sometimes the device adds an additional carriage return.
+        if ret_val:
+            string_total = ret_val.replace('\r\n', "")  # Telnet reply, with termination chars removed
+        else:
+            string_total = prev_status.replace('\r\n', "")  # Telnet reply, with termination chars removed
+        #print 'Return string = ', string_total
         return string_total
 
     def _check_attenuation(self, attenuation):
@@ -68,11 +72,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             raise ValueError
 
     def _check_channel(self, channel):
-        if type(channel) == str:
-            channel = channel.upper()
-            while channel not in ["A", "B", "C", "D"]:
-                raise ValueError
-        elif type(channel) == int:
+        if type(channel) == int:
             while channel not in [1, 2, 3, 4]:
                 raise ValueError
         else:
@@ -81,7 +81,8 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
     def get_device_id(self):
         model = self._telnet_query("MN?")  # gets the device information
         model = model.replace("MN=", "")
-        if model != "RC4DAT-6G-95":
+        if "RC4DAT-6G-95" not in model:
+            print 'Returned string ', model
             raise ValueError("Wrong device connected")
         return model
 
@@ -93,48 +94,50 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             print 'Odd attenuation value ', attenuation
             raise ValueError
         self._check_attenuation(attenuation)
-        self._telnet_query(":CHAN:1:2:3:4:SetAtt:"+str(attenuation))
-        return self.get_global_attenuation()
+        self._telnet_query(":CHAN:1:2:3:4:SETATT:" + str(attenuation))
 
     def get_global_attenuation(self):
-        replies = self._telnet_query("ATT?")
+        replies = self._telnet_query(':ATT?')
         replies = replies.split()
         replies = map(float, replies)
         return replies
 
     def set_channel_attenuation(self, channel, attenuation):
+        """
+
+                Args:
+                    channel (int): The channel of the attenuator to use. This is in native values of 1,2,3,4.
+                    attenuation (float): The value of attenuation to use. Possible values 0-95 in steps of 0.25.
+
+                Returns:
+                     float: Value of the attenuator on that channel.
+                """
         self._check_attenuation(attenuation)
         self._check_channel(channel)
         if type(channel) == str:
-            channel_dict = {"D": 1, "C": 2, "B": 3, "A": 4}
-            channel = channel.upper()
-            channel = channel_dict[channel]
-        else:
             raise TypeError
-        channel = str(channel)
-        self._telnet_query(":CHAN:"+channel+":SetAtt:" + str(attenuation))
-        channel = int(channel)
-        return self.get_channel_attenuation(channel)
+        command = ":CHAN:" + str(channel) + ":SETATT:" + str(attenuation)
+        self._telnet_write(command)
+        test = self.get_channel_attenuation(channel)
+        if attenuation != test:
+            self._telnet_write(command)
+            test = self.get_channel_attenuation(channel)
 
-    def get_channel_attenuation(self, bpm_channel):
+    def get_channel_attenuation(self, atten_channel):
         """
         
         Args:
-             bpm_channel (str or number): The channel of the attenuator to use. This is either in native values of 
-             1,2,3,4, or bpm labels of A, B, C, D.
+             atten_channel (number): The channel of the attenuator to use. This is in native values of 1,2,3,4.
         
         Returns:
              float: Value of the attenuator on that channel.
         """
-        self._check_channel(bpm_channel)
-        if type(bpm_channel) == str:
-            channel_dict = {"D": 1, "C": 2, "B": 3, "A": 4}
-            atten_channel = channel_dict[bpm_channel.upper()]
-            command = ''.join((":CHAN:" + str(atten_channel) + ":Att?"))
+        self._check_channel(atten_channel)
+        if type(atten_channel) == str:
+            raise TypeError
         else:
-            command = ''.join((":CHAN:" + str(bpm_channel) + ":Att?"))
-        # print 'Command = ', command
-        reply = self._telnet_query(command)
+            command = ":ATT?"
+        reply = self._telnet_query(':ATT?')
         for md in range(10):
             if not reply:  # Checking for an empty string.
                 print 'Got nothing back .... Trying again.'
@@ -144,4 +147,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
                 if md > 0:
                     print 'Get Channel reply = ', reply
                 break
-        return float(reply)
+            if md == 9:
+                raise IOError
+        vals = reply.split()
+        return float(vals[atten_channel - 1])
