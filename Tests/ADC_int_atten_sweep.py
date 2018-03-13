@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from math import floor
+from scipy.io import savemat
 
 
 def adc_int_atten_sweep_test(rf_object,

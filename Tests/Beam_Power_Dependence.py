@@ -2,9 +2,11 @@ from pkg_resources import require
 require("numpy")
 require("cothread")
 require("matplotlib")
+require("scipy")
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from scipy.io import savemat
 
 
 def beam_power_dependence(

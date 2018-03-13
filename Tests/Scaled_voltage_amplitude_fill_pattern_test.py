@@ -5,9 +5,11 @@ from pkg_resources import require
 require("numpy")
 require("cothread")
 require("matplotlib")
+require("scipy")
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from scipy.io import savemat
 
 
 def scaled_voltage_amplitude_fill_pattern_test(

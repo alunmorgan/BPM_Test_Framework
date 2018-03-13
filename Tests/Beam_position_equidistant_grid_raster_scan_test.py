@@ -2,10 +2,12 @@ from pkg_resources import require
 require("numpy")
 require("cothread")
 require("matplotlib")
+require("scipy")
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 import itertools
+from scipy.io import savemat
 
 
 def calc_x_pos(a, b, c, d):
