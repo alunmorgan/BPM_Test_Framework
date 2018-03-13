@@ -37,8 +37,6 @@ def adc_test(
         sub_directory (str): String that can change where the graphs will be saved to.
 
     Returns:
-        float array: X ADC data read from the BPM
-        float array: Y ADC data read from the BPM
     """
     test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object, frequency, power_level)
     # Wait for signal to settle

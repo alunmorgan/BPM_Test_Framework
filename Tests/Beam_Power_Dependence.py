@@ -154,5 +154,3 @@ def beam_power_dependence(
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
 
-    # return the full data sets
-    return output_power, input_power, beam_current, x_pos, y_pos
