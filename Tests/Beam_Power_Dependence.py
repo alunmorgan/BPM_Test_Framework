@@ -98,16 +98,12 @@ def beam_power_dependence(
     format_plot = [] # x axis, y axis, x axis title, y axis title, title of file, caption
     format_plot.append(((power_levels, input_power),
                        ('RF Source Power Output (dBm)', 'Power input at BPM (dBm)', "power_vs_power.pdf")))
-    format_plot.append(((power_levels, beam_current),
-                       ('RF Source Power Output (dBm)', 'Beam Current at BPM (mA)', "power_vs_current.pdf")))
-    format_plot.append(((power_levels, x_pos),
+    format_plot.append(((power_levels, abs(x_pos_mean), x_pos_std),
                        ('RF Source Power Output (dBm)', 'Horizontal Beam Position (mm)', "power_vs_X.pdf"),
                        specs['Beam_power_dependence_X']))
-    format_plot.append(((power_levels, y_pos),
+    format_plot.append(((power_levels, abs(y_pos_mean), y_pos_std),
                        ('RF Source Power Output (dBm)', 'Vertical Beam Position (mm)', "power_vs_Y.pdf"),
                        specs['Beam_power_dependence_Y']))
-    format_plot.append(((power_levels, adc_sum),
-                       ('RF Source Power Output (dBm)', 'ADC Sum (counts)', 'power_vs_ADC_sum.pdf')))
 
     if report_object is not None:
         intro_text = r"""Tests the relationship between RF output power and values read from the BPM. 
@@ -128,21 +124,26 @@ def beam_power_dependence(
         report_object.setup_test(test_name, intro_text, device_names, parameter_names)
         # make a caption and headings for a table of results
         caption = "Beam Power Dependence Results"
-        headings = [["Output Power", "Input Power", "BPM Current", "X Position", "Y Position", "ADC Sum"],
-                    ["(dBm)", "(dBm)", "(mA)", "(mm)", "(mm)", "(Counts)"]]
-        data = [output_power, input_power, beam_current, x_pos, y_pos, adc_sum]
+        headings = [["Input Power", " mean X Position", "mean Y Position", "Std X", "Std Y"],
+                    ["(dBm)", "(mm)", "(mm)", "", ""]]
+        data = [input_power, x_pos_mean, y_pos_mean, x_pos_std, y_pos_std]
         # copy the values to the report
-        report_object.add_table_to_test('|c|c|c|c|c|c|', data, headings, caption)
+        report_object.add_table_to_test('|c|c|c|c|c|', data, headings, caption)
 
     # plot all of the graphs
     for index in format_plot:
-        plt.plot(index[0][0], index[0][1])
+        if len(index[0]) == 2:
+            plt.plot(index[0][0], index[0][1])
+        elif len(index[0]) == 3:
+            plt.errorbar(index[0][0], index[0][1], index[0][2])
+
         plt.xlabel(index[1][0])
         plt.ylabel(index[1][1])
         plt.grid(True)
         if len(index) == 3:
             # There is a specification line. Add this.
-            plt.plot(index[2][0], index[2][1], 'r')
+            #Spec is in um while data is in mm so scale by 1E-3.
+            plt.plot(index[2][0], index[2][1] * 1e-3, 'r')
 
         if report_object is None:
             # If no report is entered as an input to the test, simply display the results
@@ -153,4 +154,6 @@ def beam_power_dependence(
 
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
+
+
 
