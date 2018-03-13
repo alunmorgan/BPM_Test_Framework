@@ -85,7 +85,6 @@ def scaled_voltage_amplitude_fill_pattern_test(
         time.sleep(settling_time)
         rf_output = np.append(rf_output, max_power - power_adjustment)
         bpm_power = np.append(bpm_power, bpm_object.get_input_power())
-        bpm_current = np.append(bpm_current, bpm_object.get_beam_current())
         bpm_xpos = np.append(bpm_xpos, bpm_object.get_x_position())
         bpm_ypos = np.append(bpm_ypos, bpm_object.get_y_position())
         adc_sum = np.append(adc_sum, bpm_object.get_adc_sum())
@@ -93,14 +92,18 @@ def scaled_voltage_amplitude_fill_pattern_test(
     rf_object.turn_off_RF()
     gate_source_object.turn_off_modulation()
 
+    savemat(sub_directory + "constant_bunch_charge_fill_sweep_data" + ".mat",
+            {'duty_cycles': duty_cycles,
+             'bpm_power': bpm_power,
+             'bpm_xpos': bpm_xpos,
+             'bpm_ypos':bpm_ypos})
+
     # Get the plot values in a format thats easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
     format_plot.append((duty_cycles, rf_output, 'Gating signal duty cycle (0-1)', 'RF power ar source (dBm)',
                         "scaled_DC_vs_Out_power.pdf"))
     format_plot.append((duty_cycles, bpm_power, 'Gating signal duty cycle (0-1)', 'Power input at BPM (dBm)',
                         "scaled_DC_vs_In_power.pdf"))
-    format_plot.append((duty_cycles, bpm_current, 'Gating signal duty cycle (0-1)', 'Beam Current at BPM (mA)',
-                        "scaled_DC_vs_current.pdf"))
     format_plot.append((duty_cycles, bpm_xpos, 'Gating signal duty cycle (0-1)', 'Horizontal Beam Position (mm)',
                         "scaled_DC_vs_X.pdf"))
     format_plot.append((duty_cycles, bpm_ypos, 'Gating signal duty cycle (0-1)', 'Vertical Beam Position (mm)',
@@ -132,9 +135,9 @@ def scaled_voltage_amplitude_fill_pattern_test(
         report_object.setup_test(test_name, intro_text, device_names, parameter_names)
         # make a caption and headings for a table of results
         caption = "Changing gate duty cycle, with fixed RF amplitude "
-        headings = [["Duty Cycle", "Output Power", "Input Power", "BPM Current", "X Position", "Y Position", "ADC Sum"],
-                    ["(0-1)", "(dBm)", "(dBm)", "(mA)", "(mm)", "(mm)", "(Counts)"]]
-        data = [duty_cycles, rf_output, bpm_power, bpm_current, bpm_xpos, bpm_ypos, adc_sum]
+        headings = [["Duty Cycle", "Output Power", "Input Power", "X Position", "Y Position", "ADC Sum"],
+                    ["(0-1)", "(dBm)", "(dBm)", "(mm)", "(mm)", "(Counts)"]]
+        data = [duty_cycles, rf_output, bpm_power, bpm_xpos, bpm_ypos, adc_sum]
         # copy the values to the report
         report_object.add_table_to_test('|c|c|c|c|c|c|c|', data, headings, caption)
 
@@ -153,11 +156,3 @@ def scaled_voltage_amplitude_fill_pattern_test(
 
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
-
-    savemat(sub_directory + "constant_bunch_charge_fill_sweep_data" + ".mat",
-            {'duty_cycles': duty_cycles,
-             'bpm_power': bpm_power,
-             'bpm_current': bpm_current,
-             'bpm_xpos': bpm_xpos,
-             'bpm_ypos':bpm_ypos})
-

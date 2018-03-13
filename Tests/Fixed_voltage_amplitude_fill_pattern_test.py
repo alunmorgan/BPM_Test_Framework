@@ -96,8 +96,6 @@ def fixed_voltage_amplitude_fill_pattern_test(
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
     format_plot.append((duty_cycles, bpm_power, 'Gating signal duty cycle (0-1)', 'Power input at BPM (dBm)',
                         "DC_vs_power.pdf"))
-    format_plot.append((duty_cycles, bpm_current, 'Gating signal duty cycle (0-1)', 'Beam Current at BPM (mA)',
-                        "DC_vs_current.pdf"))
     format_plot.append((duty_cycles, bpm_xpos, 'Gating signal duty cycle (0-1)', 'Horizontal Beam Position (mm)',
                         "DC_vs_X.pdf"))
     format_plot.append((duty_cycles, bpm_ypos, 'Gating signal duty cycle (0-1)', 'Vertical Beam Position (mm)',
@@ -130,12 +128,12 @@ def fixed_voltage_amplitude_fill_pattern_test(
 
         # make a caption and headings for a table of results
         caption = "Changing gate duty cycle, with fixed RF amplitude "
-        headings = [["Duty Cycle", "Input Power", "BPM Current", "X Position", "Y Position", "ADC Sum"],
-                    ["(0-1)", "(dBm)", "(mA)", "(mm)", "(mm)", "(Counts)"]]
-        data = [duty_cycles, bpm_power, bpm_current, bpm_xpos, bpm_ypos, adc_sum]
+        headings = [["Duty Cycle", "Input Power", "X Position", "Y Position", "ADC Sum"],
+                    ["(0-1)", "(dBm)", "(mm)", "(mm)", "(Counts)"]]
+        data = [duty_cycles, bpm_power, bpm_xpos, bpm_ypos, adc_sum]
 
         # copy the values to the report
-        report_object.add_table_to_test('|c|c|c|c|c|c|', data, headings, caption)
+        report_object.add_table_to_test('|c|c|c|c|c|', data, headings, caption)
 
     # plot all of the graphs
     for index in format_plot:
@@ -155,7 +153,6 @@ def fixed_voltage_amplitude_fill_pattern_test(
     savemat(sub_directory + "constant_fill_charge_fill_sweep_data" + ".mat",
             {'duty_cycles': duty_cycles,
              'bpm_power': bpm_power,
-             'bpm_current': bpm_current,
              'bpm_xpos': bpm_xpos,
              'bpm_ypos':bpm_ypos})
 
