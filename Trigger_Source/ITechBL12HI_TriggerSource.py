@@ -1,5 +1,5 @@
 from Generic_TriggerSource import *
-import common_device_functions.ITechBL12HI_common as common
+import common_device_functions.ITechBL12HI_common as itechbl12hi_common
 from pkg_resources import require
 require("numpy")
 import numpy as np
@@ -17,7 +17,7 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
     """
     # Constructor and Deconstructor
 
-    def __init__(self, ipaddress, port=5024, timeout=1):
+    def __init__(self, tn, timeout):
         """Initialises and opens the connection to the ITechBL12HI over telnet and informs the user 
 
         Args:
@@ -29,8 +29,9 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
 
         """
         self.timeout = timeout  # timeout for the telnet comms
-        self.ipaddress = ipaddress
-        self.port = port
+        #self.ipaddress = ipaddress
+        #self.port = port
+        self.tn = tn
         self.DeviceID = self.get_device_id()  # gets the device of the telnet device, makes sure its the right one
         self.turn_off_RF()  # turn off the RF output
 
@@ -40,15 +41,14 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
         """Closes the telnet connection to the ITechBL12HI
         """
         self.turn_off_RF()  # make sure the RF output is off
-        # self.tn.close()  # close the telnet link
+        #self.tn.close()  # close the telnet link
         print("Closed connection to " + self.DeviceID)  # tell the user the telnet link has closed
 
     # API Calls
     def get_device_id(self):
         """Override method that will return the device ID."""
-        return common.get_device_identity(ipaddress=self.ipaddress,
-                                          port=self.port,
-                                          timeout=self.timeout)
+        return itechbl12hi_common.get_device_identity(self.tn,
+                                                      timeout=self.timeout)
 
     def set_up_trigger_pulse(self, freq):
         """Override method that will set up a trigger signal.
@@ -63,10 +63,9 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
 
         Set the level to the requested power.
         This hardware does not have the ability to turn the RF source on and off."""
-        common.turn_rf_on(ipaddress=self.ipaddress,
-                          port=self.port,
-                          timeout=self.timeout,
-                          Output_Power=self.Output_Power)
+        itechbl12hi_common.turn_rf_on(self.tn,
+                                      timeout=self.timeout,
+                                      Output_Power=self.Output_Power)
 
     def turn_off_RF(self):
         """Override method that will turn off the RF device output.
@@ -74,9 +73,8 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
         This device does not have the ability to turn off teh RF source.
         Instead it is turned down to the lowest level."""
 
-        common.turn_rf_off(ipaddress=self.ipaddress,
-                           port=self.port,
-                           timeout=self.timeout)
+        itechbl12hi_common.turn_rf_off(self.tn,
+                                       timeout=self.timeout)
 
     def get_output_state(self):
         """Override method that will get the current output state.
@@ -90,7 +88,7 @@ class ITechBL12HI_trigsrc(Generic_TrigSource):
             bool: Returns True if the output is enabled, False if it is not.
         """
         # checks output state
-        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "POW:RF?")
+        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "POW:RF?")
         if "-50" in ret:
             self.Output_State = False  # output must be off
             return False

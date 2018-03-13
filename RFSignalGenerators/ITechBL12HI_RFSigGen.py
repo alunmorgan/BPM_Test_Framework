@@ -1,5 +1,5 @@
 from Generic_RFSigGen import *
-import common_device_functions.ITechBL12HI_common as common
+import common_device_functions.ITechBL12HI_common as itechbl12hi_common
 from pkg_resources import require
 require("numpy")
 import numpy as np
@@ -32,6 +32,7 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         self.timeout = timeout  # timeout for the telnet comms
         self.ipaddress = ipaddress
         self.port = port
+        self.tn = itechbl12hi_common.telnet_setup(ipaddress, port, timeout)
         self.device_id = self.get_device_id()  # gets the device of the telnet device, makes sure its the right one
         self.turn_off_RF()  # turn off the RF output
         self.limit = limit  # set the RF output limit
@@ -43,14 +44,14 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         """Closes the telnet connection to the ITechBL12HI
         """
         self.turn_off_RF()  # make sure the RF output is off
+        self.tn.close()  # Closes the telnet connection
         print("Closed connection to RF source " + self.device_id)  # tell the user the telnet link has closed
 
     # API Calls
     def get_device_id(self):
         """Override method that will return the device ID."""
-        return common.get_device_identity(ipaddress=self.ipaddress,
-                                          port=self.port,
-                                          timeout=self.timeout)
+        return itechbl12hi_common.get_device_identity(self.tn,
+                                                      timeout=self.timeout)
 
     def get_output_power(self):
         """Override method that will return the output power.
@@ -63,7 +64,7 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             float: The current power value as a float in dBm
             str: The current output power concatenated with the units.
         """
-        self.Output_Power = common.telnet_query(self.ipaddress, self.port, self.timeout, "POW:RF?")
+        self.Output_Power = itechbl12hi_common.telnet_query(self.tn, self.timeout, "POW:RF?")
         return float(self._split_num_char(self.Output_Power)[0]), self.Output_Power
 
     def get_frequency(self):
@@ -78,7 +79,7 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             str: The current output frequency concatenated with the units.
         """
 
-        self.Frequency, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "FREQ:RF?")  # get the device frequency
+        self.Frequency, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "FREQ:RF?")  # get the device frequency
         return float(self.Frequency.replace(',', '.')[0:-4]), self.Frequency
 
     def set_frequency(self, frequency):
@@ -95,10 +96,10 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         # check the input is a numeric
         if type(frequency) != float and type(frequency) != int \
                 and np.float64 != np.dtype(frequency) and np.int64 != np.dtype(frequency):
-            raise TypeError
+            raise TypeError('Frequency value is not a float or int')
         # check the output is a positive number
         elif frequency < 0:
-            raise ValueError
+            raise ValueError('Frequency value is < 0')
 
         self.Frequency = frequency
         f_str = str(frequency).replace('.', ',')
@@ -106,7 +107,8 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             # Adding the truncated 0
             f_str = f_str + '0'
         freq_str = ''.join(("FREQ:RF " + f_str))
-        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, freq_str)  # Write the frequency value in MHz
+        # Write the frequency value in MHz
+        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, freq_str)
         return check
 
     def set_output_power(self, power):
@@ -124,7 +126,7 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         # check the input is a numeric
         if type(power) != float and type(power) != int \
                 and np.float64 != np.dtype(power) and np.int64 != np.dtype(power):
-            raise TypeError
+            raise TypeError('Power value is not numeric')
         elif power > self.limit:  # If a value that is too high is used, the hardware may break.
             power = self.limit
             # tell the user the limit has been reached and cap the output level
@@ -134,8 +136,8 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
             warnings.warn('Power level is too low setting to -50 dBm')
         self.Output_Power = np.round(power)
         #  print 'Power = ', self.Output_Power
-        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout,
-                                         "POW:RF " + str(self.Output_Power))  # write the new output power
+        # write the new output power
+        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "POW:RF " + str(self.Output_Power))
         return check
 
     def turn_on_RF(self):
@@ -143,20 +145,18 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         
         Set the level to the requested power.
         This hardware does not have the ability to turn the RF source on and off."""
-        common.turn_rf_on(ipaddress=self.ipaddress,
-                          port=self.port,
-                          timeout=self.timeout,
-                          Output_Power=self.Output_Power)
+        itechbl12hi_common.turn_rf_on(self.tn,
+                                      timeout=self.timeout,
+                                      Output_Power=self.Output_Power)
 
     def turn_off_RF(self):
         """Override method that will turn off the RF device output.
 
         This device does not have the ability to turn off teh RF source.
         Instead it is turned down to the lowest level."""
-        
-        common.turn_rf_off(ipaddress=self.ipaddress,
-                           port=self.port,
-                           timeout=self.timeout)
+
+        itechbl12hi_common.turn_rf_off(self.tn,
+                                       timeout=self.timeout)
 
     def get_output_state(self):
         """Override method that will get the current output state. 
@@ -182,7 +182,7 @@ class ITechBL12HI_RFSigGen(Generic_RFSigGen):
         # checks the input is a numeric
         if type(limit) != float and type(limit) != int \
                 and np.float64 != np.dtype(limit) and np.int64 != np.dtype(limit):
-            raise TypeError
+            raise TypeError('Limit value is not numeric')
         self.limit = limit
         return self.get_output_power_limit()
 

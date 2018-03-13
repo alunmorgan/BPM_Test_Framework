@@ -1,5 +1,5 @@
 from Generic_GateSource import *
-import common_device_functions.ITechBL12HI_common as common
+import common_device_functions.ITechBL12HI_common as itechbl12hi_common
 from pkg_resources import require
 require("numpy")
 import numpy as np
@@ -12,7 +12,7 @@ class CustomException(Exception):
 class ITechBL12HI_GateSource(Generic_GateSource):
     # Constructor and Deconstructor
 
-    def __init__(self, ipaddress, port=5555, timeout=1):
+    def __init__(self, tn, timeout):
         """Initialises and opens the connection to the ITechBL12HI over telnet and informs the user 
 
         Args:
@@ -24,8 +24,9 @@ class ITechBL12HI_GateSource(Generic_GateSource):
             
         """
         self.timeout = timeout  # Sets timeout for the telnet calls
-        self.ipaddress = ipaddress
-        self.port = port
+        #self.ipaddress = ipaddress
+        #self.port = port
+        self.tn = tn
         self.device_id = self.get_device_id()  # Gets the device ID, checks connection is made
         self.modulation_state = self.get_modulation_state()
         #self.turn_off_modulation()  # Turns off the signal modulation
@@ -48,9 +49,8 @@ class ITechBL12HI_GateSource(Generic_GateSource):
     # API Methods
     def get_device_id(self):
         #     """Override method that will return the device ID.
-        return common.get_device_identity(ipaddress=self.ipaddress,
-                                          port=self.port,
-                                          timeout=self.timeout)
+        return itechbl12hi_common.get_device_identity(self.tn,
+                                                      timeout=self.timeout)
 
     def turn_on_modulation(self):
         """Override method, Turns on the pulse modulation.
@@ -63,7 +63,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL 0")  # Turns on the modulation state output
+        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "GATE:FILL 0")  # Turns on the modulation state output
         if 'OK' in check:
             self.modulation_state = True
         else:
@@ -83,7 +83,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL 100")  # Turns off the modulation state output
+        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "GATE:FILL 100")  # Turns off the modulation state output
         if 'OK' in check:
             self.modulation_state = False
         else:
@@ -100,7 +100,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        modulation, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL?")  # Checks the modulation state
+        modulation, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "GATE:FILL?")  # Checks the modulation state
         if modulation == "100 %":
             modulation_state = False  # If it isn't, return a False
         else:
@@ -117,7 +117,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
             str: The units that the pulse period is measured in 
 
         """
-        m_clk, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "FREQ:MC?")
+        m_clk, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "FREQ:MC?")
         m_num = m_clk[0:-4]
         m_num2 = float(m_num.replace(',', '.'))  # MHz
         self.pulse_period = 1. / m_num2  # Gets the pulse period of the device
@@ -160,7 +160,7 @@ class ITechBL12HI_GateSource(Generic_GateSource):
          Returns:
              float: decimal value (0-1) of the duty cycle of the pulse modulation
          """
-        fill, check = common.telnet_query(self.ipaddress, self.port, self.timeout, "GATE:FILL?")  # calculates the duty cycle and returns it
+        fill, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "GATE:FILL?")  # calculates the duty cycle and returns it
         g_fill = float(fill[0:-2])
         return g_fill / 100.
 
@@ -177,13 +177,13 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         """
         # makes sure the duty cycle value is a numeric
         if type(dutycycle) != float and type(dutycycle) != int and np.float64 != np.dtype(dutycycle):
-            raise TypeError
+            raise TypeError('Duty cycle is not numeric')
         # makes sure the duty cycle value is a decimal between 0 and 1
         elif dutycycle > 1 or dutycycle < 0:
-            raise ValueError
+            raise ValueError('Duty cycle is >1 or < 0')
         duty_str = "GATE:FILL " + str(int(np.round(dutycycle * 100))) + '\r\n'
         # writes the calculated pulse width
-        ret, check = common.telnet_query(self.ipaddress, self.port, self.timeout, duty_str)
+        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, duty_str)
         return check
 
     def invert_pulse_polarity(self, polarity):
