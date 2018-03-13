@@ -77,7 +77,7 @@ class Tex_Report():
         subset.append(signal[len(signal) - 1])
         return subset
 
-    def setup_test(self, section_title, introduction_text ,device_names, parameter_names):
+    def setup_test(self, section_title, introduction_text, device_names, parameter_names):
         """Creates a new LaTeX section for a new test
 
         Creates a LaTeX section for the report, this will format and load into it 
@@ -105,10 +105,11 @@ class Tex_Report():
             for i in device_names:
                 self.doc.append(NoEscape(i + r'\\'))
 
-            self.doc.append(NoEscape(r'\\'))
-            self.doc.append(NoEscape(r'\textbf{The parameters used in this test are:}\\\\'))
-            for i in parameter_names:
-                self.doc.append(NoEscape(i + r'\\'))
+            if parameter_names:
+                self.doc.append(NoEscape(r'\\'))
+                self.doc.append(NoEscape(r'\textbf{The parameters used in this test are:}\\\\'))
+                for i in parameter_names:
+                    self.doc.append(NoEscape(i + r'\\'))
 
     def add_figure_to_test(self, image_name, caption=""):
         """Adds a figure to the current section of the report
