@@ -75,6 +75,7 @@ class ElectronBPMDevice(Generic_BPMDevice):
             self.mac_address = self._get_mac_address()
             self.device_id = self.get_device_id()
             # Initial setup of the BPM system.
+            self.ft = self._read_epics_pv("FT:ENABLE_S")
             self.kx = self._read_epics_pv("CF:KX_S")
             self.ky = self._read_epics_pv("CF:KY_S")
             self.agc = self._read_epics_pv("CF:ATTEN:AGC_S")
@@ -100,6 +101,7 @@ class ElectronBPMDevice(Generic_BPMDevice):
             agc = 'AGC on'
         else:
             raise IOError('AGC value is invalid')
+        self._write_epics_pv("FT:ENABLE_S", self.ft)
         self._write_epics_pv("CF:ATTEN:AGC_S", agc)  # Restore AGC.
         self._write_epics_pv("CF:ATTEN:DISP_S", self.delta)  # Restore delta.
         self._write_epics_pv("CF:ATTEN:OFFSET_S", self.attn_wfm)  # Restore attenuation waveform.
@@ -109,9 +111,12 @@ class ElectronBPMDevice(Generic_BPMDevice):
         self.set_attenuation(self.attn)  # Restore attenuation setting.
         print "Closed connection to " + self.get_device_id()
 
-    def set_internal_state(self, agc='AGC on', delta=0, offset=0, switches='Auto',
-                           switch_state=15, attenuation=33, dsc='Automatic'):
-        self._write_epics_pv("CF:ATTEN:AGC_S", agc)  # Turn AGC off.
+    def set_internal_state(self, agc='AGC off', delta=0, offset=0, switches='Auto',
+                           switch_state=15, attenuation=0, dsc='Automatic',
+                           ft_state='Disabled'):
+        """Sets up the internal state of the BPM. The defaults set it up in normal running conditions."""
+        self._write_epics_pv("FT:ENABLE_S", ft_state)
+        self._write_epics_pv("CF:ATTEN:AGC_S", agc)  # Set Automatic gain control.
         self._write_epics_pv("CF:ATTEN:DISP_S", delta)  # Set delta to zero.
         # Set attenuation waveform to offset.
         self._write_epics_pv("CF:ATTEN:OFFSET_S", [x * offset for x in np.ones_like(self.attn_wfm)])
