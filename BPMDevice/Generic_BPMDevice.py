@@ -96,11 +96,11 @@ class Generic_BPMDevice():
         pass
 
     @abstractmethod
-    def get_adc_data(self):
+    def get_adc_data(self, num_bits):
         """Abstract method for override, gets the ABCD ADC data.
 
         Args:
-            num_vals (int): The number of samples to capture
+            num_bits (int): The number of bits the ADC has
         Returns: 
             list: [raw_timestamp (tuple), X position in mm]
         """
@@ -173,16 +173,6 @@ class Generic_BPMDevice():
         Args:
         Returns: 
             str: Type of BPM with MAC address
-        """
-        pass
-
-    @abstractmethod
-    def get_input_tolerance(self):
-        """Abstract method for override, gets the maximum input power the device can take
-
-        Args:
-        Returns: 
-            float: max input power in dBm
         """
         pass
 
