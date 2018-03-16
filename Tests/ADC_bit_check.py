@@ -101,9 +101,9 @@ def adc_test(
     # This is because the epics layer always returns a 16 bit number.
     # For now set to 16. The upper extra bits will be ignored in the later processing anyway.
     format_string = '0%db' % 16  # bpm_object.adc_n_bits
-    print data1_tmp
-    test = np.asarray([list(format(x, format_string)) for x in data1_tmp])
-    print test
+    # print data1_tmp
+    # test = np.asarray([list(format(x, format_string)) for x in data1_tmp])
+    # print test
     data[:, :, 0] = np.asarray([list(format(x, format_string)) for x in data1_tmp])
     data[:, :, 1] = np.asarray([list(format(x, format_string)) for x in data2_tmp])
     data[:, :, 2] = np.asarray([list(format(x, format_string)) for x in data3_tmp])
@@ -117,6 +117,9 @@ def adc_test(
         format_plot.append(((np.arange(1, 16 + 1), data_std[:, kw]),
                             ('bit number', 'Standard deviation', ' '.join(('ADC', str(kw + 1))),
                              'ADC_bit_check.pdf')))
+    format_plot.append(((time_tmp,  data1_tmp),
+                        ('time', 'Data', 'ADC 1',
+                         'ADC_data.pdf')))
 
     savemat(''.join((sub_directory, 'ADC_bit_check', '_data.mat')),
             {'data': data,
@@ -126,7 +129,7 @@ def adc_test(
     cols = ['k', 'r', 'g', 'b']
     x_shift = 0
     cols_ind = 0
-    for index in format_plot:
+    for index in format_plot[:-1]:
         plt.bar(index[0][0] + x_shift, index[0][1], align='center', width=0.15, label=index[1][2], color=cols[cols_ind])
         x_shift = x_shift + 0.1
         cols_ind = cols_ind + 1
@@ -142,6 +145,21 @@ def adc_test(
     else:
         plt.savefig(''.join((sub_directory, format_plot[0][1][3])))
         report_object.add_figure_to_test(image_name=''.join((sub_directory, format_plot[0][1][3])),
+                                         caption='ADC bit test. All should be close to 0.5')
+    plt.cla()  # Clear axis
+    plt.clf()  # Clear figure
+
+    plt.plot(format_plot[-1][0][0], format_plot[-1][0][1], label=format_plot[-1][1][2])
+    plt.legend(loc='upper right')
+    plt.xlabel(format_plot[-1][1][0])
+    plt.ylabel(format_plot[-1][1][1])
+
+    if report_object is None:
+        # If no report is entered as an input to the test, simply display the results
+        plt.show()
+    else:
+        plt.savefig(''.join((sub_directory, format_plot[-1][1][3])))
+        report_object.add_figure_to_test(image_name=''.join((sub_directory, format_plot[-1][1][3])),
                                          caption='ADC bit test. All should be close to 0.5')
     plt.cla()  # Clear axis
     plt.clf()  # Clear figure
