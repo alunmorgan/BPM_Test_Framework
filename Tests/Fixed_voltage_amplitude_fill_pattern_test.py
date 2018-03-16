@@ -24,6 +24,7 @@ def fixed_voltage_amplitude_fill_pattern_test(
                                    duty_cycles=np.arange(1, 0, -0.1),
                                    pulse_period=1.87319,
                                    settling_time=1,
+                                   samples=10,
                                    report_object=None,
                                    sub_directory=""):
     """
@@ -51,6 +52,7 @@ def fixed_voltage_amplitude_fill_pattern_test(
                 this is a float that is in micro seconds.
             settling_time (float): Time in seconds, that the program will wait in between 
                 setting an  output power on the RF, and reading the values of the BPM. 
+            samples (int): The number of samples to capture at each data point.
             report_object (LaTeX Report Obj): Specific report that the test results will be recorded
                 to. If no report is sent to the test then it will just display the results in 
                 a graph. 
@@ -65,8 +67,12 @@ def fixed_voltage_amplitude_fill_pattern_test(
 
 
     """
-    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
-                                                       frequency, max_power)
+    test_name = test_system_object.test_initialisation(test_name=__name__,
+                                                       rf_object=rf_object,
+                                                       prog_atten_object=prog_atten_object,
+                                                       bpm_object=bpm_object,
+                                                       frequency=frequency,
+                                                       power_level=max_power)
 
     gate_source_object.set_pulse_period(pulse_period)
     gate_source_object.turn_on_modulation()
@@ -74,37 +80,48 @@ def fixed_voltage_amplitude_fill_pattern_test(
     # Set up BPM for normal operation
     bpm_object.set_internal_state()
     # Wait for system to settle
-    time.sleep(settling_time)
+    time.sleep(5)
 
-    bpm_power = np.array([])
-    bpm_xpos = np.array([])
-    bpm_ypos = np.array([])
-    adc_sum = np.array([])
+    # Build up the arrays where the final values will be saved
+    x_pos_mean = np.array([])
+    y_pos_mean = np.array([])
+    x_pos_std = np.array([])
+    y_pos_std = np.array([])
 
     for index in duty_cycles:
         gate_source_object.set_pulse_dutycycle(index)
         time.sleep(settling_time)
-        bpm_power = np.append(bpm_power, bpm_object.get_input_power())
-        bpm_xpos = np.append(bpm_xpos, bpm_object.get_x_position())
-        bpm_ypos = np.append(bpm_ypos, bpm_object.get_y_position())
-        adc_sum = np.append(adc_sum, bpm_object.get_adc_sum())
+        #bpm_power = np.append(bpm_power, bpm_object.get_input_power())
+        x_time, x_pos_data = bpm_object.get_x_sa_data(samples)  # record X pos
+        y_time, y_pos_data = bpm_object.get_y_sa_data(samples)  # record Y pos
+
+        x_pos_mean = np.append(x_pos_mean, np.mean(x_pos_data))  # record X pos
+        y_pos_mean = np.append(y_pos_mean, np.mean(y_pos_data))  # record Y pos
+        x_pos_std = np.append(x_pos_std, np.std(x_pos_data))  # record X pos
+        y_pos_std = np.append(y_pos_std, np.std(y_pos_data))  # record Y pos
 
     rf_object.turn_off_RF()
     gate_source_object.turn_off_modulation()
 
+    savemat(sub_directory + "constant_fill_charge_fill_sweep_data" + ".mat",
+            {'duty_cycles': duty_cycles,
+             'x_pos_mean': x_pos_mean,
+             'x_pos_std': x_pos_std,
+             'y_pos_mean': y_pos_mean,
+             'y_pos_std': y_pos_std})
+
     # Get the plot values in a format thats easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append((duty_cycles, bpm_power, 'Gating signal duty cycle (0-1)', 'Power input at BPM (dBm)',
-                        "DC_vs_power.pdf"))
-    format_plot.append((duty_cycles, bpm_xpos, 'Gating signal duty cycle (0-1)', 'Horizontal Beam Position (mm)',
-                        "DC_vs_X.pdf"))
-    format_plot.append((duty_cycles, bpm_ypos, 'Gating signal duty cycle (0-1)', 'Vertical Beam Position (mm)',
-                        "DC_vs_Y.pdf"))
-    format_plot.append((duty_cycles, adc_sum, 'Gating signal duty cycle (0-1)', 'ADC Sum (counts)',
-                        'DC_vs_ADC_sum.pdf'))
+    format_plot.append(((duty_cycles, x_pos_mean, x_pos_std),
+                        ('Gating signal duty cycle (0-1)', 'Horizontal Beam Position (mm)',
+                        "Duty_cycle_vs_X.pdf")))
+    format_plot.append(((duty_cycles, x_pos_mean, x_pos_std),
+                        ('Gating signal duty cycle (0-1)', 'Vertical Beam Position (mm)',
+                        "Duty_cycle_vs_Y.pdf")))
 
     if report_object is not None:
         intro_text = r"""
+            Equivalent to keeping the total charge in the train constant.
             This test imitates a fill pattern by modulation the RF signal with a square wave. The up time 
             of the square wave represents when a bunch goes passed, and the downtime the gaps between the 
             bunches. This test will take the pulse length in micro seconds, and then linearly step up the 
@@ -128,31 +145,26 @@ def fixed_voltage_amplitude_fill_pattern_test(
 
         # make a caption and headings for a table of results
         caption = "Changing gate duty cycle, with fixed RF amplitude "
-        headings = [["Duty Cycle", "Input Power", "X Position", "Y Position", "ADC Sum"],
-                    ["(0-1)", "(dBm)", "(mm)", "(mm)", "(Counts)"]]
-        data = [duty_cycles, bpm_power, bpm_xpos, bpm_ypos, adc_sum]
+        headings = [["Duty Cycle", "mean X Position", "mean Y Position", "Std X", "Std Y"],
+                    ["(0-1)", "(mm)", "(mm)", "", ""]]
+        data = [duty_cycles, x_pos_mean, y_pos_mean, x_pos_std, y_pos_std]
 
         # copy the values to the report
         report_object.add_table_to_test('|c|c|c|c|c|', data, headings, caption)
 
     # plot all of the graphs
     for index in format_plot:
-        plt.plot(index[0], index[1])
-        plt.xlabel(index[2])
-        plt.ylabel(index[3])
+        plt.errorbar(index[0][0], index[0][1], index[0][2])
+        plt.xlabel(index[1][0])
+        plt.ylabel(index[1][1])
         plt.grid(True)
         if report_object is None:
             # If no report is entered as an input to the test, simply display the results
             plt.show()
         else:
-            plt.savefig(''.join((sub_directory, index[4])))
-            report_object.add_figure_to_test(image_name=''.join((sub_directory, index[4])), caption=index[4])
+            plt.savefig(''.join((sub_directory, index[1][2])))
+            report_object.add_figure_to_test(image_name=''.join((sub_directory, index[1][2])), caption=index[1][2])
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
 
-    savemat(sub_directory + "constant_fill_charge_fill_sweep_data" + ".mat",
-            {'duty_cycles': duty_cycles,
-             'bpm_power': bpm_power,
-             'bpm_xpos': bpm_xpos,
-             'bpm_ypos':bpm_ypos})
 
