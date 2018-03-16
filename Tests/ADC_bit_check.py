@@ -38,9 +38,15 @@ def adc_test(
 
     Returns:
     """
-    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object, frequency, power_level)
-    bpm_object.set_internal_state(agc='AGC off', delta=0, offset=0, switches='Manual',
-                                  switch_state=15, attenuation=0, dsc='Unity gains',
+    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object, bpm_object,
+                                                       frequency, power_level)
+    bpm_object.set_internal_state(agc='AGC off',
+                                  delta=0,
+                                  offset=0,
+                                  switches='Manual',
+                                  switch_state=bpm_object.switch_straight,
+                                  attenuation=0,
+                                  dsc='Unity gains',
                                   ft_state='Enabled')
     # Wait for signal to settle
     time.sleep(settling_time)
@@ -58,16 +64,31 @@ def adc_test(
         device_names.append('BPM is ' + test_system_object.bpm_hw)
 
         # Get the parameter values for the report
+        if bpm_object.dsc == 0:
+            dsc = 'Fixed gains'
+        elif bpm_object.dsc == 1:
+            dsc = 'Unity gains'
+        elif bpm_object.dsc == 2:
+            dsc = 'Automatic'
+        else:
+            raise ValueError('DSC value is incorrect')
+
         parameter_names = []
+        parameter_names.append('AGC %d' % bpm_object.agc)
+        parameter_names.append('Switching %d' % bpm_object.switches)
+        parameter_names.append('DSC %s' % dsc)
+
         # add the test details to the report
         report_object.setup_test(test_name, intro_text, device_names, parameter_names)
 
     # Setting up variables.
-    data = np.empty((1024, bpm_object.adc_n_bits, bpm_object.num_adcs))
-    data_std = np.empty((bpm_object.adc_n_bits, bpm_object.num_adcs))
+    data = np.empty((1024, 16, bpm_object.num_adcs))
+    data_std = np.empty((16, bpm_object.num_adcs))
+    # data = np.empty((1024, bpm_object.adc_n_bits, bpm_object.num_adcs))
+    # data_std = np.empty((bpm_object.adc_n_bits, bpm_object.num_adcs))
 
     # Gets 1024 samples for each ADC.
-    time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_adc_data()  # record data
+    time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_adc_data(16)  # record data
 
     # turn off the RF
     rf_object.turn_off_RF()
@@ -76,17 +97,24 @@ def adc_test(
     # First convert the int value into a binary string.
     # Turn that sting into a list of values.
     # Then turn that list of lists into an array
-    data[:, :, 0] = np.asarray([list(format(x, '0' + str(bpm_object.adc_n_bits) + 'b')) for x in data1_tmp])
-    data[:, :, 1] = np.asarray([list(format(x, '0' + str(bpm_object.adc_n_bits) + 'b')) for x in data2_tmp])
-    data[:, :, 2] = np.asarray([list(format(x, '0' + str(bpm_object.adc_n_bits) + 'b')) for x in data3_tmp])
-    data[:, :, 3] = np.asarray([list(format(x, '0' + str(bpm_object.adc_n_bits) + 'b')) for x in data4_tmp])
+    # This should be bpm_object.adc_n_bits in size. However if this is not 16 there is a broadcast error.
+    # This is because the epics layer always returns a 16 bit number.
+    # For now set to 16. The upper extra bits will be ignored in the later processing anyway.
+    format_string = '0%db' % 16  # bpm_object.adc_n_bits
+    print data1_tmp
+    test = np.asarray([list(format(x, format_string)) for x in data1_tmp])
+    print test
+    data[:, :, 0] = np.asarray([list(format(x, format_string)) for x in data1_tmp])
+    data[:, :, 1] = np.asarray([list(format(x, format_string)) for x in data2_tmp])
+    data[:, :, 2] = np.asarray([list(format(x, format_string)) for x in data3_tmp])
+    data[:, :, 3] = np.asarray([list(format(x, format_string)) for x in data4_tmp])
 
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
 
     for kw in range(bpm_object.num_adcs):
         for wn in range(bpm_object.adc_n_bits):
             data_std[wn, kw] = np.std(data[:, wn, kw])
-        format_plot.append(((np.arange(1, bpm_object.adc_n_bits + 1), data_std[:, kw]),
+        format_plot.append(((np.arange(1, 16 + 1), data_std[:, kw]),
                             ('bit number', 'Standard deviation', ' '.join(('ADC', str(kw + 1))),
                              'ADC_bit_check.pdf')))
 
