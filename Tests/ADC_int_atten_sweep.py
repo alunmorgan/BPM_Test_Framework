@@ -16,6 +16,7 @@ def adc_int_atten_sweep_test(
                              prog_atten_object,
                              frequency,
                              power_level=-20,
+                             external_attenuation=60,
                              attenuation_levels=np.arange(0, 62, 2),
                              settling_time=1,
                              report_object=None,
@@ -31,6 +32,8 @@ def adc_int_atten_sweep_test(
         prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
         frequency (float): Output frequency for the tests, set as a float that will use the assumed units of MHz.
         power_levels (tuple of floats): output power levels for the tests. dBm is assumed.
+        external_attenuation (int): The level of external attenuation used in order to set the initial
+                                    power level at the BPM.
         settling_time (float): Time in seconds, that the program will wait in between
             setting an  output power on the RF, and reading the values of the BPM.
         report_object (LaTeX Report Obj): Specific report that the test results will be recorded
@@ -41,9 +44,11 @@ def adc_int_atten_sweep_test(
         float array: X ADC data read from the BPM
         float array: Y ADC data read from the BPM
     """
-    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object, frequency, power_level)
+    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
+                                                       bpm_object, frequency, power_level,
+                                                       external_attenuation=external_attenuation)
     bpm_object.set_internal_state(agc='AGC off', delta=0, offset=0, switches='Manual',
-                                  switch_state=15, attenuation=0, dsc='Unity gains',
+                                  switch_state=bpm_object.switch_straight, attenuation=0, dsc='Unity gains',
                                   ft_state='Enabled')
     # Wait for system to settle
     time.sleep(settling_time)
@@ -65,44 +70,57 @@ def adc_int_atten_sweep_test(
         # add the test details to the report
         report_object.setup_test(test_name, intro_text, device_names, parameter_names)
 
-    data = np.empty((len(attenuation_levels), 1024, bpm_object.num_adcs))
-    # data_std = np.empty((len(attenuation_levels), bpm_object.num_adcs))
-    # data1_mean = []
-    # data2_mean = []
-    # data3_mean = []
-    # data4_mean = []
-    # data1_std = []
-    # data2_std = []
-    # data3_std = []
-    # data4_std = []
-    # times = []
-    # graph_legend = []
+    num_repeat_points = 10
+    data = np.empty((len(attenuation_levels), 1024, bpm_object.num_adcs, num_repeat_points))
+    data_adj = np.zeros((len(attenuation_levels), bpm_object.num_adcs))
+
     #  Gradually reducing the power level
     level_ind = 0
+    upper_atten = attenuation_levels[0]
+    atten_step = 2  # The drop in attenuation allowed before the external attenuation is adjusted.
     for index in attenuation_levels:
-        # Set attenuator value to give desired power level.
+        data_adj_before = np.empty((1024, bpm_object.num_adcs))
+        data_adj_after = np.empty((1024, bpm_object.num_adcs))
+        _1, data_adj_before[:, 0], \
+            data_adj_before[:, 1], \
+            data_adj_before[:, 2], \
+            data_adj_before[:, 3] = bpm_object.get_adc_data(bpm_object.adc_n_bits)
+        time.sleep(settling_time)  # Wait for signal to settle
+        prog_atten_object.set_global_attenuation(external_attenuation - index)
+        _1, data_adj_after[:, 0], \
+            data_adj_after[:, 1], \
+            data_adj_after[:, 2], \
+            data_adj_after[:, 3] = bpm_object.get_adc_data(bpm_object.adc_n_bits)
+        data_adj[level_ind, :] = np.max(data_adj_after, axis=0) - \
+                                 np.max(data_adj_before, axis=0) #+ data_adj[level_ind - 1, :]
         bpm_object.set_attenuation(index)
         time.sleep(settling_time)  # Wait for signal to settle
         # Gets 1024 samples for each ADC.
-        time_tmp, data[level_ind, :, 0], \
-                  data[level_ind, :, 1], \
-                  data[level_ind, :, 2], \
-                  data[level_ind, :, 3] = bpm_object.get_adc_data()  # record data
+        for nw in range(num_repeat_points):
+            time_tmp, data[level_ind, :, 0, nw], \
+                      data[level_ind, :, 1, nw], \
+                      data[level_ind, :, 2, nw], \
+                      data[level_ind, :, 3, nw] = bpm_object.get_adc_data(bpm_object.adc_n_bits)  # record data
+        level_ind = level_ind + 1
 
     # turn off the RF
     rf_object.turn_off_RF()
 
-    data_mean = np.mean(data, axis=1)
-    data_std = np.std(data, axis=1)
-
+    data_max = np.mean(np.max(data, axis=1), axis=2)
+    data_std = np.std(np.max(data, axis=1), axis=2)
+    data_corrected = data_max - data_adj
     savemat(sub_directory + "ADC_int_atten_sweep_data" + ".mat",
-            {'data_mean': data_mean,
-             'data_std': data_std})
+            {'attenuation': attenuation_levels,
+             'data': data,
+             'data_max': data_max,
+             'data_std': data_std,
+             'data_adj': data_adj,
+             'data_corrected': data_corrected})
 
     # Get the plot values in a format that is easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
     for hw in range(bpm_object.num_adcs):
-        format_plot.append(((attenuation_levels, data_mean[:, hw], data_std[:, hw]), ('attenuation', 'counts',
+        format_plot.append(((attenuation_levels, data_corrected[:, hw], data_std[:, hw]), ('attenuation', 'counts',
                             "ADC_varying_internal_attenuation.pdf", ' '.join(('ADC', str(hw))))))
 
     # plot all of the graphs
