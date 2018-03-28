@@ -1,10 +1,4 @@
-from pkg_resources import require
-require("numpy")
-require("cothread")
-require("matplotlib")
-require("scipy")
 import numpy as np
-import matplotlib.pyplot as plt
 import time
 from scipy.io import savemat
 
@@ -17,8 +11,7 @@ def beam_power_dependence(
                           frequency,
                           power_levels=range(-40, -100, -10),
                           settling_time=1,
-                          samples=1000,
-                          report_object=None,
+                          samples=10,
                           sub_directory=""):
     """Tests the relationship between RF output power and values read from the BPM.
 
@@ -53,13 +46,15 @@ def beam_power_dependence(
     """
 
     test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
-                                                       frequency, power_levels[0])
+                                                       bpm_object, frequency, power_levels[0])
     # Wait for signal to settle
     time.sleep(settling_time)
     # Set up BPM for normal operation
-    bpm_object.set_internal_state()
+    bpm_object.set_internal_state(agc=0, attenuation=35)
 
     # Build up the arrays where the final values will be saved
+    x_pos_raw = np.array([])
+    y_pos_raw = np.array([])
     x_pos_mean = np.array([])
     y_pos_mean = np.array([])
     x_pos_std = np.array([])
@@ -69,91 +64,45 @@ def beam_power_dependence(
     # Perform the test
     for index in power_levels:
         # Set attenuator value to give desired power level.
+        # As this is a relative adjustment the initial correction for system loss is
+        # still valid.
         prog_atten_object.set_global_attenuation(power_levels[0] - index)
         time.sleep(settling_time)  # Wait for signal to settle
 
         # Perform the test
         x_time, x_pos_data = bpm_object.get_x_sa_data(samples)  # record X pos
         y_time, y_pos_data = bpm_object.get_y_sa_data(samples)  # record Y pos
-
-        x_pos_mean = np.append(x_pos_mean, np.mean(x_pos_data))  # record X pos
-        y_pos_mean = np.append(y_pos_mean, np.mean(y_pos_data))  # record Y pos
-        x_pos_std = np.append(x_pos_std, np.std(x_pos_data))  # record X pos
-        y_pos_std = np.append(y_pos_std, np.std(y_pos_data))  # record Y pos
+        x_pos_raw = np.append(x_pos_raw, x_pos_data)
+        y_pos_raw = np.append(y_pos_raw, y_pos_data)
+        if index == power_levels[0]:
+            x_pos_first = np.mean(x_pos_data)
+            y_pos_first = np.mean(y_pos_data)
+            x_pos_mean = [0]
+            y_pos_mean = [0]
+        else:
+            x_pos_mean = np.append(x_pos_mean, (np.mean(x_pos_data) - x_pos_first) * 1e3)  # record X pos
+            y_pos_mean = np.append(y_pos_mean, (np.mean(y_pos_data) - y_pos_first) * 1e3)  # record Y pos
+        x_pos_std = np.append(x_pos_std, abs(np.std(x_pos_data)) * 1e3)  # record X pos
+        y_pos_std = np.append(y_pos_std, abs(np.std(y_pos_data)) * 1e3)  # record Y pos
         input_power = np.append(input_power, bpm_object.get_input_power())
-
-    # turn off the RF
-    rf_object.turn_off_RF()
 
     savemat(sub_directory + "beam_power_dependence_data" + ".mat",
             {'input_power': input_power,
+             'x_pos_raw': x_pos_raw,
              'x_pos_mean': x_pos_mean,
              'x_pos_std': x_pos_std,
+             'y_pos_raw': y_pos_raw,
              'y_pos_mean': y_pos_mean,
-             'y_pos_std': y_pos_std})
+             'y_pos_std': y_pos_std,
+             'bpm_agc': bpm_object.agc,
+             'bpm_switching': bpm_object.switches,
+             'bpm_dsc': bpm_object.dsc,
+             'test_name': test_name,
+             'rf_hw': test_system_object.rf_hw,
+             'bpm_hw': test_system_object.bpm_hw,
+             'settling_time': settling_time,
+             'frequency': frequency,
+             'power_levels': power_levels})
 
-    specs = bpm_object.get_performance_spec()
-
-    # Get the plot values in a format that's easy to iterate
-    format_plot = [] # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append(((power_levels, input_power),
-                       ('RF Source Power Output (dBm)', 'Power input at BPM (dBm)', "power_vs_power.pdf")))
-    format_plot.append(((power_levels, abs(x_pos_mean), x_pos_std),
-                       ('RF Source Power Output (dBm)', 'Horizontal Beam Position (mm)', "power_vs_X.pdf"),
-                       specs['Beam_power_dependence_X']))
-    format_plot.append(((power_levels, abs(y_pos_mean), y_pos_std),
-                       ('RF Source Power Output (dBm)', 'Vertical Beam Position (mm)', "power_vs_Y.pdf"),
-                       specs['Beam_power_dependence_Y']))
-
-    if report_object is not None:
-        intro_text = r"""Tests the relationship between RF output power and values read from the BPM. 
-        An RF signal is output, and then different parameters are measured from the BPM. 
-        The signal is linearly ramped up in dBm at a single frequency. The number of samples to take, 
-        and settling time between each measurement can be decided using the arguments. \\~\\
-        """
-        # Get the device names for the report
-        device_names = []
-        device_names.append('RF source is ' + test_system_object.rf_hw)
-        device_names.append('BPM is ' + test_system_object.bpm_hw)
-        # Get the parameter values for the report
-        parameter_names = []
-        parameter_names.append("Frequency: " + str(frequency) + "MHz")
-        parameter_names.append("Power levels used: " + str(power_levels) + "dBm")
-        parameter_names.append("Settling time: " + str(settling_time) + "s")
-        # add the test details to the report
-        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
-        # make a caption and headings for a table of results
-        caption = "Beam Power Dependence Results"
-        headings = [["Input Power", " mean X Position", "mean Y Position", "Std X", "Std Y"],
-                    ["(dBm)", "(mm)", "(mm)", "", ""]]
-        data = [input_power, x_pos_mean, y_pos_mean, x_pos_std, y_pos_std]
-        # copy the values to the report
-        report_object.add_table_to_test('|c|c|c|c|c|', data, headings, caption)
-
-    # plot all of the graphs
-    for index in format_plot:
-        if len(index[0]) == 2:
-            plt.plot(index[0][0], index[0][1])
-        elif len(index[0]) == 3:
-            plt.errorbar(index[0][0], index[0][1], index[0][2])
-
-        plt.xlabel(index[1][0])
-        plt.ylabel(index[1][1])
-        plt.grid(True)
-        if len(index) == 3:
-            # There is a specification line. Add this.
-            #Spec is in um while data is in mm so scale by 1E-3.
-            plt.plot(index[2][0], index[2][1] * 1e-3, 'r')
-
-        if report_object is None:
-            # If no report is entered as an input to the test, simply display the results
-            plt.show()
-        else:
-            plt.savefig(''.join((sub_directory, index[1][2])))
-            report_object.add_figure_to_test(image_name=''.join((sub_directory, index[1][2])), caption=index[1][2])
-
-        plt.cla()  # Clear axis
-        plt.clf()  # Clear figure
-
-
-
+    # turn off the RF
+    rf_object.turn_off_RF()

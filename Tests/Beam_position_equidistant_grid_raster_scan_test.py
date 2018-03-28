@@ -74,10 +74,14 @@ def beam_position_equidistant_grid_raster_scan_test(
             float array: predicted Y values of position
     """
     # Initialise test
-    test_name = test_system_object.test_initialisation(__name__, rf_object, prog_atten_object,
-                                                       rf_frequency, power_level)
+    test_name = test_system_object.test_initialisation(test_name=__name__,
+                                                       rf_object=rf_object,
+                                                       prog_atten_object=prog_atten_object,
+                                                       bpm_object=bpm_object,
+                                                       frequency=rf_frequency,
+                                                       power_level=power_level)
     # Set up BPM for normal operation
-    bpm_object.set_internal_state()
+    bpm_object.set_internal_state(agc=0, attenuation=35)
     # Wait for system to settle
     time.sleep(settling_time)
 
@@ -171,11 +175,16 @@ def beam_position_equidistant_grid_raster_scan_test(
         predicted_x = np.append(predicted_x, calc_x_pos(a_pwr, b_pwr, c_pwr, d_pwr))
         predicted_y = np.append(predicted_y, calc_y_pos(a_pwr, b_pwr, c_pwr, d_pwr))
 
+    rf_object.turn_off_RF()
+
+    savemat(sub_directory + "beam_position_raster_scan_data" + ".mat",
+            {'measured_x': measured_x,
+             'measured_y': measured_y,
+             'predicted_x': predicted_x,
+             'predicted_y': predicted_y})
+
     plt.plot(measured_x, measured_y, 'bo',
              predicted_x, predicted_y, 'r+', markersize=10,)
-    #plt.xlim(-10.5, 10.5)
-    #plt.ylim(-10.5, 10.5)
-
     plt.xlabel("Horizontal Beam Position (mm)")
     plt.ylabel("Vertical Beam Position (mm)")
     plt.grid(True)
@@ -213,9 +222,5 @@ def beam_position_equidistant_grid_raster_scan_test(
         report_object.add_figure_to_test(image_name=''.join((sub_directory,
                                                             "Beam_position_equidistant_grid_raster_scan_test")),
                                          caption="Beam_position_equidistant_grid_raster_scan_test")
-        savemat(sub_directory+"beam_position_raster_scan_data" + ".mat",
-                {'measured_x': measured_x,
-                 'measured_y': measured_y,
-                 'predicted_x': predicted_x,
-                 'predicted_y': predicted_y})
+
 

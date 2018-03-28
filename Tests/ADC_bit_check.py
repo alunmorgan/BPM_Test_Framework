@@ -1,11 +1,5 @@
-from pkg_resources import require
-require("numpy")
-require("cothread")
-require("matplotlib")
 import numpy as np
-import matplotlib.pyplot as plt
 import time
-from math import floor
 from scipy.io import savemat
 
 
@@ -17,7 +11,6 @@ def adc_test(
              frequency,
              power_level=-20,
              settling_time=1,
-             report_object=None,
              sub_directory=""):
     """Compares the signals from the ADCs while a sine wave excitation is input.
 
@@ -51,36 +44,6 @@ def adc_test(
     # Wait for signal to settle
     time.sleep(settling_time)
 
-    if report_object is not None:
-        intro_text = r"""Excites with a sine wave and then gets the ADC data from each channel. 
-        Plots the histogram to that any missing bits can be identified. The expected value is 0.5. 
-        Any value 0.1 away from this indicates a problem.
-
-        The RF signal is a sine wave.  \\~\\
-        """
-        # Get the device names for the report
-        device_names = []
-        device_names.append('RF source is ' + test_system_object.rf_hw)
-        device_names.append('BPM is ' + test_system_object.bpm_hw)
-
-        # Get the parameter values for the report
-        if bpm_object.dsc == 0:
-            dsc = 'Fixed gains'
-        elif bpm_object.dsc == 1:
-            dsc = 'Unity gains'
-        elif bpm_object.dsc == 2:
-            dsc = 'Automatic'
-        else:
-            raise ValueError('DSC value is incorrect')
-
-        parameter_names = []
-        parameter_names.append('AGC %d' % bpm_object.agc)
-        parameter_names.append('Switching %d' % bpm_object.switches)
-        parameter_names.append('DSC %s' % dsc)
-
-        # add the test details to the report
-        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
-
     # Setting up variables.
     data = np.empty((1024, 16, bpm_object.num_adcs))
     data_std = np.empty((16, bpm_object.num_adcs))
@@ -90,8 +53,6 @@ def adc_test(
     # Gets 1024 samples for each ADC.
     time_tmp, data1_tmp, data2_tmp, data3_tmp, data4_tmp = bpm_object.get_adc_data(16)  # record data
 
-    # turn off the RF
-    rf_object.turn_off_RF()
 
     #  Converting to arrays of binary values
     # First convert the int value into a binary string.
@@ -109,59 +70,27 @@ def adc_test(
     data[:, :, 2] = np.asarray([list(format(x, format_string)) for x in data3_tmp])
     data[:, :, 3] = np.asarray([list(format(x, format_string)) for x in data4_tmp])
 
-    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-
     for kw in range(bpm_object.num_adcs):
         for wn in range(bpm_object.adc_n_bits):
             data_std[wn, kw] = np.std(data[:, wn, kw])
-        format_plot.append(((np.arange(1, 16 + 1), data_std[:, kw]),
-                            ('bit number', 'Standard deviation', ' '.join(('ADC', str(kw + 1))),
-                             'ADC_bit_check.pdf')))
-    format_plot.append(((time_tmp,  data1_tmp),
-                        ('time', 'Data', 'ADC 1',
-                         'ADC_data.pdf')))
 
+    print sub_directory
     savemat(''.join((sub_directory, 'ADC_bit_check', '_data.mat')),
             {'data': data,
-             'data_std': data_std})
+             'data_std': data_std,
+             'n_bits': bpm_object.adc_n_bits,
+             'n_adc': bpm_object.num_adcs,
+             'data_adc1': data1_tmp,
+             'data_adc2': data2_tmp,
+             'data_adc3': data3_tmp,
+             'data_adc4': data4_tmp,
+             'time': time_tmp,
+             'bpm_agc': bpm_object.agc,
+             'bpm_switching': bpm_object.switches,
+             'bpm_dsc': bpm_object.dsc,
+             'test_name': test_name,
+             'rf_hw': test_system_object.rf_hw,
+             'bpm_hw': test_system_object.bpm_hw})
 
-    # plot all of the graphs
-    cols = ['k', 'r', 'g', 'b']
-    x_shift = 0
-    cols_ind = 0
-    for index in format_plot[:-1]:
-        plt.bar(index[0][0] + x_shift, index[0][1], align='center', width=0.15, label=index[1][2], color=cols[cols_ind])
-        x_shift = x_shift + 0.1
-        cols_ind = cols_ind + 1
-    plt.legend(loc='upper right')
-    plt.xlabel(format_plot[0][1][0])
-    plt.ylabel(format_plot[0][1][1])
-    plt.xlim(0.5, bpm_object.adc_n_bits + 1)
-    plt.ylim(0, 1)
-
-    if report_object is None:
-        # If no report is entered as an input to the test, simply display the results
-        plt.show()
-    else:
-        plt.savefig(''.join((sub_directory, format_plot[0][1][3])))
-        report_object.add_figure_to_test(image_name=''.join((sub_directory, format_plot[0][1][3])),
-                                         caption='ADC bit test. All should be close to 0.5')
-    plt.cla()  # Clear axis
-    plt.clf()  # Clear figure
-
-    plt.plot(format_plot[-1][0][0], format_plot[-1][0][1], label=format_plot[-1][1][2])
-    plt.legend(loc='upper right')
-    plt.xlabel(format_plot[-1][1][0])
-    plt.ylabel(format_plot[-1][1][1])
-
-    if report_object is None:
-        # If no report is entered as an input to the test, simply display the results
-        plt.show()
-    else:
-        plt.savefig(''.join((sub_directory, format_plot[-1][1][3])))
-        report_object.add_figure_to_test(image_name=''.join((sub_directory, format_plot[-1][1][3])),
-                                         caption='ADC bit test. All should be close to 0.5')
-    plt.cla()  # Clear axis
-    plt.clf()  # Clear figure
-
-
+    # turn off the RF
+    rf_object.turn_off_RF()

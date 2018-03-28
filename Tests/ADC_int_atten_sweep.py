@@ -1,12 +1,9 @@
-from pkg_resources import require
-require("numpy")
-require("cothread")
-require("matplotlib")
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import time
-from math import floor
+#from math import floor
 from scipy.io import savemat
+#import plotting_helper_functions
 
 
 def adc_int_atten_sweep_test(
@@ -19,7 +16,6 @@ def adc_int_atten_sweep_test(
                              external_attenuation=60,
                              attenuation_levels=np.arange(0, 62, 2),
                              settling_time=1,
-                             report_object=None,
                              sub_directory=""):
     """Compares the signals from the ADCs while a sine wave excitation is input.
 
@@ -52,23 +48,6 @@ def adc_int_atten_sweep_test(
                                   ft_state='Enabled')
     # Wait for system to settle
     time.sleep(settling_time)
-
-    if report_object is not None:
-        intro_text = r"""Excites with different signal levels. Gets the ADC data from each channel at each signal level. 
-        Plots the curve.
-
-        The RF signal is a sine wave.  \\~\\
-        """
-        # Get the device names for the report
-        device_names = []
-        device_names.append('RF source is ' + rf_object.get_device_id())
-        device_names.append('BPM is ' + bpm_object.get_device_id())
-
-        # Get the parameter values for the report
-        parameter_names = []
-        parameter_names.append('Attenuation levels: ' + str(attenuation_levels))
-        # add the test details to the report
-        report_object.setup_test(test_name, intro_text, device_names, parameter_names)
 
     num_repeat_points = 10
     data = np.empty((len(attenuation_levels), 1024, bpm_object.num_adcs, num_repeat_points))
@@ -103,9 +82,6 @@ def adc_int_atten_sweep_test(
                       data[level_ind, :, 3, nw] = bpm_object.get_adc_data(bpm_object.adc_n_bits)  # record data
         level_ind = level_ind + 1
 
-    # turn off the RF
-    rf_object.turn_off_RF()
-
     data_max = np.mean(np.max(data, axis=1), axis=2)
     data_std = np.std(np.max(data, axis=1), axis=2)
     data_corrected = data_max - data_adj
@@ -115,31 +91,15 @@ def adc_int_atten_sweep_test(
              'data_max': data_max,
              'data_std': data_std,
              'data_adj': data_adj,
-             'data_corrected': data_corrected})
+             'data_corrected': data_corrected,
+             'n_bits': bpm_object.adc_n_bits,
+             'n_adc': bpm_object.num_adcs,
+             'bpm_agc': bpm_object.agc,
+             'bpm_switching': bpm_object.switches,
+             'bpm_dsc': bpm_object.dsc,
+             'test_name': test_name,
+             'rf_hw': test_system_object.rf_hw,
+             'bpm_hw': test_system_object.bpm_hw})
 
-    # Get the plot values in a format that is easy to iterate
-    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    for hw in range(bpm_object.num_adcs):
-        format_plot.append(((attenuation_levels, data_corrected[:, hw], data_std[:, hw]), ('attenuation', 'counts',
-                            "ADC_varying_internal_attenuation.pdf", ' '.join(('ADC', str(hw))))))
-
-    # plot all of the graphs
-    cols = ['k', 'r', 'g', 'b']
-    cols_ind = 0
-    for index in format_plot:
-        plt.plot(index[0][0], index[0][1], color=cols[cols_ind], label=index[1][3])
-        cols_ind = cols_ind + 1
-    plt.legend(loc='upper right')
-    plt.xlabel(format_plot[0][1][0])
-    plt.ylabel(format_plot[0][1][1])
-    plt.xlim(attenuation_levels[0], attenuation_levels[-1])
-    if report_object is None:
-        # If no report is entered as an input to the test, simply display the results
-        plt.show()
-    else:
-        plt.savefig(''.join((sub_directory, format_plot[0][1][2])))
-        report_object.add_figure_to_test(image_name=''.join((sub_directory, format_plot[0][1][2])),
-                                         caption='Internal attenuator check')
-    plt.cla()  # Clear axis
-    plt.clf()  # Clear figure
-
+    # turn off the RF
+    rf_object.turn_off_RF()
