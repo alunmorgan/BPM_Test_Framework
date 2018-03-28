@@ -23,9 +23,11 @@ if not os.path.exists(root_path):
 report = Latex_Report.Tex_Report('/'.join((root_path, "BPMTestReport")), BPM.macaddress)
 
 dls_RF_frequency = 499.6817682
-dls_bunch = 1.87319
+dls_bunch = 1. / (dls_RF_frequency / 936.)  # us
 subdirectory = ''.join((root_path, '/'))
 settling_time = 0
+
+ProgAtten.set_global_attenuation(0)
 
 Tests.beam_position_equidistant_grid_raster_scan_test(
     rf_object=RF,
