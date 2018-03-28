@@ -282,28 +282,28 @@ class ElectronBPMDevice(Generic_BPMDevice):
             dict: a set of vectors containing comparison data
         """
         specs ={}
-        specs['noise_10kHz'] = ([0,  -24, -32, -40, -44, -50, -56, -62, -68, -74, -80],
-                                [0.2, 0.3, 0.5, 1,   2,   4,   5,   10,  20,  50, 100])
-        specs['noise_1MHz'] = ([0, -32, -36, -40, -44, -50, -56, -62, -68, -74, -80],
-                               [3,  5,   6,   8,   15,  30,  50,  150, 300, 600, 1500])
-        specs['Beam_current_dependence_X'] = ([0, -2, -56, -68, -74, -80],
-                                              [0,  1,   2,  10,  20,  50])
-        specs['Beam_current_dependence_Y'] = ([0, -2, -56, -68, -74, -80],
-                                              [0,  1,   2,  10,  20,  50])
+        specs['noise_10kHz'] = ([0],
+                                [0])
+        specs['noise_1MHz'] = ([0],
+                               [0])
+        specs['Beam_current_dependence_X'] = ([0],
+                                              [0])
+        specs['Beam_current_dependence_Y'] = ([0],
+                                              [0])
         specs['Beam_current_dependence_deviation_within_range_X'] = \
-            ([[0, -8], [-8, -20], [-20, -32], [-32, -40], [-40, -56], [-56, -68], [-68, -70]],
-             [   1,        1,          1,          1,          1,          5,          50])
+            ([[0, 0]],
+             [   1])
         specs['Beam_current_dependence_deviation_within_range_Y'] = \
-            ([[0, -8], [-8, -20], [-20, -32], [-32, -40], [-40, -56], [-56, -68], [-68, -70]],
-             [   1,        1,          1,          1,          1,          5,          50])
+            ([[0, 0]],
+             [   1])
 
-        specs['Fill_pattern_dependence_X'] = ([20, 100], 1)
-        specs['Fill_pattern_dependence_Y'] = ([20, 100], 1)
+        specs['Fill_pattern_dependence_X'] = ([0, 0], 0)
+        specs['Fill_pattern_dependence_Y'] = ([0, 0], 0)
 
-        specs['Beam_power_dependence_X'] = ([0, -2, -56, -68, -74, -80],
-                                            [0,  1,   2,  10,  20,  50])
-        specs['Beam_power_dependence_Y'] = ([0, -2, -56, -68, -74, -80],
-                                            [0,  1,   2,  10,  20,  50])
+        specs['Beam_power_dependence_X'] = ([0],
+                                            [0])
+        specs['Beam_power_dependence_Y'] = ([0],
+                                            [0])
 
         return specs
 
