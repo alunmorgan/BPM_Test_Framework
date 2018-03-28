@@ -19,7 +19,8 @@ class TestSystem:
         self.trigger_hw = trigger_hw.get_device_id()
         self.bpm_hw = bpm_hw.get_device_id()
 
-    def test_initialisation(self, test_name, rf_object, prog_atten_object, frequency, power_level):
+    def test_initialisation(self, test_name, rf_object, prog_atten_object, bpm_object, frequency,
+                            power_level, external_attenuation=0):
         # Formats the test name and tells the user the test has started
         test_name = test_name.rsplit("Tests.")[1]
         test_name = test_name.replace("_", " ")
@@ -29,9 +30,12 @@ class TestSystem:
         rf_object.turn_off_RF()
         rf_object.set_frequency(frequency)
         # Forcing to be an int as decimal points will cause the command sent to fail
-        rf_object.set_output_power(int(floor(power_level + self.loss)))
-        prog_atten_object.set_global_attenuation(0)
-        rf_object.turn_on_RF()
+        if power_level < bpm_object.max_input:
+            rf_object.set_output_power(int(floor(power_level + self.loss)))
+            prog_atten_object.set_global_attenuation(external_attenuation)
+            rf_object.turn_on_RF()
+        else:
+            raise ValueError('Input power level dangerously high')
 
         return test_name
 
