@@ -18,7 +18,7 @@ def telnet_query(tn, timeout, orig_message):
         So the wrong data is read.
 
     Args:
-        message (str): SCPI message to be sent to the ITechBL12HI
+        orig_message (str): SCPI message to be sent to the ITechBL12HI
 
     Returns:
         str: Reply message from the ITechBL12HI
@@ -47,7 +47,7 @@ def telnet_query(tn, timeout, orig_message):
             print 'Bad status  STATUS = ', check
             if message is not None:
                 print 'Return = ', message.group(1)
-            raise ValueError("Bad status on communication with ITechBL12HI: " + orig_message)
+            raise ValueError(''.join(('Bad status on communication with ITechBL12HI: ', orig_message)))
     return message.group(1), check
 
 
