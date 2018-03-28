@@ -58,7 +58,10 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "GATE:FILL 0")  # Turns on the modulation state output
+        # Turns on the modulation state output
+        ret, check = itechbl12hi_common.telnet_query(tn=self.tn,
+                                                     timeout=self.timeout,
+                                                     orig_message="GATE:FILL 0")
         if 'OK' in check:
             self.modulation_state = True
         else:
@@ -78,7 +81,10 @@ class ITechBL12HI_GateSource(Generic_GateSource):
         Returns:
 
         """
-        ret, check = itechbl12hi_common.telnet_query(self.tn, self.timeout, "GATE:FILL 100")  # Turns off the modulation state output
+        # Turns off the modulation state output
+        ret, check = itechbl12hi_common.telnet_query(tn=self.tn,
+                                                     timeout=self.timeout,
+                                                     orig_message="GATE:FILL 100")
         if 'OK' in check:
             self.modulation_state = False
         else:
