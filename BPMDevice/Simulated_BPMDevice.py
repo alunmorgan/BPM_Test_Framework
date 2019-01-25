@@ -42,8 +42,32 @@ class SimulatedBPMDevice(Generic_BPMDevice):
         self.RFSim = rf_sim  # Instance of the RF source used, allows the simulator to know what signals are output
         self.GateSim = gatesim  # Instance of the Gate device, allows the simulator to know what signals are output
         self.ProgAtten = progatten  # Instance of the Programmable attenuator, allows to know about changes to input levels.
-        self.macaddress = 'SIMULATED'
+        self.epics_id = 'SIMULATED_EPICS'
+        self.mac_address = 'SIMULATED'
+        self.switch_straight = 3  # The switch setting which corresponds to straight through.
+        self.adc_n_bits = 12
+        self.num_adcs = 4
         self.noise_mag = noise_mag
+        self.damage_level = damage_level
+        self.agc = 1
+        self.attn = 0
+        self.ft = 'Disabled'
+        self.kx = 10
+        self.ky = 10
+        self.delta = 0
+        self.attn_wfm = [1,1,1]
+        self.switches = 'Auto'
+        self.switch_val = 3
+        self.dsc = 2
+
+    def set_internal_state(self, state_dict):
+        pass
+
+    def get_attenuation(self):
+        return 10
+
+    def set_attenuation(self, atten):
+        pass
 
     def get_x_position(self):
         """Override method, gets the calculated X position of the beam.

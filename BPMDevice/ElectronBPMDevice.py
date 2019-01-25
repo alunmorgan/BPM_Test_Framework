@@ -66,9 +66,47 @@ class ElectronBPMDevice(Generic_BPMDevice):
         self.set_attenuation(self.attn)  # Restore attenuation setting.
         print "Closed connection to " + self.device_id
 
-    def set_internal_state(self, agc='AGC on', delta=0, offset=0, switches='Auto',
-                           switch_state=3, attenuation=0, dsc='Automatic',
-                           ft_state='Disabled'):
+    def set_internal_state(self, state_dict):
+        if 'agc' in state_dict.keys():
+            agc = state_dict['agc']
+        else:
+            agc = 'AGC on'
+
+        if 'delta'in state_dict.keys():
+            delta = state_dict['delta']
+        else:
+            delta = 0
+
+        if 'offset' in state_dict.keys():
+            offset = state_dict['offset']
+        else:
+            offset = 0
+
+        if 'switches' in state_dict.keys():
+            switches = state_dict['switches']
+        else:
+            switches = 'Automatic'
+
+        if 'switch_state' in state_dict.keys():
+            switch_state = state_dict['switch_state']
+        else:
+            switch_state = 3
+
+        if 'attenuation' in state_dict.keys():
+            attenuation = state_dict['attenuation']
+        else:
+            attenuation = 0
+
+        if 'dsc' in state_dict.keys():
+            dsc = state_dict['dsc']
+        else:
+            dsc = 'Automatic'
+
+        if 'ft_state' in state_dict.keys():
+            ft_state = state_dict['ft_state']
+        else:
+            ft_state = 'Disabled'
+
         """Sets up the internal state of the BPM. The defaults set it up in normal running conditions."""
         LiberaBPM_common.write_epics_pv(self.epics_id, "FT:ENABLE_S", ft_state)
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN:AGC_S", agc)  # Set Automatic gain control.

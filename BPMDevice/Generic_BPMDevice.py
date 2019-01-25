@@ -13,6 +13,14 @@ class Generic_BPMDevice():
     __metaclass__ = ABCMeta  # Allows for abstract methods to be created.
 
     @abstractmethod
+    def set_internal_state(self, state_dict):
+        """Abstract method for override. Sets the internal state of the device.
+
+        Args:
+            state_dict (dict): Dictionary of parameters so set.
+            """
+
+    @abstractmethod
     def get_attenuation(self):
         """Abstract method for override, gets the calculated X position of the beam.
 
