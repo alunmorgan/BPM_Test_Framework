@@ -7,7 +7,7 @@ import numpy as np
 import warnings
 
 
-class agilent33220a_wfmgen(Generic_TrigSource):
+class Agilent33220A_trigsrc(Generic_TrigSource):
     """Rigol3030DSG RFSigGen, Child of Generic_RFSigGen.
 
     This class is for communicating with the Agilent33220A over telnet. The specific API calls abstract the SCPI 
