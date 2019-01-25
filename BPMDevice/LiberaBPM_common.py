@@ -18,7 +18,7 @@ def read_epics_pv(epics_id, pv):
     Returns:
         pv_val: Value of requested process variable.
     """
-    return caget(''.join((epics_id, pv)))  # Get PV data
+    return caget(':'.join((epics_id, pv)))  # Get PV data
 
 
 def write_epics_pv(epics_id, pv, val):
@@ -34,7 +34,7 @@ def write_epics_pv(epics_id, pv, val):
     Returns:
         variant: Value of requested process variable.
     """
-    return caput(''.join((epics_id, pv)), val)  # Write PV data
+    return caput(':'.join((epics_id, pv)), val)  # Write PV data
 
 
 def get_mac_address(epics_id):
@@ -45,7 +45,7 @@ def get_mac_address(epics_id):
          str: mac address of the device.
     """
     pv = "SA:X"  # Any PV hosts on the device could be used here
-    node = connect(epics_id + pv, cainfo=True).host.split(":")[0]  # Get the IP address of the host
+    node = connect(':'.join((epics_id, pv)), cainfo=True).host.split(":")[0]  # Get the IP address of the host
     host_info = Popen(["arp", "-n", node], stdout=PIPE).communicate()[0]  # Uses arp to get more info about the host
     host_info = host_info.split("\n")[1]  # Splits the data about the host
     index = host_info.find(":")  # Gets the first ":", used in the MAC address
@@ -107,7 +107,7 @@ def get_x_sa_data(epics_id, num_vals):
         timestamps (list): floats
         data (list): floats
     """
-    sa_x_accum = Accumulator(''.join((epics_id, 'SA:X')), num_vals)
+    sa_x_accum = Accumulator(':'.join((epics_id, 'SA:X')), num_vals)
     times, data = sa_x_accum.wait()
     times_rel = [x - times[0] for x in times]
     return times_rel, data
@@ -123,7 +123,7 @@ def get_y_sa_data(epics_id, num_vals):
         timestamps (list): floats
         data (list): floats
     """
-    sa_y_accum = Accumulator(''.join((epics_id, 'SA:Y')), num_vals)
+    sa_y_accum = Accumulator(':'.join((epics_id, 'SA:Y')), num_vals)
     times, data = sa_y_accum.wait()
     times_rel = [x - times[0] for x in times]
     return times_rel, data

@@ -15,22 +15,22 @@ class ElectronBPMDevice(Generic_BPMDevice):
     Attributes:
         epics_id (str): Channel identifier string that will be used to access PVs.
     """
-    def __init__(self, dev_id):
+    def __init__(self, epics_id):
         """Initializes the Libera BPM device object and assigns it an ID. 
         
         Args:
-            dev_id (str/int): The ID number assigned to that specific BPM device.
+            epics_id (str/int): The ID number assigned to that specific BPM device.
         Returns:
 .
         """
-        if type(dev_id) != str:  # Makes sure the ID is a string
+        if type(epics_id) != str:  # Makes sure the ID is a string
             raise TypeError  # Raises a type error if integer is not used
         else:
             self.adc_n_bits = 12
             self.num_adcs = 4
-            self.max_input = 6  # The max power (dBm) the inputs can take before damage.
+            self.damage_level = 6  # The max power (dBm) the inputs can take before damage.
             self.switch_straight = 3  # The switch setting which corresponds to straight through.
-            self.epics_id = dev_id  # TS-DI-EBPM-04:
+            self.epics_id = epics_id  # TS-DI-EBPM-04:
             self.mac_address = LiberaBPM_common.get_mac_address(self.epics_id)
             self.device_id = self.get_device_id()
             # Initial setup of the BPM system.
@@ -344,4 +344,3 @@ class ElectronBPMDevice(Generic_BPMDevice):
                                             [0])
 
         return specs
-

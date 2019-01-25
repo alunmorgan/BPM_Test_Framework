@@ -20,7 +20,7 @@ class SimulatedBPMDevice(Generic_BPMDevice):
         GateSim (Gate Source Simulator Obj) : Reference to a gate source simulator
     """
 
-    def __init__(self, rf_sim, gatesim=None, progatten=None, noise_mag=0.):
+    def __init__(self, rf_sim, damage_level, gatesim=None, progatten=None, noise_mag=0.):
         """Initializes the Libera BPM device object and assigns it an ID. 
         
         Args:

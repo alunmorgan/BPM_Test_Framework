@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class Generic_BPMDevice():
     """Generic BPM Device class used for hardware abstraction.
 
@@ -205,6 +206,5 @@ class Generic_BPMDevice():
                     dict: Various vectors of floats for different performance measures.
                 """
         pass
-
 
 
