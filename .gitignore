@@ -1,0 +1,6 @@
+BPMDevice/htmlcov/
+BPMDevice/.coverage
+htmlcov/
+venv/
+*.py~
+*.sh~
