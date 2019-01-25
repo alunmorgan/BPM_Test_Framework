@@ -1,11 +1,10 @@
-from pkg_resources import require
-require("numpy")
-require("matplotlib")
 from pylatex import Document, Section, Figure, NoEscape, Command, Tabular
-import matplotlib.pyplot as plt
-import numpy as np
 from math import ceil
 import os
+from pkg_resources import require
+require("matplotlib")
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def takespread(sequence, num):
@@ -14,7 +13,7 @@ def takespread(sequence, num):
         yield sequence[int(ceil(i * length / num))]
 
 
-class Tex_Report():
+class TexReport:
 
     """A LaTeX test report object with APIs for writing the BPM report.
 
@@ -54,11 +53,13 @@ class Tex_Report():
         self.doc.append(NoEscape(r'\noindent'))
         self.doc.append(NoEscape(r'\large\textbf{Diamond Light Source Ltd} \hfill\large\textbf{Date: \today}'))
         self.doc.append(NoEscape(r'\\\normalsize Beam Diagnostics Group \hfill\\'))
-        self.doc.append(NoEscape(''.join((r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
+        self.doc.append(NoEscape(''.join(
+            (r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
         self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', mac, '}'))))
 
         intro_text = r'This is a \LaTeX test report for the, beam profile monitor electronics that are used at ' \
-                     r'Diamond. In this document the different tests will be recorded in their own individual section. ' \
+                     r'Diamond. ' \
+                     r'In this document the different tests will be recorded in their own individual section. ' \
                      r'along with the specific parameters that are being tested and the test method used.\\\\'
 
         self.doc.append(NoEscape(intro_text))
@@ -127,7 +128,7 @@ class Tex_Report():
         with self.doc.create(Figure(position='htbp')) as plot:
             plot.add_image(image_name)
             plot.add_caption(str(caption))
-            plt.close() # Close a figure window
+            plt.close()  # Close a figure window
 
     def add_table_to_test(self, format_string, data, headings, caption=""):
         """Adds a figure to the current section of the report
@@ -136,8 +137,10 @@ class Tex_Report():
         The image name specifies the image, without the pdf extension. 
 
         Args: 
-            image_name (str): The name of the image to be placed into the report.
-            caption (str): The caption to be placed below the image.
+            format_string (str): defines the format of the table.
+            data (array or list of list): The data to fill the table.
+            headings (list of str): The column headings.
+            caption (str): The caption to be placed below the table.
 
         Returns:
         """
@@ -155,10 +158,10 @@ class Tex_Report():
 
         for index in range(len(data)):
 
-            data[index] = np.round_(data[index],2)
+            data[index] = np.round_(data[index], 2)
             data[index] = data[index].tolist()
             if len(data[index]) > 20:
-                data[index] = self._decimate_list(data[index], 20)#number of samples in table
+                data[index] = self._decimate_list(data[index], 20)  # number of samples in table
 
         for iterations in range(len(data[0])):
             row = []
@@ -182,8 +185,3 @@ class Tex_Report():
         self.doc.generate_pdf(clean_tex=False)
         self.doc.generate_pdf(clean_tex=False)
         self.doc.generate_pdf(clean_tex=False)
-
-
-
-
-
