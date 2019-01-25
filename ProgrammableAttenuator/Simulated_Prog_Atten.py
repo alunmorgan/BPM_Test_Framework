@@ -1,7 +1,7 @@
 from ProgrammableAttenuator import *
 import telnetlib
-from pkg_resources import require
-require("numpy")
+#from pkg_resources import require
+#require("numpy")
 import numpy as np
 
 
@@ -24,17 +24,13 @@ class Simulated_Prog_Atten(Generic_Prog_Atten):
             raise ValueError
 
     def _check_channel(self, channel):
-        if type(channel) == str:
-            channel = channel.upper()
-            while channel not in ["A", "B", "C", "D"]:
-                raise ValueError
-        elif type(channel) == int:
+        if type(channel) == int:
             while channel not in [1, 2, 3, 4]:
                 raise ValueError
         else:
             raise TypeError
 
-    def get_device_ID(self):
+    def get_device_id(self):
         return "Simulated programmable attenuator device"
 
     def set_global_attenuation(self, attenuation):
@@ -52,22 +48,22 @@ class Simulated_Prog_Atten(Generic_Prog_Atten):
         self._check_attenuation(attenuation)
         self._check_channel(channel)
 
-        if channel.upper() == "A":
+        if channel == 1:
             self.A = attenuation
-        elif channel.upper() == "B":
+        elif channel == 2:
             self.B = attenuation
-        elif channel.upper() == "C":
+        elif channel == 3:
             self.C = attenuation
-        elif channel.upper() == "D":
+        elif channel == 4:
             self.D = attenuation
 
     def get_channel_attenuation(self, channel):
         self._check_channel(channel)
-        if channel.upper() == "A":
+        if channel == 1:
             return self.A
-        elif channel.upper() == "B":
+        elif channel == 2:
             return self.B
-        elif channel.upper() == "C":
+        elif channel == 3:
             return self.C
-        elif channel.upper() == "D":
+        elif channel == 4:
             return self.D
