@@ -1,5 +1,5 @@
 from pkg_resources import require
-require("cothread==2.14")
+require("cothread==2.15")
 from cothread.catools import camonitor, FORMAT_TIME
 import cothread
 

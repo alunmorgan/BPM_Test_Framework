@@ -1,5 +1,5 @@
 from pkg_resources import require
-require("cothread==2.14")
+require("cothread==2.15")
 from cothread.catools import caget, caput, connect
 from subprocess import Popen, PIPE
 import numpy as np
