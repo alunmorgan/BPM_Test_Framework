@@ -164,17 +164,17 @@ class SimulatedBPMDevice(Generic_BPMDevice):
             tt_y_times.append(m * 936./500e6)
         return tt_y_times, tt_y_data
 
-    def get_adc_data(self):
+    def get_adc_data(self, adc_n_bits):
         """Override method, gets the ABCD ADC data.
 
         Args:
+                adc_n_bits (int): number of bit in the ADC
         Returns: 
             timestamps (list): floats
             data (list): floats
         """
-        adc_n_bits = 16
         adc_max_counts = np.power(2, adc_n_bits)
-        times = np.arange(0, 250. / 117E6, 1./117e6)
+        times = np.arange(0, 1024. / 117E6, 1./117e6)
         excitation_f = 500e3
         angles = np.mod(times * excitation_f, 1) * 2 * np.pi
         data = (np.sin(angles) + 1) * adc_max_counts / 2   # ADD power sensitivity to sin amplitude?
