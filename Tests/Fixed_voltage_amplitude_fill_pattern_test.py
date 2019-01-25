@@ -1,14 +1,11 @@
 import numpy as np
 import time
-from scipy.io import savemat
+import json
+#  from scipy.io import savemat
 
 
 def fixed_voltage_amplitude_fill_pattern_test(
                                    test_system_object,
-                                   rf_object,
-                                   bpm_object,
-                                   prog_atten_object,
-                                   gate_source_object,
                                    frequency,
                                    max_power=-40,
                                    duty_cycles=np.arange(1, 0, -0.1),
@@ -26,12 +23,7 @@ def fixed_voltage_amplitude_fill_pattern_test(
         
 
         Args:
-            test_system_object (System Obj): Object capturing the system losses and hardware ids.
-            rf_object (RFSignalGenerator Obj): Object to interface with the RF hardware.
-            bpm_object (BPMDevice Obj): Object to interface with the BPM hardware.
-            prog_atten_object (Prog_Atten Obj): Object to interface with programmable attenuator hardware
-            gate_source_object: (GateSource Obj): Object used to interface with the gate source
-                hardware. 
+            test_system_object (System Obj): Object capturing the devices used, system losses and hardware ids.
             frequency (float/str): Output frequency for the tests, set as a float that will 
                 use the assumed units of MHz. 
             max_power (float): Starting output power for the tests, default value is
@@ -46,28 +38,18 @@ def fixed_voltage_amplitude_fill_pattern_test(
                 to. If no report is sent to the test then it will just display the results in 
                 a graph. 
             sub_directory (str): String that can change where the graphs will be saved to
-                
-        Returns:
-            float array: duty cycle of the modulation signal
-            float array: power read from the BPM
-            float array: current read from the BPM
-            float array: X position read from the BPM
-            float array: Y position read from the BPM
-
 
     """
     test_name = test_system_object.test_initialisation(test_name=__name__,
-                                                       rf_object=rf_object,
-                                                       prog_atten_object=prog_atten_object,
-                                                       bpm_object=bpm_object,
                                                        frequency=frequency,
                                                        power_level=max_power)
-
-    gate_source_object.set_pulse_period(pulse_period)
-    gate_source_object.turn_on_modulation()
-    gate_source_object.set_pulse_dutycycle(duty_cycles[0])
+    if test_system_object.GS is not None:
+        test_system_object.GS.set_pulse_period(pulse_period)
+        test_system_object.GS.turn_on_modulation()
+        test_system_object.GS.set_pulse_dutycycle(duty_cycles[0])
     # Set up BPM for normal operation
-    bpm_object.set_internal_state(agc=0, attenuation=35)
+    test_system_object.BPM.set_internal_state({'agc': 0, 'attenuation': 35})
+    test_system_object.RF.turn_on_RF()
     # Wait for system to settle
     time.sleep(5)
 
@@ -80,10 +62,11 @@ def fixed_voltage_amplitude_fill_pattern_test(
     y_pos_std = np.array([])
 
     for index in duty_cycles:
-        gate_source_object.set_pulse_dutycycle(index)
+        if test_system_object.GS is not None:
+            test_system_object.GS.set_pulse_dutycycle(index)
         time.sleep(settling_time)
-        x_time, x_pos_data = bpm_object.get_x_sa_data(samples)  # record X pos
-        y_time, y_pos_data = bpm_object.get_y_sa_data(samples)  # record Y pos
+        x_time, x_pos_data = test_system_object.BPM.get_x_sa_data(samples)  # record X pos
+        y_time, y_pos_data = test_system_object.BPM.get_y_sa_data(samples)  # record Y pos
         x_pos_raw = np.append(x_pos_raw, x_pos_data)
         y_pos_raw = np.append(y_pos_raw, y_pos_data)
         if index == duty_cycles[0]:
@@ -97,25 +80,33 @@ def fixed_voltage_amplitude_fill_pattern_test(
         x_pos_std = np.append(x_pos_std, np.std(x_pos_data) * 1e3)  # record X pos
         y_pos_std = np.append(y_pos_std, np.std(y_pos_data) * 1e3)  # record Y pos
 
-    savemat(sub_directory + "constant_fill_charge_fill_sweep_data" + ".mat",
-            {'duty_cycles': duty_cycles,
-             'x_pos_raw': x_pos_raw,
-             'x_pos_mean': x_pos_mean,
-             'x_pos_std': x_pos_std,
-             'y_pos_raw': y_pos_raw,
-             'y_pos_mean': y_pos_mean,
-             'y_pos_std': y_pos_std,
-             'bpm_agc': bpm_object.agc,
-             'bpm_switching': bpm_object.switches,
-             'bpm_dsc': bpm_object.dsc,
-             'settling_time': settling_time,
-             'frequency': frequency,
-             'test_name': test_name,
-             'rf_hw': test_system_object.rf_hw,
-             'bpm_hw': test_system_object.bpm_hw,
-             'gate_hw': test_system_object.gate_hw,
-             'max_power': max_power,
-             'pulse_period': pulse_period})
+    if test_system_object.gate_id is None:
+        gate = ''
+    else:
+        gate = test_system_object.gate_id
 
-    rf_object.turn_off_RF()
-    gate_source_object.turn_off_modulation()
+    test_system_object.RF.turn_off_RF()
+    if test_system_object.GS is not None:
+        test_system_object.GS.turn_off_modulation()
+
+    data_out = {'duty_cycles': list(duty_cycles),
+                'x_pos_raw': list(x_pos_raw),
+                'x_pos_mean': list(x_pos_mean),
+                'x_pos_std': list(x_pos_std),
+                'y_pos_raw': list(y_pos_raw),
+                'y_pos_mean': list(y_pos_mean),
+                'y_pos_std': list(y_pos_std),
+                'bpm_agc': test_system_object.BPM.agc,
+                'bpm_switching': test_system_object.BPM.switches,
+                'bpm_dsc': test_system_object.BPM.dsc,
+                'settling_time': settling_time,
+                'frequency': frequency,
+                'test_name': test_name,
+                'rf_hw': test_system_object.rf_id,
+                'bpm_hw': test_system_object.bpm_id,
+                'gate_hw': gate,
+                'max_power': max_power,
+                'pulse_period': pulse_period}
+
+    with open(sub_directory + "constant_fill_charge_fill_sweep_data.json", 'w') as write_file:
+        json.dump(data_out, write_file)

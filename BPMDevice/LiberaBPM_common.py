@@ -192,12 +192,14 @@ def get_adc_data(epics_id, num_bits):
     adc4_data = read_epics_pv(epics_id, 'FT:RAW4')
     # The data is centred on the middle bits. Shift it so all values are positive.
     half_range = np.power(2, num_bits) / 2
-    adc1_data[:] = [x + half_range for x in adc1_data]
-    adc2_data[:] = [x + half_range for x in adc2_data]
-    adc3_data[:] = [x + half_range for x in adc3_data]
-    adc4_data[:] = [x + half_range for x in adc4_data]
-    times = np.arange(len(adc1_data)) * 1 / 117E6  # Data rate is 117MHz
-    return list(times), list(adc1_data), list(adc2_data), list(adc3_data), list(adc4_data)
+    adc1_out = [int(x + half_range) for x in adc1_data]
+    adc2_out = [int(x + half_range) for x in adc2_data]
+    adc3_out = [int(x + half_range) for x in adc3_data]
+    adc4_out = [int(x + half_range) for x in adc4_data]
+    times = np.arange(len(adc1_out)) * 1 / 117E6  # Data rate is 117MHz
+    if not adc1_out or not adc2_out or not adc3_out or not adc4_out:
+        raise ValueError('Not all ADC data returned.')
+    return list(times), [adc1_out, adc2_out, adc3_out, adc4_out]
 
 
 def get_ft_data(epics_id):
