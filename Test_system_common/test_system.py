@@ -31,7 +31,7 @@ import ProgrammableAttenuator
 class TestSystem:
     """This captures the behaviour of the system due to cabling losses"""
 
-    def __init__(self, rf_hw, bpm_hw, atten_hw, gate_hw=None, trigger_hw=None):
+    def __init__(self, bpm_epics_id, rf_hw, bpm_hw, atten_hw, gate_hw=None, trigger_hw=None):
         self.rf_hw = rf_hw
         self.gate_hw = gate_hw
         self.bpm_hw = bpm_hw
@@ -56,8 +56,8 @@ class TestSystem:
                             'Programmable_attenuators': {'MC_RC4DAT6G95': {'ipaddress': "172.23.244.105", 'port': 23,
                                                                            'timeout': 10},
                                                          'Simulated': {}},
-                            'BPM': {'Libera_Electron': {'epics_id': 'TS-DI-EBPM-05', 'damage_level': 0},
-                                    'Libera_Brilliance': {'epics_id': 'TS-DI-EBPM-05', 'damage_level': 0},
+                            'BPM': {'Libera_Electron': {'damage_level': 0},
+                                    'Libera_Brilliance': {'damage_level': 0},
                                     'Simulated': {'noise_mag': 1, 'damage_level': 2}}
                             }
 
@@ -125,9 +125,9 @@ class TestSystem:
 
         print 'Initialising BPM'
         if self.bpm_hw == 'Libera_Electron':
-            self.BPM = BPMDevice.ElectronBPMDevice(epics_id=self.all_devices['BPM']['Libera_Electron']['epics_id'])
+            self.BPM = BPMDevice.ElectronBPMDevice(epics_id=bpm_epics_id)
         elif self.bpm_hw == 'Libera_Brilliance':
-            self.BPM = BPMDevice.BrillianceBPMDevice(epics_id=self.all_devices['BPM']['Libera_Brilliance']['epics_id'])
+            self.BPM = BPMDevice.BrillianceBPMDevice(epics_id=bpm_epics_id)
         elif self.bpm_hw == 'Simulated':
             self.BPM = BPMDevice.SimulatedBPMDevice(rf_sim=self.RF,
                                                     gatesim=self.GS,
