@@ -39,11 +39,12 @@ def convert_attenuation_settings_to_abcd(starting_attenuations, map_atten_bpm,
     b_applied_adj = starting_attenuations[map_atten_bpm['B'] - 1] - b_atten_readback
     c_applied_adj = starting_attenuations[map_atten_bpm['C'] - 1] - c_atten_readback
     d_applied_adj = starting_attenuations[map_atten_bpm['D'] - 1] - d_atten_readback
-    a_applied = 0.25 * 10 ** a_applied_adj
-    b_applied = 0.25 * 10 ** b_applied_adj
-    c_applied = 0.25 * 10 ** c_applied_adj
-    d_applied = 0.25 * 10 ** d_applied_adj
-    
+    a_applied = np.sqrt(50 * 0.25 * 10 ** a_applied_adj)
+    b_applied = np.sqrt(50 * 0.25 * 10 ** b_applied_adj)
+    c_applied = np.sqrt(50 * 0.25 * 10 ** c_applied_adj)
+    d_applied = np.sqrt(50 * 0.25 * 10 ** d_applied_adj)
+    return a_applied, b_applied, c_applied, d_applied
+
 
 def round_to_2sf(input_vals):
     if type(input_vals) is list:
