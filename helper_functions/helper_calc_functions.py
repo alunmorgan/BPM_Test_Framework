@@ -22,6 +22,13 @@ def multiply_list(lst, multiple):
     return output
 
 
+def add_list(lst, additional):
+    output = []
+    for val in lst:
+        output.append(val + additional)
+    return output
+
+
 def quarter_round(x):
     return round(x * 4) / 4
 
