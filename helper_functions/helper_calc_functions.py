@@ -1,18 +1,16 @@
 import numpy as np
 
 
-def calc_x_pos(a, b, c, d):
+def calc_x_pos(a, b, c, d, kx):
     diff = ((a+d)-(b+c))
     total = (a+b+c+d)
-    kx = 10.0
     x = kx*(diff/total)
     return x
 
 
-def calc_y_pos(a, b, c, d):
+def calc_y_pos(a, b, c, d, ky):
     diff = ((a+b)-(c+d))
     total = (a+b+c+d)
-    ky = 10.0
     y = ky*(diff/total)
     return y
 
