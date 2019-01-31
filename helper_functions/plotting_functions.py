@@ -153,11 +153,26 @@ def plot_fixed_voltage_amplitude_fill_pattern_data(sub_directory, loaded_data):
 
 
 def plot_raster_scan(sub_directory, loaded_data):
-    plt.plot(helper_functions.multiply_list(loaded_data['measured_x'], 20),
-             helper_functions.multiply_list(loaded_data['measured_y'], 20), 'bo',
-             loaded_data['predicted_x'], loaded_data['predicted_y'], 'r+', markersize=10, )
+    x_predicted = []
+    y_predicted = []
+    for inds in range(len(loaded_data['a_atten_readback'])):
+        a, b, c, d = helper_functions.convert_attenuation_settings_to_abcd(loaded_data['starting_attenuations'],
+                                                                           loaded_data['map_atten_bpm'],
+                                             loaded_data['a_atten_readback'][inds], loaded_data['b_atten_readback'][inds],
+                                             loaded_data['c_atten_readback'][inds], loaded_data['d_atten_readback'][inds])
+
+        x_predicted.append(helper_functions.calc_x_pos(a, b, c, d, kx=1))
+        y_predicted.append(helper_functions.calc_y_pos(a, b, c, d, ky=1))
+
+    plt.plot(helper_functions.multiply_list(helper_functions.add_list(loaded_data['measured_x'], 0.), 1),
+             helper_functions.multiply_list(loaded_data['measured_y'], 1), 'bo',
+             loaded_data['requested_x'], loaded_data['requested_y'], 'r+',
+             helper_functions.multiply_list(x_predicted, 1),
+             helper_functions.multiply_list(y_predicted, 1), 'g+',
+             markersize=10)
     plt.xlabel("Horizontal Beam Position (mm)")
     plt.ylabel("Vertical Beam Position (mm)")
+    plt.legend(('Measured', 'Requested', 'Predicted'),loc='upper right')
     plt.grid(True)
     fig_name = ''.join((sub_directory, "Beam_position_equidistant_grid_raster_scan_test" + ".pdf"))
     plt.savefig(fig_name)
