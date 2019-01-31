@@ -18,6 +18,8 @@ def tests_for_single_bpm(test_sys, data_location, rf_frequency, settling_time=0.
     subdirectory = ''.join((root_path, '/'))
 
     data_out = {'epics_id': test_sys.BPM.epics_id,
+                'rf_id': test_sys.rf_id,
+                'prog_atten_id': test_sys.prog_atten_id,
                 'mac_address': test_sys.BPM.mac_address,
                 'first_turn': test_sys.BPM.ft,
                 'agc': test_sys.BPM.agc,
