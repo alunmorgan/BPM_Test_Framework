@@ -1,6 +1,7 @@
 from pylatex import Document, Section, Figure, NoEscape, Command, Tabular
 from math import ceil
 import os
+import json
 from pkg_resources import require
 require("matplotlib")
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ class TexReport:
         doc (pylatex document Obj): LaTeX document that all text and figures
             for the report are written to. 
     """
-    def __init__(self, fname, mac):
+    def __init__(self, subdirectory):
         """Initialise the test report and start to record the data.
 
         Creates an instance of the pylatex document object, this is stored as class
@@ -35,13 +36,17 @@ class TexReport:
         name will be saved as the "fname" argument. 
 
         Args: 
-            fname (str): The name that the LaTeX report will be saved as. 
+            subdirectory (str): The name of the folder the test data is stored..
             
         Returns:
             
         """
+        with open(''.join((subdirectory, 'initial_BPM_state.json')), 'r') as read_data:
+            test_system_state = json.load(read_data)
         logo_path = os.path.split(os.path.realpath(__file__))
-        self.doc = Document(fname)
+        print test_system_state['mac_address'].replace(':', '-')
+        self.doc = Document('/'.join((subdirectory,
+                                      "".join(("BPMTestReport_", test_system_state['mac_address'].replace(':', '-'))))))
         self.doc.documentclass = Command(
             'documentclass',
             options=['a4paper, 11pt'],
@@ -55,14 +60,22 @@ class TexReport:
         self.doc.append(NoEscape(r'\\\normalsize Beam Diagnostics Group \hfill\\'))
         self.doc.append(NoEscape(''.join(
             (r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
-        self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', mac, '}'))))
+        self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', test_system_state['mac_address'], '}'))))
 
         intro_text = r'This is a \LaTeX test report for the, beam profile monitor electronics that are used at ' \
                      r'Diamond. ' \
                      r'In this document the different tests will be recorded in their own individual section. ' \
                      r'along with the specific parameters that are being tested and the test method used.\\\\'
-
         self.doc.append(NoEscape(intro_text))
+
+        # Get the device names for the report
+        device_names = []
+        device_names.append('RF source is ' + test_system_state['rf_id'])
+        device_names.append('Programmable attenuator is ' + test_system_state['prog_atten_id'])
+        self.doc.append(NoEscape(r'\textbf{The controllable devices used in this test system are:}\\\\'))
+        for i in device_names:
+            self.doc.append(NoEscape(i + r'\\'))
+
         self.doc.append(NoEscape(r'\clearpage'))
         self.doc.append(NoEscape(r'\tableofcontents'))
         self.doc.append(NoEscape(r'\listoffigures'))
@@ -102,17 +115,13 @@ class TexReport:
         self.doc.append(NoEscape(r'\clearpage'))
         with self.doc.create(Section(section_title)):
             self.doc.append(NoEscape(introduction_text))
-            self.doc.append(NoEscape(r'\textbf{The devices used for this test are:}\\\\'))
-            for i in device_names:
-                self.doc.append(NoEscape(i + r'\\'))
-
             if parameter_names:
                 self.doc.append(NoEscape(r'\\'))
                 self.doc.append(NoEscape(r'\textbf{The parameters used in this test are:}\\\\'))
                 for i in parameter_names:
                     self.doc.append(NoEscape(i + r'\\'))
 
-    def add_figure_to_test(self, image_name, caption=""):
+    def add_figure_to_test(self, image_name, caption="", fig_width=0.8):
         """Adds a figure to the current section of the report
 
         Adds a pdf image in the form of a figure to the current section of the report. 
@@ -121,12 +130,13 @@ class TexReport:
         Args: 
             image_name (str): The name of the image to be placed into the report.
             caption (str): The caption to be placed below the image.
+            fig_width (float): The width of the figure in fraction of textwidth.
 
         Returns:
             
         """
         with self.doc.create(Figure(position='htbp')) as plot:
-            plot.add_image(image_name)
+            plot.add_image(image_name, width=NoEscape(r'%s\textwidth' % fig_width))
             plot.add_caption(str(caption))
             plt.close()  # Close a figure window
 

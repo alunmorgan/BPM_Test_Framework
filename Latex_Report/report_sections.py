@@ -5,6 +5,16 @@ import os.path
 import json
 
 
+def switching_state_label(switching_orig):
+    if switching_orig == 1:
+        switching = 'On'
+    elif switching_orig == 0:
+        switching = 'Off'
+    else:
+        raise ValueError('AGC value is incorrect')
+    return switching
+
+
 def agc_state_label(agc_orig):
     if agc_orig == 1:
         agc = 'On'
@@ -28,10 +38,8 @@ def dsc_state_label(dsc_orig):
 
 
 def assemble_report(subdirectory):
-    with open(''.join((subdirectory, 'initial_BPM_state.json')), 'r') as read_data:
-        bpm_state = json.load(read_data)
-    #  bpm_state = loadmat(''.join((subdirectory, 'initial_BPM_state.json')))
-    report = Latex_Report.TexReport('/'.join((subdirectory, "BPMTestReport")), bpm_state['mac_address'])
+
+    report = Latex_Report.TexReport(subdirectory=subdirectory)
 
     if os.path.exists(os.path.join(subdirectory, 'ADC_bit_check_data.json')):
         report_section_adc_bit_test(report_object=report, subdirectory=subdirectory,
@@ -81,10 +89,12 @@ def report_section_adc_bit_test(report_object, subdirectory, test_data):
     # Get the parameter values for the report
     parameter_names = []
     parameter_names.append('AGC %s' % agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append(''.join(('Switching ', str(loaded_data['bpm_switching']))))
+    parameter_names.append(''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))))
     parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
+    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
 
     # add the test details to the report
+    print loaded_data['test_name']
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
 
     # make a caption and headings for a table of results
@@ -99,8 +109,8 @@ def report_section_adc_bit_test(report_object, subdirectory, test_data):
 
     fig1_adc = helper_functions.plot_adc_bit_check_data(sub_directory=subdirectory,
                                                         loaded_data=loaded_data)
-    report_object.add_figure_to_test(image_name=fig1_adc, caption='ADC bit test. All should be close to 0.5')
-    # report_object.add_figure_to_test(image_name=fig2_adc, caption='Raw ADC data')
+    report_object.add_figure_to_test(image_name=fig1_adc, caption='ADC bit test. All should be close to 0.5',
+                                     fig_width=0.6)
 
 
 def report_section_adc_int_atten(report_object, subdirectory, test_data):
@@ -126,8 +136,9 @@ def report_section_adc_int_atten(report_object, subdirectory, test_data):
     parameter_names.append('ADC? input power: ' + str(
         helper_functions.round_to_2sf(loaded_data['bpm_input_power'])))
     parameter_names.append('AGC %s' % agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append(''.join(('Switching ', str(loaded_data['bpm_switching']))))
+    parameter_names.append(''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))))
     parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
+    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
     fig_name = helper_functions.plot_adc_int_atten_sweep_data(sub_directory=subdirectory,
@@ -159,8 +170,9 @@ def report_section_beam_power_dependence(report_object, subdirectory, test_data)
     #    helper_functions.round_to_2sf(loaded_data['bpm_input_power'])))
     parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
     parameter_names.append('AGC %s' % agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append(''.join(('Switching ', str(loaded_data['bpm_switching']))))
+    parameter_names.append(''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))))
     parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
+    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
     # make a caption and headings for a table of results
@@ -179,8 +191,8 @@ def report_section_beam_power_dependence(report_object, subdirectory, test_data)
         loaded_data=loaded_data)
     # report_object.add_figure_to_test(image_name=fig1_bpd, caption='BPM Input power vs RF output power')
     report_object.add_figure_to_test(image_name=fig1_bpd, caption='Position errors as a function of input power')
-    report_object.add_figure_to_test(image_name=fig_noise_time, caption='Noise with no input')
-    report_object.add_figure_to_test(image_name=fig_noise_freq, caption='Noise spectrum with no input')
+    # report_object.add_figure_to_test(image_name=fig_noise_time, caption='Noise with no input')
+    # report_object.add_figure_to_test(image_name=fig_noise_freq, caption='Noise spectrum with no input')
 
 
 def report_section_bunch_train_length_dependency(report_object, subdirectory, test_data):
@@ -206,9 +218,10 @@ def report_section_bunch_train_length_dependency(report_object, subdirectory, te
     parameter_names.append("Maximum Power: " + str(loaded_data['max_power']) + "dBm")
     parameter_names.append("Pulse Period: " + str(loaded_data['pulse_period']))
     parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
-    parameter_names.append('AGC ' + str(loaded_data['bpm_agc']))
-    parameter_names.append('Switching ' + str(loaded_data['bpm_switching']))
+    parameter_names.append('AGC ' + agc_state_label(loaded_data['bpm_agc']))
+    parameter_names.append('Switching ' + switching_state_label(loaded_data['bpm_switching']))
     parameter_names.append('DSC ' + dsc_state_label(loaded_data['bpm_dsc']))
+    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
     # make a caption and headings for a table of results
@@ -252,6 +265,7 @@ def report_section_fixed_voltage_amplitude_fill_pattern(report_object, subdirect
     parameter_names.append('AGC ' + str(loaded_data['bpm_agc']))
     parameter_names.append('Switching ' + str(loaded_data['bpm_switching']))
     parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
+    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
 
@@ -290,6 +304,10 @@ def report_section_position_raster_scan(report_object, subdirectory, test_data):
     parameter_names.append("Fixed RF Output Frequency: " + str(loaded_data['frequency']) + "MHz")
     parameter_names.append("Number of points: " + str(len(loaded_data['measured_x'])))
     parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
+    parameter_names.append('AGC ' + agc_state_label(loaded_data['bpm_agc']))
+    parameter_names.append('Switching ' + switching_state_label(loaded_data['bpm_switching']))
+    parameter_names.append('DSC ' + dsc_state_label(loaded_data['bpm_dsc']))
+    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
 
     report_object.setup_test("Beam_position_equidistant_grid_raster_scan", intro_text, device_names, parameter_names)
 
