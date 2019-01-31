@@ -22,6 +22,14 @@ class Generic_BPMDevice():
             """
 
     @abstractmethod
+    def get_internal_state(self):
+        """Abstract method for override. Returns the internal state of the device.
+
+        Args:
+        Returns: Parameters of the BPM settings
+            """
+
+    @abstractmethod
     def get_attenuation(self):
         """Abstract method for override, gets the calculated X position of the beam.
 

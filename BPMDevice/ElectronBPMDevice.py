@@ -53,9 +53,7 @@ class ElectronBPMDevice(Generic_BPMDevice):
         Returns:
          
         """
-        print 'Restoring FT state to', self.ft
         LiberaBPM_common.write_epics_pv(self.epics_id, "FT:ENABLE_S", 'Disabled')#self.ft)
-        print 'Restored FT state'
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN:AGC_S", self.agc)  # Restore AGC.
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN:DISP_S", self.delta)  # Restore delta.
         # Restore attenuation waveform.
@@ -118,6 +116,19 @@ class ElectronBPMDevice(Generic_BPMDevice):
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:SETSW_S", switch_state)
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN_S", attenuation)  # Set initial attenuation
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:DSC_S", dsc)  # Set digital signal conditioning
+
+    def get_internal_state(self):
+        ft_state = LiberaBPM_common.read_epics_pv(self.epics_id, "FT:ENABLE_S")
+        agc = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN:AGC_S")  # Automatic gain control.
+        delta = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN:DISP_S")  # Set delta to zero.
+        # Set attenuation waveform to offset.
+        offset_wf = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN:OFFSET_S")
+        switches = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:AUTOSW_S")  # Set switches to manual.
+        # Choose a switch setting to define a switch pattern.
+        switch_state = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:SETSW_S")
+        attenuation = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN_S")  # Set initial attenuation
+        dsc = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:DSC_S")  # Set digital signal conditioning
+        return ft_state, agc, delta, offset_wf, switches, switch_state, attenuation, dsc
 
     def get_attenuation(self):
         """Override method, gets the internal attenuation setting.
