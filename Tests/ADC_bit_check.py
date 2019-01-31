@@ -22,9 +22,9 @@ def adc_test(
 
     Returns:
     """
-    test_name = test_system_object.test_initialisation(test_name=__name__,
-                                                       frequency=frequency,
-                                                       output_power_level=output_power_level)
+    test_name, set_output_power = test_system_object.test_initialisation(test_name=__name__,
+                                                                         frequency=frequency,
+                                                                         output_power_level=output_power_level)
     test_system_object.BPM.set_internal_state({'agc': 'AGC off',
                                                'delta': 0,
                                                'offset': 0,
@@ -33,6 +33,8 @@ def adc_test(
                                                'attenuation': 0,
                                                'dsc': 'Unity gains',
                                                'ft_state': 'Enabled'})
+    ft_state, agc, delta, offset_wf, switches, switch_state, bpm_attenuation, dsc = \
+        test_system_object.BPM.get_internal_state()
 
     test_system_object.RF.turn_on_RF()
     # Wait for signal to settle
@@ -45,9 +47,10 @@ def adc_test(
     data_out = {'test_name': test_name,
                 'rf_hw': test_system_object.rf_id,
                 'bpm_hw': test_system_object.bpm_id,
-                'bpm_agc': test_system_object.BPM.agc,
-                'bpm_switching': test_system_object.BPM.switches,
-                'bpm_dsc': test_system_object.BPM.dsc,
+                'bpm_agc': agc,
+                'bpm_switching': switches,
+                'bpm_dsc': dsc,
+                'bpm_attenuation': bpm_attenuation,
                 'n_bits': test_system_object.BPM.adc_n_bits,
                 'n_adc': test_system_object.BPM.num_adcs,
                 'data': data_tmp,

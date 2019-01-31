@@ -6,7 +6,7 @@ import json
 def beam_power_dependence(
                           test_system_object,
                           frequency,
-                          output_power_levels=range(-40, -100, -10),
+                          output_power_levels,
                           settling_time=0.2,
                           samples=10,
                           sub_directory=""):
@@ -29,12 +29,7 @@ def beam_power_dependence(
         sub_directory (str): String that can change where the graphs will be saved to.
 
     Returns:
-        float array: Power read at the BPM
-        float array: X Positions read from the BPM
-        float array: Y Positions read from the BPM
-        float array: Standard deviation of X Positions read from the BPM
-        float array: Standard deviation Y Positions read from the BPM
-    """
+     """
 
     test_name, starting_power = test_system_object.test_initialisation(test_name=__name__,
                                                                        frequency=frequency,
@@ -44,15 +39,14 @@ def beam_power_dependence(
     # Set up BPM for normal operation
     test_system_object.BPM.set_internal_state({'agc': 0, 'attenuation': 35})
 
+    ft_state, agc, delta, offset_wf, switches, switch_state, bpm_attenuation, dsc = \
+        test_system_object.BPM.get_internal_state()
+
     # Build up the arrays where the final values will be saved
     x_pos_raw = []
     y_pos_raw = []
     x_pos_raw_time = []
     y_pos_raw_time = []
-    # x_pos_mean = np.array([])
-    # y_pos_mean = np.array([])
-    # x_pos_std = np.array([])
-    # y_pos_std = np.array([])
     input_power = []
 
     starting_attenuations = test_system_object.ProgAtten.get_global_attenuation()
@@ -63,10 +57,6 @@ def beam_power_dependence(
     # Perform the test
     x_time_baseline, x_pos_baseline = test_system_object.BPM.get_x_sa_data(samples)  # record X pos
     y_time_baseline, y_pos_baseline = test_system_object.BPM.get_y_sa_data(samples)  # record Y pos
-
-    # x_baseline_mean = np.mean(x_pos_baseline)
-    # y_baseline_mean = np.mean(y_pos_baseline)
-
 
     test_system_object.RF.turn_on_RF()
     # Wait for signal to settle
@@ -89,17 +79,6 @@ def beam_power_dependence(
         y_pos_raw.append(y_pos_data)
         x_pos_raw_time.append(x_time)
         y_pos_raw_time.append(y_time)
-        # if index == output_power_levels[0]:
-        #     x_pos_first = np.mean(x_pos_data)
-        #     y_pos_first = np.mean(y_pos_data)
-        #     x_pos_mean = [0]
-        #     y_pos_mean = [0]
-        # else:
-        #     x_pos_mean = np.append(x_pos_mean, (np.mean(x_pos_data) - x_pos_first) * 1e3)  # record X pos
-        #     y_pos_mean = np.append(y_pos_mean, (np.mean(y_pos_data) - y_pos_first) * 1e3)  # record Y pos
-        # x_pos_std = np.append(x_pos_std, abs(np.std(x_pos_data)))  # record X pos
-        # y_pos_std = np.append(y_pos_std, abs(np.std(y_pos_data)))  # record Y pos
-
 
     # turn off the RF
     test_system_object.RF.turn_off_RF()
@@ -113,9 +92,10 @@ def beam_power_dependence(
                 'set_output_power_levels': original_output_power_levels,
                 'output_power_levels': applied_output_power_levels,
                 'bpm_input_power': input_power,
-                'bpm_agc': test_system_object.BPM.agc,
-                'bpm_switching': test_system_object.BPM.switches,
-                'bpm_dsc': test_system_object.BPM.dsc,
+                'bpm_agc': agc,
+                'bpm_switching': switches,
+                'bpm_dsc': dsc,
+                'bpm_attenuation': bpm_attenuation,
                 'x_pos_raw': x_pos_raw,
                 'y_pos_raw': y_pos_raw,
                 'x_pos_raw_time': x_pos_raw_time,
@@ -125,25 +105,6 @@ def beam_power_dependence(
                 'y_time_baseline': y_time_baseline,
                 'y_pos_baseline': y_pos_baseline
                 }
-
-    # data_out = {'bpm_input_power': input_power,
-    #             'x_pos_raw': list(x_pos_raw),
-    #             'x_pos_mean': list(x_pos_mean),
-    #             'x_pos_std': list(x_pos_std),
-    #             'y_pos_raw': list(y_pos_raw),
-    #             'y_pos_mean': list(y_pos_mean),
-    #             'y_pos_std': list(y_pos_std),
-    #             'bpm_agc': test_system_object.BPM.agc,
-    #             'bpm_switching': test_system_object.BPM.switches,
-    #             'bpm_dsc': test_system_object.BPM.dsc,
-    #             'test_name': test_name,
-    #             'rf_id': test_system_object.rf_id,
-    #             'bpm_id': test_system_object.bpm_id,
-    #             'prog_atten_id': test_system_object.prog_atten_id,
-    #             'settling_time': settling_time,
-    #             'frequency': frequency,
-    #             'set_output_power_levels': original_output_power_levels,
-    #             'output_power_levels': applied_output_power_levels}
 
     with open(sub_directory + "beam_power_dependence_data.json", 'w') as write_file:
         json.dump(data_out, write_file)
