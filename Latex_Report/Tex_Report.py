@@ -62,7 +62,7 @@ class TexReport:
             (r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
         self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', test_system_state['mac_address'], '}'))))
 
-        intro_text = r'This is a \LaTeX test report for the, beam profile monitor electronics that are used at ' \
+        intro_text = r'This is a test report for the, beam profile monitor electronics that are used at ' \
                      r'Diamond. ' \
                      r'In this document the different tests will be recorded in their own individual section. ' \
                      r'along with the specific parameters that are being tested and the test method used.\\\\'
