@@ -116,9 +116,15 @@ def plot_beam_power_dependence_data(sub_directory, loaded_data):
                         ('Frequency ()', 'Position (um)', "baseline_noise_frequency.pdf", 'Horizontal')))
     format_plot.append(((y_noise_freq[1:int(len(y_noise_freq)/2.)], y_noise_fft[1:int(len(y_noise_freq)/2.)]),
                         ('Frequency ()', 'Position (um)', "baseline_noise_frequency.pdf", 'Vertical')))
+    format_plot.append(((loaded_data['bpm_specs']['Beam_current_dependence_X'][0],
+                         loaded_data['bpm_specs']['Beam_current_dependence_X'][1]),
+                        ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Horizontal')))
+    format_plot.append(((loaded_data['bpm_specs']['Beam_current_dependence_Y'][0],
+                         loaded_data['bpm_specs']['Beam_current_dependence_Y'][1]),
+                        ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Vertical')))
 
     # fig1_name = line_plot_data([format_plot[0]], sub_directory)
-    fig1_name = line_plot_data([format_plot[0], format_plot[1]], sub_directory)
+    fig1_name = line_plot_data([format_plot[0], format_plot[1], format_plot[6], format_plot[7]], sub_directory)
     fig2_name = line_plot_data([format_plot[2], format_plot[3]], sub_directory)
     fig3_name = line_plot_data([format_plot[4], format_plot[5]], sub_directory)
     return fig1_name, fig2_name, fig3_name

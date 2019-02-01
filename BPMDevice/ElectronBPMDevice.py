@@ -44,6 +44,7 @@ class ElectronBPMDevice(Generic_BPMDevice):
             self.switch_val = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:SETSW_S")
             self.attn = self.get_attenuation()
             self.dsc = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:DSC_S")
+            self.spec = self.get_performance_spec()
         print "Opened connection to " + self.device_id  # Informs the user the device is now connected to
 
     def __del__(self):
