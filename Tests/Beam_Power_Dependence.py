@@ -103,7 +103,8 @@ def beam_power_dependence(
                 'x_time_baseline': x_time_baseline,
                 'x_pos_baseline': x_pos_baseline,
                 'y_time_baseline': y_time_baseline,
-                'y_pos_baseline': y_pos_baseline
+                'y_pos_baseline': y_pos_baseline,
+                'bpm_spec': test_system_object.BPM.spec
                 }
 
     with open(sub_directory + "beam_power_dependence_data.json", 'w') as write_file:
