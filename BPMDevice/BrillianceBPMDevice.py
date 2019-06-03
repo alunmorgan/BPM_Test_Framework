@@ -29,7 +29,7 @@ class BrillianceBPMDevice(Generic_BPMDevice):
         else:
             self.adc_n_bits = 16
             self.num_adcs = 4
-            self.max_input = 6  # The max power (dBm) the inputs can take before damage.
+            self.damage_level = 6  # The max power (dBm) the inputs can take before damage.
             self.switch_straight = 15  # The switch setting which corresponds to straight through.
             self.epics_id = epics_id  # TS-DI-EBPM-04:
             self.mac_address = LiberaBPM_common.get_mac_address(self.epics_id)
@@ -45,6 +45,7 @@ class BrillianceBPMDevice(Generic_BPMDevice):
             self.switch_val = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:SETSW_S")
             self.attn = self.get_attenuation()
             self.dsc = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:DSC_S")
+            self.spec = self.get_performance_spec()
         print "Opened connection to " + self.device_id  # Informs the user the device is now connected to
 
     def __del__(self):
@@ -54,9 +55,7 @@ class BrillianceBPMDevice(Generic_BPMDevice):
         Returns:
 
         """
-        print 'Restoring FT state to', self.ft
         LiberaBPM_common.write_epics_pv(self.epics_id, "FT:ENABLE_S", 'Disabled')  # self.ft)
-        print 'Restored FT state'
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN:AGC_S", self.agc)  # Restore AGC.
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN:DISP_S", self.delta)  # Restore delta.
         # Restore attenuation waveform.
@@ -67,9 +66,46 @@ class BrillianceBPMDevice(Generic_BPMDevice):
         self.set_attenuation(self.attn)  # Restore attenuation setting.
         print "Closed connection to " + self.device_id
 
-    def set_internal_state(self, agc='AGC on', delta=0, offset=0, switches='Auto',
-                           switch_state=3, attenuation=0, dsc='Automatic',
-                           ft_state='Disabled'):
+    def set_internal_state(self, state_dict):
+        if 'agc' in state_dict.keys():
+            agc = state_dict['agc']
+        else:
+            agc = 'AGC on'
+
+        if 'delta'in state_dict.keys():
+            delta = state_dict['delta']
+        else:
+            delta = 0
+
+        if 'offset' in state_dict.keys():
+            offset = state_dict['offset']
+        else:
+            offset = 0
+
+        if 'switches' in state_dict.keys():
+            switches = state_dict['switches']
+        else:
+            switches = 'Automatic'
+
+        if 'switch_state' in state_dict.keys():
+            switch_state = state_dict['switch_state']
+        else:
+            switch_state = 3
+
+        if 'attenuation' in state_dict.keys():
+            attenuation = state_dict['attenuation']
+        else:
+            attenuation = 0
+
+        if 'dsc' in state_dict.keys():
+            dsc = state_dict['dsc']
+        else:
+            dsc = 'Automatic'
+
+        if 'ft_state' in state_dict.keys():
+            ft_state = state_dict['ft_state']
+        else:
+            ft_state = 'Disabled'
         """Sets up the internal state of the BPM. The defaults set it up in normal running conditions."""
         LiberaBPM_common.write_epics_pv(self.epics_id, "FT:ENABLE_S", ft_state)
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN:AGC_S", agc)  # Set Automatic gain control.
@@ -81,6 +117,19 @@ class BrillianceBPMDevice(Generic_BPMDevice):
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:SETSW_S", switch_state)
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:ATTEN_S", attenuation)  # Set initial attenuation
         LiberaBPM_common.write_epics_pv(self.epics_id, "CF:DSC_S", dsc)  # Set digital signal conditioning
+
+    def get_internal_state(self):
+        ft_state = LiberaBPM_common.read_epics_pv(self.epics_id, "FT:ENABLE_S")
+        agc = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN:AGC_S")  # Automatic gain control.
+        delta = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN:DISP_S")  # Set delta to zero.
+        # Set attenuation waveform to offset.
+        offset_wf = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN:OFFSET_S")
+        switches = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:AUTOSW_S")  # Set switches to manual.
+        # Choose a switch setting to define a switch pattern.
+        switch_state = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:SETSW_S")
+        attenuation = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:ATTEN_S")  # Set initial attenuation
+        dsc = LiberaBPM_common.read_epics_pv(self.epics_id, "CF:DSC_S")  # Set digital signal conditioning
+        return ft_state, agc, delta, offset_wf, switches, switch_state, attenuation, dsc
 
     def get_attenuation(self):
         """Override method, gets the internal attenuation setting.
@@ -244,7 +293,7 @@ class BrillianceBPMDevice(Generic_BPMDevice):
             str: Device with epics channel ID and MAC address
         """
 
-        return "Libera Electron BPM with the Epics ID " + "\"" + self.epics_id + \
+        return "Libera Brilliance BPM with the Epics ID " + "\"" + self.epics_id + \
                "\" and the MAC Address \"" + self.mac_address + "\""
 
     # def get_input_tolerance(self):
