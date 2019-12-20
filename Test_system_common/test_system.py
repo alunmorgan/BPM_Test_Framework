@@ -53,7 +53,7 @@ class TestSystem:
                                                                   'timeout': 1},
                                                 'ITechBL12HI': {'ipaddress': "172.23.252.204", 'port': 5024,
                                                                 'timeout': 1}},
-                            'Programmable_attenuators': {'MC_RC4DAT6G95': {'ipaddress': "172.23.244.105", 'port': 23,
+                            'Programmable_attenuators': {'MC_RC4DAT6G95': {'ipaddress': "172.23.252.143", 'port': 23,
                                                                            'timeout': 10},
                                                          'Simulated': {}},
                             'BPM': {'Libera_Electron': {'damage_level': 0},
