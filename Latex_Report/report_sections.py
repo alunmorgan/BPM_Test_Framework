@@ -55,7 +55,8 @@ def assemble_report(subdirectory):
 
     if os.path.exists(os.path.join(subdirectory, 'beam_power_dependence_data.json')):
         report_section_beam_power_dependence(report_object=report, subdirectory=subdirectory,
-                                             test_data='beam_power_dependence_data.json')
+                                             test_data='beam_power_dependence_data.json',
+                                             ref_data='initial_BPM_state.json')
 
     if os.path.exists(os.path.join(subdirectory, 'constant_fill_charge_fill_sweep_data.json')):
         report_section_fixed_voltage_amplitude_fill_pattern(report_object=report, subdirectory=subdirectory,
@@ -146,7 +147,7 @@ def report_section_adc_int_atten(report_object, subdirectory, test_data):
     report_object.add_figure_to_test(image_name=fig_name, caption='Varying internal attenuation')
 
 
-def report_section_beam_power_dependence(report_object, subdirectory, test_data):
+def report_section_beam_power_dependence(report_object, subdirectory, test_data, ref_data):
     with open(''.join((subdirectory, test_data)), 'r') as read_data:
         loaded_data = json.load(read_data)
     #  loaded_data = loadmat(''.join((subdirectory, test_data)))
@@ -188,7 +189,8 @@ def report_section_beam_power_dependence(report_object, subdirectory, test_data)
     report_object.add_table_to_test('|c|c|c|c|c|', data, headings, caption)
     fig1_bpd, fig_noise_time, fig_noise_freq = helper_functions.plot_beam_power_dependence_data(
         sub_directory=subdirectory,
-        loaded_data=loaded_data)
+        loaded_data=loaded_data,
+        ref_data=ref_data)
     # report_object.add_figure_to_test(image_name=fig1_bpd, caption='BPM Input power vs RF output power')
     report_object.add_figure_to_test(image_name=fig1_bpd, caption='Position errors as a function of input power')
     # report_object.add_figure_to_test(image_name=fig_noise_time, caption='Noise with no input')
