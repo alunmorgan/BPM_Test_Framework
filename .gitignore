@@ -2,6 +2,16 @@ BPMDevice/htmlcov/
 BPMDevice/.coverage
 htmlcov/
 venv/
+.idea/
 *.py~
 *.sh~
 *.pyc
+*.aux
+*.out
+*.pyg
+*.tex.bak
+*.toc
+*.lof
+*.mat
+*.xml
+*.iml
