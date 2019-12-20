@@ -10,6 +10,8 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
 
     def __init__(self, ipaddress, port, timeout):
         self.timeout = timeout  # timeout for the telnet comms
+        #print ipaddress
+        #print port
         self.tn = telnetlib.Telnet(ipaddress, port, self.timeout)  # connects to the telnet device
         # gets the device of the telnet device, makes sure its the right one
         self.DeviceID = self.get_device_id()
@@ -95,6 +97,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
             raise ValueError
         self._check_attenuation(attenuation)
         self._telnet_query(":CHAN:1:2:3:4:SETATT:" + str(attenuation))
+        # print 'Attenuation requested', attenuation, 'Attenuation set', self.get_global_attenuation()
 
     def get_global_attenuation(self):
         replies = self._telnet_query(':ATT?')
@@ -122,6 +125,7 @@ class MC_RC4DAT6G95_Prog_Atten(Generic_Prog_Atten):
         if attenuation != test:
             self._telnet_write(command)
             test = self.get_channel_attenuation(channel)
+        # print 'Channel ', channel, ' Attenuation requested', attenuation, 'Attenuation set', test
 
     def get_channel_attenuation(self, atten_channel):
         """
