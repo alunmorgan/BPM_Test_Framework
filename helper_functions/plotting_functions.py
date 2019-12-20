@@ -92,7 +92,7 @@ def plot_adc_int_atten_sweep_data(sub_directory, loaded_data):
     return fig_name
 
 
-def plot_beam_power_dependence_data(sub_directory, loaded_data):
+def plot_beam_power_dependence_data(sub_directory, loaded_data, ref_data):
     # Get the plot values in a format that's easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
 
@@ -116,12 +116,12 @@ def plot_beam_power_dependence_data(sub_directory, loaded_data):
                         ('Frequency ()', 'Position (um)', "baseline_noise_frequency.pdf", 'Horizontal')))
     format_plot.append(((y_noise_freq[1:int(len(y_noise_freq)/2.)], y_noise_fft[1:int(len(y_noise_freq)/2.)]),
                         ('Frequency ()', 'Position (um)', "baseline_noise_frequency.pdf", 'Vertical')))
-    format_plot.append(((loaded_data['bpm_specs']['Beam_current_dependence_X'][0],
-                         loaded_data['bpm_specs']['Beam_current_dependence_X'][1]),
-                        ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Horizontal')))
-    format_plot.append(((loaded_data['bpm_specs']['Beam_current_dependence_Y'][0],
-                         loaded_data['bpm_specs']['Beam_current_dependence_Y'][1]),
-                        ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Vertical')))
+    # format_plot.append(((ref_data['bpm_spec']['Beam_current_dependence_X'][0],
+    #                      ref_data['bpm_spec']['Beam_current_dependence_X'][1]),
+    #                     ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Horizontal')))
+    # format_plot.append(((ref_data['bpm_spec']['Beam_current_dependence_Y'][0],
+    #                      ref_data['bpm_spec']['Beam_current_dependence_Y'][1]),
+    #                     ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Vertical')))
 
     # fig1_name = line_plot_data([format_plot[0]], sub_directory)
     fig1_name = line_plot_data([format_plot[0], format_plot[1], format_plot[6], format_plot[7]], sub_directory)
