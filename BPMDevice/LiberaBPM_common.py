@@ -197,6 +197,10 @@ def get_adc_data(epics_id, num_bits):
     adc3_out = [int(x + half_range) for x in adc3_data]
     adc4_out = [int(x + half_range) for x in adc4_data]
     times = np.arange(len(adc1_out)) * 1 / 117E6  # Data rate is 117MHz
+    # print 'adc1', adc1_out[:10]
+    # print 'adc2', adc2_out[:10]
+    # print 'adc3', adc3_out[:10]
+    # print 'adc4', adc4_out[:10]
     if not adc1_out or not adc2_out or not adc3_out or not adc4_out:
         raise ValueError('Not all ADC data returned.')
     return list(times), [adc1_out, adc2_out, adc3_out, adc4_out]
