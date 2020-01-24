@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import helper_functions.helper_calc_functions
+import os
+from copy import deepcopy
+from itertools import compress
+import operator
 
 
 def line_plot_data(datasets, sub_directory):
@@ -23,7 +27,7 @@ def line_plot_data(datasets, sub_directory):
         # There is a specification line. Add this.
         # Spec is in um while data is in mm so scale by 1E-3.
         plt.plot(datasets[0][2][0], datasets[0][2][1], 'r')
-    fig_name = ''.join((sub_directory, datasets[0][1][2]))
+    fig_name = os.path.join(sub_directory, datasets[0][1][2])
     plt.savefig(fig_name)
     plt.cla()  # Clear axis
     plt.clf()  # Clear figure
@@ -44,7 +48,7 @@ def bar_plot_data(datasets, sub_directory):
     x_step = datasets[0][0][0][1] - datasets[0][0][0][0]
     plt.xlim(datasets[0][0][0][0] - x_step / 2., datasets[0][0][0][-1] + x_step / 2.)
     plt.ylim(0, 1)
-    fig_name = ''.join((sub_directory, datasets[0][1][2]))
+    fig_name = os.path.join(sub_directory, datasets[0][1][2])
     plt.savefig(fig_name)
     plt.cla()  # Clear axis
     plt.clf()  # Clear figure
@@ -58,38 +62,58 @@ def plot_adc_bit_check_data(sub_directory, loaded_data):
         data_std = helper_functions.adc_missing_bit_analysis(data[kw], loaded_data['n_bits'])
         format_plot.append(((np.arange(1, loaded_data['n_bits'] + 1), data_std),
                             ('bit number', 'Standard deviation', 'ADC_bit_check.pdf', ' '.join(('ADC', str(kw + 1))))))
-        # format_plot.append(((loaded_data['time'], data[kw]),
-        #                     ('time', 'Data', 'ADC_data.pdf', ' '.join(('ADC', str(kw + 1))))))
-
     fig1_name = bar_plot_data(format_plot, sub_directory)
-    # fig2_name = line_plot_data(format_plot[1::2], sub_directory)
-    return fig1_name#, fig2_name
+    return fig1_name
 
 
 def plot_adc_int_atten_sweep_data(sub_directory, loaded_data):
     # Get the plot values in a format that is easy to iterate
     format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    data = loaded_data['data']
-    adc_mean = list()
-    adc_std = list()
-    for atten_steps in range(len(data)):
-        data_temp = helper_functions.reconfigure_adc_data(data[atten_steps])
-        if atten_steps == 0:
-            for adc in range(len(data_temp)):
-                adc_mean.append([])
-                # adc_std.append([])
-        for adc in range(len(data_temp)):
-            adc_mean[adc].append(np.mean(data_temp[adc]))
-            # adc_std[adc].append(np.std(data_temp[adc]))
 
-    for adc_num in range(len(adc_mean)):
-        format_plot.append(((loaded_data['output_power'], adc_mean[adc_num]),
-                            ('power', 'counts',
-                             "ADC_varying_internal_attenuation.pdf", ' '.join(('ADC', str(adc_num + 1))))))
+    data = loaded_data['data']
+    data_a = [np.mean(data[0]['sa_a_data'])]
+    data_b = [np.mean(data[0]['sa_b_data'])]
+    data_c = [np.mean(data[0]['sa_c_data'])]
+    data_d = [np.mean(data[0]['sa_d_data'])]
+    ref_a = np.mean(data[0]['sa_a_data'])
+    ref_b = np.mean(data[0]['sa_b_data'])
+    ref_c = np.mean(data[0]['sa_c_data'])
+    ref_d = np.mean(data[0]['sa_d_data'])
+    data_a_norm = [1]
+    data_b_norm = [1]
+    data_c_norm = [1]
+    data_d_norm = [1]
+    for atten_steps in range(1, len(data)):
+        data_a.append(np.mean(data[atten_steps]['sa_a_data']))
+        data_b.append(np.mean(data[atten_steps]['sa_b_data']))
+        data_c.append(np.mean(data[atten_steps]['sa_c_data']))
+        data_d.append(np.mean(data[atten_steps]['sa_d_data']))
+        data_a_norm.append(data_a[atten_steps] / ref_a)
+        data_b_norm.append(data_b[atten_steps] / ref_b)
+        data_c_norm.append(data_c[atten_steps] / ref_c)
+        data_d_norm.append(data_d[atten_steps] / ref_d)
+
+    format_plot.append(((loaded_data['output_power'], data_a),
+                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'A')))
+    format_plot.append(((loaded_data['output_power'], data_b),
+                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'B')))
+    format_plot.append(((loaded_data['output_power'], data_c),
+                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'C')))
+    format_plot.append(((loaded_data['output_power'], data_d),
+                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'D')))
+    format_plot.append(((loaded_data['output_power'], data_a_norm),
+                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'A')))
+    format_plot.append(((loaded_data['output_power'], data_b_norm),
+                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'B')))
+    format_plot.append(((loaded_data['output_power'], data_c_norm),
+                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'C')))
+    format_plot.append(((loaded_data['output_power'], data_d_norm),
+                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'D')))
 
     # plot all of the graphs
-    fig_name = line_plot_data([format_plot[0], format_plot[1], format_plot[2], format_plot[3]], sub_directory)
-    return fig_name
+    fig1_name = line_plot_data([format_plot[0], format_plot[1], format_plot[2], format_plot[3]], sub_directory)
+    fig2_name = line_plot_data([format_plot[4], format_plot[5], format_plot[6], format_plot[7]], sub_directory)
+    return fig1_name, fig2_name
 
 
 def plot_beam_power_dependence_data(sub_directory, loaded_data, ref_data):
@@ -102,11 +126,12 @@ def plot_beam_power_dependence_data(sub_directory, loaded_data, ref_data):
         loaded_data['x_time_baseline'], loaded_data['x_pos_baseline'])
     y_noise_freq, y_noise_fft = helper_functions.helper_calc_functions.change_to_freq_domain(
         loaded_data['y_time_baseline'], loaded_data['y_pos_baseline'])
-    print y_noise_freq
 
-    format_plot.append(((loaded_data['output_power_levels'], x_pos_mean, x_pos_std),
+    format_plot.append(((loaded_data['output_power_levels'], [xp * 1e3 for xp in x_pos_mean],
+                         [xs * 1e3 for xs in x_pos_std]),
                         ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Horizontal')))
-    format_plot.append(((loaded_data['output_power_levels'], y_pos_mean, y_pos_std),
+    format_plot.append(((loaded_data['output_power_levels'], [yp * 1e3 for yp in y_pos_mean],
+                         [ys * 1e3 for ys in y_pos_std]),
                         ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Vertical')))
     format_plot.append(((loaded_data['x_time_baseline'], loaded_data['x_pos_baseline']),
                         ('Time (s)', 'Position (um)', "baseline_noise_time.pdf", 'Horizontal')))
@@ -124,22 +149,22 @@ def plot_beam_power_dependence_data(sub_directory, loaded_data, ref_data):
     #                     ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Vertical')))
 
     # fig1_name = line_plot_data([format_plot[0]], sub_directory)
-    fig1_name = line_plot_data([format_plot[0], format_plot[1], format_plot[6], format_plot[7]], sub_directory)
+    fig1_name = line_plot_data([format_plot[0], format_plot[1]], sub_directory)
     fig2_name = line_plot_data([format_plot[2], format_plot[3]], sub_directory)
     fig3_name = line_plot_data([format_plot[4], format_plot[5]], sub_directory)
     return fig1_name, fig2_name, fig3_name
 
 
 def plot_scaled_voltage_amplitude_fill_pattern_data(sub_directory, loaded_data):
-    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append(((loaded_data['duty_cycles'][0], loaded_data['x_pos_mean'][0], loaded_data['x_pos_std'][0]),
-                                     ('Gating signal duty cycle (0-1)',
-                                      'Beam Position (um) (Normalised at 1)',
-                                      "scaled_DC_vs_position.pdf", 'Horizontal',)))
-    format_plot.append(((loaded_data['duty_cycles'][0], loaded_data['y_pos_mean'][0], loaded_data['y_pos_std'][0]),
-                        ('(Gating signal duty cycle (0-1)',
-                       'Beam Position (um) (Normalised at 1)'
-                        "scaled_DC_vs_Y.pdf", 'Vertical')))
+    format_plot = [((loaded_data['duty_cycles'][0], loaded_data['x_pos_mean'][0], loaded_data['x_pos_std'][0]),
+                    ('Gating signal duty cycle (0-1)',
+                     'Beam Position (um) (Normalised at 1)',
+                     "scaled_DC_vs_position.pdf", 'Horizontal',)),
+                   ((loaded_data['duty_cycles'][0], loaded_data['y_pos_mean'][0], loaded_data['y_pos_std'][0]),
+                    ('(Gating signal duty cycle (0-1)',
+                     'Beam Position (um) (Normalised at 1)'
+                     "scaled_DC_vs_Y.pdf",
+                     'Vertical'))]  # x axis, y axis, x axis title, y axis title, title of file, caption
 
     fig_name = line_plot_data([format_plot[0], format_plot[1]], sub_directory)
     return fig_name
@@ -147,40 +172,69 @@ def plot_scaled_voltage_amplitude_fill_pattern_data(sub_directory, loaded_data):
 
 def plot_fixed_voltage_amplitude_fill_pattern_data(sub_directory, loaded_data):
     # Get the plot values in a format thats easy to iterate
-    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-    format_plot.append(((loaded_data['duty_cycles'][0], loaded_data['x_pos_mean'][0], loaded_data['x_pos_std'][0]),
-                        ('Gating signal duty cycle (0-1)', 'Beam Position (um) (Normalised at 1)',
-                         "Duty_cycle_vs_position.pdf", 'Horizontal')))
-    format_plot.append(((loaded_data['duty_cycles'][0], loaded_data['y_pos_mean'][0], loaded_data['y_pos_std'][0]),
-                        ('Gating signal duty cycle (0-1)', 'Beam Position (um) (Normalised at 1)',
-                         "Duty_cycle_vs_position.pdf", 'Vertical')))
+    format_plot = [((loaded_data['duty_cycles'][0], loaded_data['x_pos_mean'][0], loaded_data['x_pos_std'][0]),
+                    ('Gating signal duty cycle (0-1)', 'Beam Position (um) (Normalised at 1)',
+                     "Duty_cycle_vs_position.pdf", 'Horizontal')),
+                   ((loaded_data['duty_cycles'][0], loaded_data['y_pos_mean'][0], loaded_data['y_pos_std'][0]),
+                    ('Gating signal duty cycle (0-1)', 'Beam Position (um) (Normalised at 1)',
+                     "Duty_cycle_vs_position.pdf",
+                     'Vertical'))]  # x axis, y axis, x axis title, y axis title, title of file, caption
     fig_name = line_plot_data([format_plot[0], format_plot[1]], sub_directory)
     return fig_name
 
 
-def plot_raster_scan(sub_directory, loaded_data):
+def plot_raster_scan(sub_directory, loaded_data, test_data, centre_test_data):
+    # Calculate predicted locations
     x_predicted = []
     y_predicted = []
     for inds in range(len(loaded_data['a_atten_readback'])):
         a, b, c, d = helper_functions.convert_attenuation_settings_to_abcd(loaded_data['starting_attenuations'],
                                                                            loaded_data['map_atten_bpm'],
-                                             loaded_data['a_atten_readback'][inds], loaded_data['b_atten_readback'][inds],
-                                             loaded_data['c_atten_readback'][inds], loaded_data['d_atten_readback'][inds])
+                                                                           loaded_data['a_atten_readback'][inds],
+                                                                           loaded_data['b_atten_readback'][inds],
+                                                                           loaded_data['c_atten_readback'][inds],
+                                                                           loaded_data['d_atten_readback'][inds])
 
         x_predicted.append(helper_functions.calc_x_pos(a, b, c, d, kx=1))
         y_predicted.append(helper_functions.calc_y_pos(a, b, c, d, ky=1))
 
-    plt.plot(helper_functions.multiply_list(helper_functions.add_list(loaded_data['measured_x'], 0.), 1),
-             helper_functions.multiply_list(loaded_data['measured_y'], 1), 'bo',
-             loaded_data['requested_x'], loaded_data['requested_y'], 'r+',
-             helper_functions.multiply_list(x_predicted, 1),
-             helper_functions.multiply_list(y_predicted, 1), 'g+',
+    result_number = 0
+    x_passed = list()
+    y_passed = list()
+    x_failed = list()
+    y_failed = list()
+    centre_x_passed = list()
+    centre_y_passed = list()
+    centre_x_failed = list()
+    centre_y_failed = list()
+    for pf_state in test_data:
+        if pf_state:
+            x_passed.append(loaded_data['measured_x'][result_number])
+            y_passed.append(loaded_data['measured_y'][result_number])
+        else:
+            x_failed.append(loaded_data['measured_x'][result_number])
+            y_failed.append(loaded_data['measured_y'][result_number])
+        result_number += 1
+
+    result_number = 0
+    for pf_state2 in centre_test_data:
+        if pf_state2:
+            centre_x_passed.append(loaded_data['measured_x'][result_number])
+            centre_y_passed.append(loaded_data['measured_y'][result_number])
+        else:
+            centre_x_failed.append(loaded_data['measured_x'][result_number])
+            centre_y_failed.append(loaded_data['measured_y'][result_number])
+        result_number += 1
+
+    plt.plot(x_passed, y_passed, 'bo', x_failed, y_failed, 'ro',
+             x_predicted, y_predicted, 'g+',
+             centre_x_passed, centre_y_passed, 'bo', centre_x_failed, centre_y_failed, 'ro',
              markersize=10)
     plt.xlabel("Horizontal Beam Position (mm)")
     plt.ylabel("Vertical Beam Position (mm)")
-    plt.legend(('Measured', 'Requested', 'Predicted'),loc='upper right')
+    plt.legend(('Passed', 'Failed', 'Predicted'), loc='upper right')
     plt.grid(True)
-    fig_name = ''.join((sub_directory, "Beam_position_equidistant_grid_raster_scan_test" + ".pdf"))
+    fig_name = os.path.join(sub_directory, "Beam_position_equidistant_grid_raster_scan_test.pdf")
     plt.savefig(fig_name)
     return fig_name
 
@@ -188,23 +242,23 @@ def plot_raster_scan(sub_directory, loaded_data):
 def plot_noise(sub_directory, loaded_data, loaded_data_complex):
 
     # Get the plot values in a format that is easy to iterate
-    format_plot = []  # x axis, y axis, x axis title, y axis title, title of file, caption
-
-    format_plot.append(((loaded_data['x_time'], loaded_data['x_pos']),
-                        ('Time (s)', 'Horizontal Beam Position (mm)', "SA_at_different_power_x.pdf",
-                         loaded_data['graph_legend'])))
-    format_plot.append(((loaded_data['y_time'], loaded_data['y_pos']),
-                        ('Time (s)', 'Vertical Beam Position (mm)', "SA_at_different_power_y.pdf",
-                         loaded_data['graph_legend'])))
-    format_plot.append((([loaded_data['output_power'], loaded_data['output_power']],
-                         [loaded_data['x_mean'], loaded_data['y_mean']]),
-                        ('Power at BPM input (dBm)', 'mean values', "SA_means_at_different_power.pdf", ['x', 'y'])))
-    format_plot.append(((loaded_data_complex['x_f_freq'], loaded_data_complex['x_f_data']),
-                        ('Frequency (Hz)', 'Horizontal Beam Position', "Baseline_noise_spectrum_x.pdf",
-                         loaded_data['graph_legend'])))
-    format_plot.append(((loaded_data_complex['y_f_freq'], loaded_data_complex['y_f_data']),
-                        ('Frequency (Hz)', 'Vertical Beam Position', "Baseline_noise_spectrum_y.pdf",
-                         loaded_data['graph_legend'])))
+    # x axis, y axis, x axis title, y axis title, title of file, caption
+    format_plot = [((loaded_data['x_time'], loaded_data['x_pos']),
+                    ('Time (s)', 'Horizontal Beam Position (mm)', "SA_at_different_power_x.pdf",
+                     loaded_data['graph_legend'])), ((loaded_data['y_time'], loaded_data['y_pos']),
+                                                     ('Time (s)', 'Vertical Beam Position (mm)',
+                                                      "SA_at_different_power_y.pdf",
+                                                      loaded_data['graph_legend'])),
+                   (([loaded_data['output_power'], loaded_data['output_power']],
+                     [loaded_data['x_mean'], loaded_data['y_mean']]),
+                    ('Power at BPM input (dBm)', 'mean values', "SA_means_at_different_power.pdf", ['x', 'y'])),
+                   ((loaded_data_complex['x_f_freq'], loaded_data_complex['x_f_data']),
+                    ('Frequency (Hz)', 'Horizontal Beam Position', "Baseline_noise_spectrum_x.pdf",
+                     loaded_data['graph_legend'])), ((loaded_data_complex['y_f_freq'], loaded_data_complex['y_f_data']),
+                                                     ('Frequency (Hz)', 'Vertical Beam Position',
+                                                      "Baseline_noise_spectrum_y.pdf",
+                                                      loaded_data[
+                                                          'graph_legend']))]
 
     fig_names = []
     for index in format_plot:
@@ -225,7 +279,7 @@ def plot_noise(sub_directory, loaded_data, loaded_data_complex):
             # There is a specification line. Add this.
             plt.plot(index[2][0], index[2][1], 'r')
 
-        fig_names.append(''.join((sub_directory, index[1][2])))
+        fig_names.append(os.path.join(sub_directory, index[1][2]))
         plt.savefig(fig_names[-1])
 
         plt.cla()  # Clear axis
