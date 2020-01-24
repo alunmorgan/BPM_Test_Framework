@@ -1,6 +1,8 @@
 import numpy as np
 import time
 import json
+import sys
+from helper_functions.helper_calc_functions import sa_data_to_dict
 
 
 def adc_int_atten_sweep_test(
@@ -52,14 +54,19 @@ def adc_int_atten_sweep_test(
     # Gradually reducing the power level
     bpm_input_power = []
     output_power = []
+
     for step in range(number_of_attenuation_steps):
         bpm_input_power.append(int(round(test_system_object.BPM.get_input_power())))
         output_power.append(output_power_level - step * attenuation_step_size)
         data.append([])
         adj_before.append([])
         adj_after.append([])
-        _1, adj_before[step] = test_system_object.BPM.get_adc_data(test_system_object.BPM.adc_n_bits)
 
+        sa_a_times_ab, sa_a_data_ab, sa_b_times_ab, sa_b_data_ab, \
+            sa_c_times_ab, sa_c_data_ab, sa_d_times_ab, sa_d_data_ab = \
+            test_system_object.BPM.get_sa_data(num_repeat_points)
+        adj_before[step] = sa_data_to_dict(sa_a_times_ab, sa_a_data_ab, sa_b_times_ab, sa_b_data_ab,
+                                           sa_c_times_ab, sa_c_data_ab, sa_d_times_ab, sa_d_data_ab)
         time.sleep(settling_time)  # Wait for signal to settle
         glob_atten = test_system_object.ProgAtten.get_global_attenuation()
         if glob_atten[0] - glob_atten[1] > 0.00001 or glob_atten[0] - glob_atten[2] > 0.00001 or \
@@ -68,16 +75,26 @@ def adc_int_atten_sweep_test(
 
         test_system_object.ProgAtten.set_global_attenuation(glob_atten[0] + attenuation_step_size)
 
-        _1, adj_after[step] = test_system_object.BPM.get_adc_data(test_system_object.BPM.adc_n_bits)
-
+        sa_a_times_aa, sa_a_data_aa, sa_b_times_aa, sa_b_data_aa, \
+            sa_c_times_aa, sa_c_data_aa, sa_d_times_aa, sa_d_data_aa = \
+            test_system_object.BPM.get_sa_data(num_repeat_points)
+        adj_after[step] = sa_data_to_dict(sa_a_times_aa, sa_a_data_aa, sa_b_times_aa, sa_b_data_aa,
+                                          sa_c_times_aa, sa_c_data_aa, sa_d_times_aa, sa_d_data_aa)
         bpm_atten = test_system_object.BPM.get_attenuation()
         test_system_object.BPM.set_attenuation(bpm_atten - attenuation_step_size)
         time.sleep(settling_time)  # Wait for signal to settle
 
-        for nw in range(num_repeat_points):
-            # record data
-            time_tmp, data_tmp = test_system_object.BPM.get_adc_data(test_system_object.BPM.adc_n_bits)
-            data[step].append(list(data_tmp))
+        # Capture data
+        sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data = \
+            test_system_object.BPM.get_sa_data(num_repeat_points)
+        data[step] = sa_data_to_dict(sa_a_times, sa_a_data, sa_b_times, sa_b_data,
+                                     sa_c_times, sa_c_data, sa_d_times, sa_d_data)
+
+        # print step
+        # print number_of_attenuation_steps
+        # progress = (step + 1) / number_of_attenuation_steps * 100.
+        # sys.stdout.write(('=' * progress) + ('' * (100 - progress)) + ("\r [ %d" % progress + "% ] "))
+        # sys.stdout.flush()
 
     # turn off the RF
     test_system_object.RF.turn_off_RF()
