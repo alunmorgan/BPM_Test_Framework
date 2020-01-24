@@ -1,8 +1,8 @@
 import helper_functions
 import Latex_Report
 import os.path
-# from scipy.io import loadmat
 import json
+from helper_functions import pass_fail
 
 
 def switching_state_label(switching_orig):
@@ -74,9 +74,10 @@ def assemble_report(subdirectory):
 
 
 def report_section_adc_bit_test(report_object, subdirectory, test_data):
-    with open(''.join((subdirectory, test_data)), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data), 'r') as read_data:
         loaded_data = json.load(read_data)
-    #  loaded_data = loadmat(''.join((subdirectory, test_data)))
+    test_limit = 0.05
+    status_label, status = pass_fail.adc_bit_test_pass_fail(loaded_data=loaded_data, lim=test_limit)
     intro_text = r"""Excites with a sine wave and then gets the ADC data from each channel. 
      Plots the histogram to that any missing bits can be identified. The expected value is 0.5. 
      Any value 0.1 away from this indicates a problem.
@@ -84,19 +85,18 @@ def report_section_adc_bit_test(report_object, subdirectory, test_data):
      The RF signal is a sine wave.  \\~\\
      """
     # Get the device names for the report
-    device_names = []
-    device_names.append('RF source is ' + loaded_data['rf_hw'])
+    device_names = ['RF source is ' + loaded_data['rf_hw']]
 
     # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append('AGC %s' % agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append(''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))))
-    parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
-    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
+    parameter_names = ['AGC %s' % agc_state_label(loaded_data['bpm_agc']),
+                       ''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))),
+                       'DSC %s' % dsc_state_label(loaded_data['bpm_dsc']),
+                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']),
+                       'Test limit %s' % str(test_limit)
+                       ]
 
     # add the test details to the report
-    print loaded_data['test_name']
-    report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
+    report_object.setup_test(' - '.join((loaded_data['test_name'], status_label)), intro_text, device_names, parameter_names)
 
     # make a caption and headings for a table of results
     caption = "ADC range rached by the RF signal"
@@ -115,92 +115,101 @@ def report_section_adc_bit_test(report_object, subdirectory, test_data):
 
 
 def report_section_adc_int_atten(report_object, subdirectory, test_data):
-    with open(''.join((subdirectory, test_data)), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data), 'r') as read_data:
         loaded_data = json.load(read_data)
-    ## loaded_data = loadmat(''.join((subdirectory, test_data)))
+    test_limit = 0.1
+    status_label, status = pass_fail.internal_attenuator_pass_fail(loaded_data=loaded_data, lim=test_limit)
     intro_text = r"""The RF signal is a sine wave.
-    
     As the external attenuation is reduced, the internal is increased to compensate. 
     The total attenuation remains the same.
-    ADC data from each channel is captured at each signal level. 
+    SA data from each channel is captured at each signal level. 
        \\~\\
      """
     # Get the device names for the report
-    device_names = []
-    device_names.append('RF source is ' + loaded_data['rf_id'])
-    device_names.append('Programmable attenuator is ' + loaded_data['prog_atten_id'])
+    device_names = ['RF source is ' + loaded_data['rf_id'],
+                    'Programmable attenuator is ' + loaded_data['prog_atten_id']]
 
     # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append('Output power level: ' + str(
-        helper_functions.round_to_2sf(loaded_data['output_power'])))
-    parameter_names.append('ADC? input power: ' + str(
-        helper_functions.round_to_2sf(loaded_data['bpm_input_power'])))
-    parameter_names.append('AGC %s' % agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append(''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))))
-    parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
-    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
+    parameter_names = ['Output power level: ' + str(
+        helper_functions.round_to_2sf(loaded_data['output_power'])),
+                       'AGC %s' % agc_state_label(loaded_data['bpm_agc']),
+                       ''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))),
+                       'DSC %s' % dsc_state_label(loaded_data['bpm_dsc']),
+                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']),
+                       'Test limit is %s (%s percent)' % (str(test_limit), str(test_limit*100))
+                       ]
     # add the test details to the report
-    report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
-    fig_name = helper_functions.plot_adc_int_atten_sweep_data(sub_directory=subdirectory,
-                                                              loaded_data=loaded_data)
-    report_object.add_figure_to_test(image_name=fig_name, caption='Varying internal attenuation')
+    report_object.setup_test(' - '.join((loaded_data['test_name'], status_label)), intro_text, device_names, parameter_names)
+    fig1_name, fig2_name = helper_functions.plot_adc_int_atten_sweep_data(sub_directory=subdirectory,
+                                                                          loaded_data=loaded_data)
+    report_object.add_figure_to_test(image_name=fig1_name, caption='Varying internal attenuation', fig_width=0.5)
+    report_object.add_figure_to_test(image_name=fig2_name, caption='Varying internal attenuation (normalised signals)',
+                                     fig_width=0.5)
 
 
 def report_section_beam_power_dependence(report_object, subdirectory, test_data, ref_data):
-    with open(''.join((subdirectory, test_data)), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data), 'r') as read_data:
         loaded_data = json.load(read_data)
-    #  loaded_data = loadmat(''.join((subdirectory, test_data)))
+    test_limit = 100
+    status_label, status = pass_fail.power_dependence_pass_fail(loaded_data=loaded_data, level=test_limit)
     intro_text = r"""Tests the relationship between power at the BPM inputs and values read from the BPM. 
        
        An RF signal is output, and then different parameters are measured from the BPM. 
        The signal is changed, and the measurements are repeated.  \\~\\
        """
     # Get the device names for the report
-    device_names = []
-    device_names.append('RF source is ' + loaded_data['rf_id'])
-    device_names.append('Programmable attenuator is ' + loaded_data['prog_atten_id'])
+    device_names = ['RF source is ' + loaded_data['rf_id'],
+                    'Programmable attenuator is ' + loaded_data['prog_atten_id']]
     # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append("Frequency: " + str(loaded_data['frequency']) + "MHz")
-    parameter_names.append("Power levels requested: " + str(
-        helper_functions.round_to_2sf(loaded_data['set_output_power_levels'])) + "dBm")
-    parameter_names.append("Power levels used: " + str(
-        helper_functions.round_to_2sf(loaded_data['output_power_levels'])) + "dBm")
-    #  parameter_names.append('BPM input power: ' + str(
-    #    helper_functions.round_to_2sf(loaded_data['bpm_input_power'])))
-    parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
-    parameter_names.append('AGC %s' % agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append(''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))))
-    parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
-    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
+    parameter_names = ["Frequency: " + str(loaded_data['frequency']) + "MHz", "Power levels requested: " + str(
+        helper_functions.round_to_2sf(loaded_data['set_output_power_levels'])) + "dBm", "Power levels used: " + str(
+        helper_functions.round_to_2sf(loaded_data['output_power_levels'])) + "dBm",
+                       "Settling time: " + str(loaded_data['settling_time']) + "s",
+                       'AGC %s' % agc_state_label(loaded_data['bpm_agc']),
+                       ''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))),
+                       'DSC %s' % dsc_state_label(loaded_data['bpm_dsc']),
+                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']),
+                       'Test limit %s um ' % str(test_limit)]
     # add the test details to the report
-    report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
+    report_object.setup_test(' - '.join((loaded_data['test_name'], status_label)), intro_text, device_names, parameter_names)
     # make a caption and headings for a table of results
     caption = "Beam Power Dependence Results"
     headings = [["Input Power", " mean X Position", "mean Y Position", "Std X", "Std Y"],
-                ["(dBm)", "(um)", "(um)", "(um)", "(um)"]]
+                ["(dBm)", "(um)", "(um)", "(nm)", "(nm)"]]
     x_pos_mean, x_pos_std = helper_functions.stat_dataset(loaded_data['x_pos_raw'])
     y_pos_mean, y_pos_std = helper_functions.stat_dataset(loaded_data['y_pos_raw'])
+    x_pos_mean_scaled = list()
+    x_pos_mean_scaled_abs = list()
+    for xpm in x_pos_mean:
+        x_pos_mean_scaled.append(xpm * 1e3)
+        x_pos_mean_scaled_abs.append(abs(x_pos_mean_scaled[-1]))
+    y_pos_mean_scaled = list()
+    y_pos_mean_scaled_abs = list()
+    for ypm in y_pos_mean:
+        y_pos_mean_scaled.append(ypm * 1e3)
+        y_pos_mean_scaled_abs.append(abs(y_pos_mean_scaled[-1]))
+    x_pos_std_scaled = list()
+    for xps in x_pos_std:
+        x_pos_std_scaled.append(xps * 1e6)
+    y_pos_std_scaled = list()
+    for yps in y_pos_std:
+        y_pos_std_scaled.append(yps * 1e6)
     data = [loaded_data['set_output_power_levels'],
-            x_pos_mean, y_pos_mean,
-            x_pos_std, y_pos_std]
+            x_pos_mean_scaled, y_pos_mean_scaled,
+            x_pos_std_scaled, y_pos_std_scaled]
     # copy the values to the report
     report_object.add_table_to_test('|c|c|c|c|c|', data, headings, caption)
     fig1_bpd, fig_noise_time, fig_noise_freq = helper_functions.plot_beam_power_dependence_data(
         sub_directory=subdirectory,
         loaded_data=loaded_data,
         ref_data=ref_data)
-    # report_object.add_figure_to_test(image_name=fig1_bpd, caption='BPM Input power vs RF output power')
-    report_object.add_figure_to_test(image_name=fig1_bpd, caption='Position errors as a function of input power')
-    # report_object.add_figure_to_test(image_name=fig_noise_time, caption='Noise with no input')
-    # report_object.add_figure_to_test(image_name=fig_noise_freq, caption='Noise spectrum with no input')
+    report_object.add_figure_to_test(image_name=fig1_bpd, caption='Position errors as a function of input power',
+                                     fig_width=0.5)
 
 
 def report_section_bunch_train_length_dependency(report_object, subdirectory, test_data):
-    with open(''.join((subdirectory, test_data)), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data), 'r') as read_data:
         loaded_data = json.load(read_data)
-    #  loaded_data = loadmat(''.join((subdirectory, test_data)))
     intro_text = r"""
            Equivalent to keeping the bunch charge constant.
            This test imitates a fill pattern by modulation the RF signal with a square wave. The up time 
@@ -210,20 +219,18 @@ def report_section_bunch_train_length_dependency(report_object, subdirectory, te
            is changed. While the duty cycle is increased, the peak RF voltage increases, meaning that 
            the average power will be constant with duty cycle change. \\~\\
        """
-    device_names = []
-    device_names.append('RF source is ' + str(loaded_data['rf_hw']))
-#    device_names.append('Gate is ' + str(loaded_data['gate_hw']))
+    device_names = ['RF source is ' + str(loaded_data['rf_hw'])]
+    #    device_names.append('Gate is ' + str(loaded_data['gate_hw']))
 
     # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append("Frequency: " + str(loaded_data['frequency']))
-    parameter_names.append("Maximum Power: " + str(loaded_data['max_power']) + "dBm")
-    parameter_names.append("Pulse Period: " + str(loaded_data['pulse_period']))
-    parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
-    parameter_names.append('AGC ' + agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append('Switching ' + switching_state_label(loaded_data['bpm_switching']))
-    parameter_names.append('DSC ' + dsc_state_label(loaded_data['bpm_dsc']))
-    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
+    parameter_names = ["Frequency: " + str(loaded_data['frequency']),
+                       "Maximum Power: " + str(loaded_data['max_power']) + "dBm",
+                       "Pulse Period: " + str(loaded_data['pulse_period']),
+                       "Settling time: " + str(loaded_data['settling_time']) + "s",
+                       'AGC ' + agc_state_label(loaded_data['bpm_agc']),
+                       'Switching ' + switching_state_label(loaded_data['bpm_switching']),
+                       'DSC ' + dsc_state_label(loaded_data['bpm_dsc']),
+                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation'])]
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
     # make a caption and headings for a table of results
@@ -241,9 +248,8 @@ def report_section_bunch_train_length_dependency(report_object, subdirectory, te
 
 
 def report_section_fixed_voltage_amplitude_fill_pattern(report_object, subdirectory, test_data):
-    with open(''.join((subdirectory, test_data)), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data), 'r') as read_data:
         loaded_data = json.load(read_data)
-    #  loaded_data = loadmat(''.join((subdirectory, test_data)))
     intro_text = r"""
            Equivalent to keeping the total charge in the train constant.
            This test imitates a fill pattern by modulation the RF signal with a square wave. The up time 
@@ -254,20 +260,15 @@ def report_section_fixed_voltage_amplitude_fill_pattern(report_object, subdirect
            the average power will change with duty cycle. \\~\\
        """
 
-    device_names = []
-    device_names.append('RF source is ' + str(loaded_data['rf_hw']))
-    device_names.append('Gate is ' + str(loaded_data['gate_hw']))
+    device_names = ['RF source is ' + str(loaded_data['rf_hw']), 'Gate is ' + str(loaded_data['gate_hw'])]
     # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append("Frequency: " + str(loaded_data['frequency']))
-    parameter_names.append("Output Power: " + str(
-        helper_functions.round_to_2sf(loaded_data['max_power'])) + "dBm")
-    parameter_names.append("Pulse Period: " + str(loaded_data['pulse_period']))
-    parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
-    parameter_names.append('AGC ' + str(loaded_data['bpm_agc']))
-    parameter_names.append('Switching ' + str(loaded_data['bpm_switching']))
-    parameter_names.append('DSC %s' % dsc_state_label(loaded_data['bpm_dsc']))
-    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
+    parameter_names = ["Frequency: " + str(loaded_data['frequency']), "Output Power: " + str(
+        helper_functions.round_to_2sf(loaded_data['max_power'])) + "dBm",
+                       "Pulse Period: " + str(loaded_data['pulse_period']),
+                       "Settling time: " + str(loaded_data['settling_time']) + "s",
+                       'AGC ' + str(loaded_data['bpm_agc']), 'Switching ' + str(loaded_data['bpm_switching']),
+                       'DSC %s' % dsc_state_label(loaded_data['bpm_dsc']),
+                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation'])]
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
 
@@ -287,41 +288,43 @@ def report_section_fixed_voltage_amplitude_fill_pattern(report_object, subdirect
 
 
 def report_section_position_raster_scan(report_object, subdirectory, test_data):
-    with open(''.join((subdirectory, test_data)), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data), 'r') as read_data:
         loaded_data = json.load(read_data)
-    #  loaded_data = loadmat(''.join((subdirectory, test_data)))
+    test_limit = 0.05
+    status_label, status, test_results = pass_fail.raster_scan_pass_fail(loaded_data=loaded_data, lim=test_limit)
+    centre_test_limit = 0.03
+    centre_status_label, centre_status, centre_test_results = pass_fail.centre_offset_pass_fail(loaded_data=loaded_data, lim=centre_test_limit)
     # Readies text that will introduce this test in the report
     intro_text = r"""Moves the beam position in the XY plane and records beam position.
              A fixed RF frequency and power is used while the attenuator values are changed. 
              Finally the predicted values are compared with the measured values of position. \\~\\
             """
     # Readies devices that are used in the test so that they can be added to the report
-    device_names = []
-    device_names.append('RF source is ' + loaded_data['rf_id'])
-    device_names.append('Attenuator is ' + loaded_data['prog_atten_id'])
+    device_names = ['RF source is ' + loaded_data['rf_id'], 'Attenuator is ' + loaded_data['prog_atten_id']]
     # # Readies parameters that are used in the test so that they can be added to the report
-    parameter_names = []
-    parameter_names.append("Power at BPM input: " + str(
-        helper_functions.round_to_2sf(loaded_data['output_power_level'])) + "dBm")
-    parameter_names.append("Fixed RF Output Frequency: " + str(loaded_data['frequency']) + "MHz")
-    parameter_names.append("Number of points: " + str(len(loaded_data['measured_x'])))
-    parameter_names.append("Settling time: " + str(loaded_data['settling_time']) + "s")
-    parameter_names.append('AGC ' + agc_state_label(loaded_data['bpm_agc']))
-    parameter_names.append('Switching ' + switching_state_label(loaded_data['bpm_switching']))
-    parameter_names.append('DSC ' + dsc_state_label(loaded_data['bpm_dsc']))
-    parameter_names.append('BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']))
+    parameter_names = ["Power at BPM input: " + str(
+        helper_functions.round_to_2sf(loaded_data['output_power_level'])) + "dBm",
+                       "Fixed RF Output Frequency: " + str(loaded_data['frequency']) + "MHz",
+                       "Number of repeat points: " + str(len(loaded_data['measured_x'])),
+                       "Settling time: " + str(loaded_data['settling_time']) + "s",
+                       'AGC ' + agc_state_label(loaded_data['bpm_agc']),
+                       'Switching ' + switching_state_label(loaded_data['bpm_switching']),
+                       'DSC ' + dsc_state_label(loaded_data['bpm_dsc']),
+                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']),
+                       'Scan test limit %s (%s um)' % (test_limit, test_limit * 1000),
+                       'Centre test limit %s (%s um)' % (centre_test_limit, centre_test_limit * 1000)]
 
-    report_object.setup_test("Beam_position_equidistant_grid_raster_scan", intro_text, device_names, parameter_names)
+    report_object.setup_test(' '.join((loaded_data['test_name'], '-scan', status_label, '-centre', centre_status_label)), intro_text, device_names, parameter_names)
 
-    fig_name = helper_functions.plot_raster_scan(subdirectory, loaded_data)
+    fig_name = helper_functions.plot_raster_scan(subdirectory, loaded_data, test_results, centre_test_results)
 
     report_object.add_figure_to_test(image_name=fig_name, caption="Beam position equidistant grid raster scan test")
 
 
 def report_section_noise_test(report_object, subdirectory, test_data):
-    with open(''.join((subdirectory, test_data[0])), 'r') as read_data:
+    with open(os.path.join(subdirectory, test_data[0]), 'r') as read_data:
         loaded_data = json.load(read_data)
-    with open(''.join((subdirectory, test_data[1])), 'r') as read_data_complex:
+    with open(os.path.join(subdirectory, test_data[1]), 'r') as read_data_complex:
         loaded_data_complex = json.load(read_data_complex)
     intro_text = r"""Compares the noise generated.
 
@@ -331,13 +334,11 @@ def report_section_noise_test(report_object, subdirectory, test_data):
         The mean values of the captured data are plotted, with the Baseline placed at -100dBm.\\~\\
         """
     # Get the device names for the report
-    device_names = []
-    device_names.append('RF source is ' + loaded_data['rf_id'])
-    device_names.append('Programmable attenuator is ' + loaded_data['prog_atten_id'])
+    device_names = ['RF source is ' + loaded_data['rf_id'],
+                    'Programmable attenuator is ' + loaded_data['prog_atten_id']]
     # Get the parameter values for the report
-    parameter_names = []
-    parameter_names.append("power levels: " + str(
-        helper_functions.round_to_2sf(loaded_data['output_power_levels'])))
+    parameter_names = ["power levels: " + str(
+        helper_functions.round_to_2sf(loaded_data['output_power_levels']))]
     # add the test details to the report
     report_object.setup_test(loaded_data['test_name'], intro_text, device_names, parameter_names)
     # make a caption and headings for a table of results
