@@ -139,13 +139,13 @@ def get_sa_data(epics_id, num_vals):
         timestamps (list): floats
         data (list): floats
     """
-    sa_a_accum = Accumulator(''.join((epics_id, 'SA:A')), num_vals)
+    sa_a_accum = Accumulator(':'.join((epics_id, 'SA:A')), num_vals)
     sa_a_times, sa_a_data = sa_a_accum.wait()
-    sa_b_accum = Accumulator(''.join((epics_id, 'SA:B')), num_vals)
+    sa_b_accum = Accumulator(':'.join((epics_id, 'SA:B')), num_vals)
     sa_b_times, sa_b_data = sa_b_accum.wait()
-    sa_c_accum = Accumulator(''.join((epics_id, 'SA:C')), num_vals)
+    sa_c_accum = Accumulator(':'.join((epics_id, 'SA:C')), num_vals)
     sa_c_times, sa_c_data = sa_c_accum.wait()
-    sa_d_accum = Accumulator(''.join((epics_id, 'SA:D')), num_vals)
+    sa_d_accum = Accumulator(':'.join((epics_id, 'SA:D')), num_vals)
     sa_d_times, sa_d_data = sa_d_accum.wait()
 
     return sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data
