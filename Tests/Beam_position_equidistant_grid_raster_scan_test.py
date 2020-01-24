@@ -9,6 +9,7 @@ import time
 from math import log10
 import json
 import helper_functions
+import sys
 
 
 def beam_position_equidistant_grid_raster_scan_test(
@@ -18,8 +19,9 @@ def beam_position_equidistant_grid_raster_scan_test(
                                                     x_points,
                                                     y_points,
                                                     settling_time,
+                                                    samples,
                                                     sub_directory=""):
-    """Moves the beam position to -5 to 5 in the XY plane and recods beam position
+    """Moves the beam position in the XY plane and records beam position
 
     The calc_x_pos and calc_y_pos functions are used to measure the theoretical beam position values.
     A set of ABCD values are created that will move the beam position from -5 to 5 in both the X and Y
@@ -35,6 +37,7 @@ def beam_position_equidistant_grid_raster_scan_test(
             y_points (int) number of samples in the Y plane 
             settling_time (float): time in seconds to wait between changing an attenuator value and 
                 taking a reading from the BPM.
+            samples (int): number of samples to be taken at each point.
             sub_directory (str): String that can change where the graphs will be saved to
                 
         Returns:
@@ -58,10 +61,14 @@ def beam_position_equidistant_grid_raster_scan_test(
     time.sleep(settling_time)
 
     starting_attenuations = test_system_object.ProgAtten.get_global_attenuation()
+    if starting_attenuations[0] - starting_attenuations[1] > 0.00001 or \
+            starting_attenuations[0] - starting_attenuations[2] > 0.00001 or \
+            starting_attenuations[0] - starting_attenuations[3] > 0.00001:
+        raise ValueError('The initial attenuation values are not the same value')
     map_atten_bpm = test_system_object.channel_map
 
-    beam_signal_x = np.linspace(-0.5, 0.5, x_points)
-    beam_signal_y = np.linspace(-0.5, 0.5, y_points)
+    beam_signal_x = np.linspace(-0.4, 0.4, x_points)
+    beam_signal_y = np.linspace(-0.4, 0.4, y_points)
     beam_signal_sum = 1
     beam_signal_q = 0
     measured_x = []
@@ -87,6 +94,29 @@ def beam_position_equidistant_grid_raster_scan_test(
     c_atten_readback = []
     d_atten_readback = []
 
+    # Reference point (centre)
+    baseline_attenuation = starting_attenuations[0]
+    test_system_object.ProgAtten.set_channel_attenuation(map_atten_bpm['A'], baseline_attenuation)
+    test_system_object.ProgAtten.set_channel_attenuation(map_atten_bpm['B'], baseline_attenuation)
+    test_system_object.ProgAtten.set_channel_attenuation(map_atten_bpm['C'], baseline_attenuation)
+    test_system_object.ProgAtten.set_channel_attenuation(map_atten_bpm['D'], baseline_attenuation)
+    x_scaled = 0
+    y_scaled = 0
+
+    a_ref = beam_signal_sum / 4. * (x_scaled + y_scaled + beam_signal_q + 1.)  # in V?
+    b_ref = beam_signal_sum / 4. * (-x_scaled + y_scaled - beam_signal_q + 1.)  # in V?
+    c_ref = beam_signal_sum / 4. * (-x_scaled - y_scaled + beam_signal_q + 1.)  # in V?
+    d_ref = beam_signal_sum / 4. * (x_scaled - y_scaled - beam_signal_q + 1.)  # in V?
+
+    a_atten_readback.append(test_system_object.ProgAtten.get_channel_attenuation(map_atten_bpm['A']))
+    b_atten_readback.append(test_system_object.ProgAtten.get_channel_attenuation(map_atten_bpm['B']))
+    c_atten_readback.append(test_system_object.ProgAtten.get_channel_attenuation(map_atten_bpm['C']))
+    d_atten_readback.append(test_system_object.ProgAtten.get_channel_attenuation(map_atten_bpm['D']))
+
+    for n in range(samples):
+        measured_x.append(test_system_object.BPM.get_x_position())
+        measured_y.append(test_system_object.BPM.get_y_position())
+
     count = 1.
     for x_index in beam_signal_x:
         for y_index in beam_signal_y:
@@ -99,15 +129,15 @@ def beam_position_equidistant_grid_raster_scan_test(
             d.append(beam_signal_sum/4. * (x_scaled - y_scaled - beam_signal_q + 1.))  # in V?
 
             if a[-1] > 0. and b[-1] > 0. and c[-1] > 0. and d[-1] > 0.:
-                a_adj.append(log10((a[-1] * a[-1]) / (50 * 0.25)))  # Assuming signal is a voltage going into 50 ohms
-                b_adj.append(log10((b[-1] * b[-1]) / (50 * 0.25)))
-                c_adj.append(log10((c[-1] * c[-1]) / (50 * 0.25)))
-                d_adj.append(log10((d[-1] * d[-1]) / (50 * 0.25)))
+                a_adj.append(log10(a[-1] / a_ref))
+                b_adj.append(log10(b[-1] / b_ref))
+                c_adj.append(log10(c[-1] / c_ref))
+                d_adj.append(log10(d[-1] / d_ref))
 
-                a_atten.append(starting_attenuations[map_atten_bpm['A'] - 1] - a_adj[-1])
-                b_atten.append(starting_attenuations[map_atten_bpm['B'] - 1] - b_adj[-1])
-                c_atten.append(starting_attenuations[map_atten_bpm['C'] - 1] - c_adj[-1])
-                d_atten.append(starting_attenuations[map_atten_bpm['D'] - 1] - d_adj[-1])
+                a_atten.append(baseline_attenuation - a_adj[-1])
+                b_atten.append(baseline_attenuation - b_adj[-1])
+                c_atten.append(baseline_attenuation - c_adj[-1])
+                d_atten.append(baseline_attenuation - d_adj[-1])
 
                 test_system_object.ProgAtten.set_channel_attenuation(map_atten_bpm['A'],
                                                                      helper_functions.quarter_round(a_atten[-1]))
@@ -124,15 +154,18 @@ def beam_position_equidistant_grid_raster_scan_test(
                 c_atten_readback.append(test_system_object.ProgAtten.get_channel_attenuation(map_atten_bpm['C']))
                 d_atten_readback.append(test_system_object.ProgAtten.get_channel_attenuation(map_atten_bpm['D']))
 
-                measured_x.append(test_system_object.BPM.get_x_position())
-                measured_y.append(test_system_object.BPM.get_y_position())
+                for n in range(samples):
+                    measured_x.append(test_system_object.BPM.get_x_position())
+                    measured_y.append(test_system_object.BPM.get_y_position())
+
                 requested_x.append(x_scaled)
                 requested_y.append(y_scaled)
-        print ''
-        progress = int(round((count/len(beam_signal_x)) * 100.))
-        count += 1
-        sys.stdout.write(('=' * progress) + ('' * (100 - progress)) + ("\r [ %d" % progress + "% ] "))
-        sys.stdout.flush()
+                progress = int(count / (len(beam_signal_x) * len(beam_signal_y)) * 100.)
+                sys.stdout.write(('=' * progress) + ('' * (100 - progress)) + ("\r [ %d" % progress + "% ] "))
+                sys.stdout.flush()
+                # progress = int(round((count/len(beam_signal_x)) * 100.))
+                count += 1
+
 
     test_system_object.RF.turn_off_RF()
 
@@ -144,6 +177,7 @@ def beam_position_equidistant_grid_raster_scan_test(
                 'prog_atten_id': test_system_object.prog_atten_id,
                 'frequency': rf_frequency,
                 'settling_time': settling_time,
+                'number_of_samples': samples,
                 'output_power_level': output_power_level,
                 'bpm_input_power': int(round(bpm_input_power)),
                 'bpm_agc': agc,
