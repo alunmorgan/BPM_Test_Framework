@@ -36,21 +36,33 @@ def internal_attenuator_pass_fail(loaded_data, lim=0.1):
 
     if all(data_test):
         print 'pass'
-        return 'pass', True
+        return 'Pass', True
     else:
         print 'fail'
-        return 'fail', False
+        return 'Fail', False
 
 
 def power_dependence_pass_fail(loaded_data, level=100):
     # pass fail test for beam power dependence
     print loaded_data['test_name']
+    x_pos_mean, _1 = helper_functions.stat_dataset(loaded_data['x_pos_raw'])
+    y_pos_mean, _2 = helper_functions.stat_dataset(loaded_data['y_pos_raw'])
+    x_pos_mean_scaled = list()
+    x_pos_mean_scaled_abs = list()
+    for xpm in x_pos_mean:
+        x_pos_mean_scaled.append(xpm * 1e3)
+        x_pos_mean_scaled_abs.append(abs(x_pos_mean_scaled[-1]))
+    y_pos_mean_scaled = list()
+    y_pos_mean_scaled_abs = list()
+    for ypm in y_pos_mean:
+        y_pos_mean_scaled.append(ypm * 1e3)
+        y_pos_mean_scaled_abs.append(abs(y_pos_mean_scaled[-1]))
     if max(x_pos_mean_scaled_abs) < level and max(y_pos_mean_scaled_abs) < level:
         print 'pass'
-        return 'pass', True
+        return 'Pass', True
     else:
         print 'fail'
-        return 'fail', False
+        return 'Fail', False
 
 
 def adc_bit_test_pass_fail(loaded_data, lim=0.05):
@@ -63,13 +75,13 @@ def adc_bit_test_pass_fail(loaded_data, lim=0.05):
 
     if all(data_test):
         print 'pass'
-        return 'pass', True
+        return 'Pass', True
     else:
         print 'fail'
-        return 'fail', False
+        return 'Fail', False
 
 
-def raster_scan_pass_fail(loaded_data, lim=0.02):
+def raster_scan_pass_fail(loaded_data, lim=0.05):
     # pass/fail test raster scan
     # Calculate predicted locations
     x_predicted = []
@@ -86,15 +98,51 @@ def raster_scan_pass_fail(loaded_data, lim=0.02):
         y_predicted.append(helper_functions.calc_y_pos(a, b, c, d, ky=1))
 
     dists = list()
+    sample_counter = 0
     for ne in range(len(x_predicted)):
-        dists.append(sqrt((loaded_data['measured_x'][ne] - x_predicted[ne]) **2 +
-                          (loaded_data['measured_y'][ne] - y_predicted[ne]) **2))
-    print loaded_data['test_name']
+        for naq in range(loaded_data['number_of_samples']):
+            dists.append(sqrt((abs(loaded_data['measured_x'][sample_counter]) - abs(x_predicted[ne])) ** 2 +
+                         (abs(loaded_data['measured_y'][sample_counter]) - abs(y_predicted[ne])) ** 2))
+            sample_counter += 1
 
-    data_test = all([tmp < lim for tmp in dists])
-    if data_test:
+    print loaded_data['test_name']
+    data_test = [tmp < lim for tmp in dists]
+    if all(data_test):
         print 'pass'
-        return 'pass', True
+        return 'Pass', True, data_test
     else:
         print 'fail'
-        return 'fail', False
+        return 'Fail', False, data_test
+
+
+def centre_offset_pass_fail(loaded_data, lim=0.02):
+    # pass/fail test offset from centre
+    # Calculate predicted locations
+    x_predicted = []
+    y_predicted = []
+    for inds in range(len(loaded_data['a_atten_readback'])):
+        a, b, c, d = helper_functions.convert_attenuation_settings_to_abcd(loaded_data['starting_attenuations'],
+                                                                           loaded_data['map_atten_bpm'],
+                                                                           loaded_data['a_atten_readback'][inds],
+                                                                           loaded_data['b_atten_readback'][inds],
+                                                                           loaded_data['c_atten_readback'][inds],
+                                                                           loaded_data['d_atten_readback'][inds])
+
+        x_predicted.append(helper_functions.calc_x_pos(a, b, c, d, kx=1))
+        y_predicted.append(helper_functions.calc_y_pos(a, b, c, d, ky=1))
+
+    dists = list()
+    sample_counter = 0
+    for naq in range(loaded_data['number_of_samples']):
+        dists.append(sqrt((abs(loaded_data['measured_x'][sample_counter]) - abs(x_predicted[0])) ** 2 +
+                     (abs(loaded_data['measured_y'][sample_counter]) - abs(y_predicted[0])) ** 2))
+        sample_counter += 1
+
+    print 'Offset from centre'
+    data_test = [tmp < lim for tmp in dists]
+    if all(data_test):
+        print 'pass'
+        return 'Pass', True, data_test
+    else:
+        print 'fail'
+        return 'Fail', False, data_test
