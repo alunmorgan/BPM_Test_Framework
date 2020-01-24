@@ -131,3 +131,9 @@ def adc_missing_bit_analysis(data, n_bits):
         data_bits_std.append(np.std(temp))
 
     return data_bits_std
+
+
+def sa_data_to_dict(sa_a_times, sa_a_data, sa_b_times, sa_b_data, sa_c_times, sa_c_data, sa_d_times, sa_d_data):
+    data = {'sa_a_times': sa_a_times, 'sa_a_data': sa_a_data, 'sa_b_times': sa_b_times, 'sa_b_data': sa_b_data,
+            'sa_c_times': sa_c_times, 'sa_c_data': sa_c_data, 'sa_d_times': sa_d_times, 'sa_d_data': sa_d_data}
+    return data
