@@ -41,7 +41,8 @@ class TexReport:
         Returns:
             
         """
-        with open(''.join((subdirectory, 'initial_BPM_state.json')), 'r') as read_data:
+        print os.path.join(subdirectory, 'initial_BPM_state.json')
+        with open(os.path.join(subdirectory, 'initial_BPM_state.json'), 'r') as read_data:
             test_system_state = json.load(read_data)
         logo_path = os.path.split(os.path.realpath(__file__))
         print test_system_state['mac_address'].replace(':', '-')
@@ -58,8 +59,8 @@ class TexReport:
         self.doc.append(NoEscape(r'\noindent'))
         self.doc.append(NoEscape(r'\large\textbf{Diamond Light Source Ltd} \hfill\large\textbf{Date: \today}'))
         self.doc.append(NoEscape(r'\\\normalsize Beam Diagnostics Group \hfill\\'))
-        self.doc.append(NoEscape(''.join(
-            (r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
+        # self.doc.append(NoEscape(''.join(
+        #     (r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
         self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', test_system_state['mac_address'], '}'))))
 
         intro_text = r'This is a test report for the, beam profile monitor electronics that are used at ' \
@@ -192,6 +193,6 @@ class TexReport:
         Returns:
             
         """
-        self.doc.generate_pdf(clean_tex=False)
-        self.doc.generate_pdf(clean_tex=False)
-        self.doc.generate_pdf(clean_tex=False)
+        self.doc.generate_pdf(clean_tex=False, compiler='pdflatex')
+        self.doc.generate_pdf(clean_tex=False, compiler='pdflatex')
+        self.doc.generate_pdf(clean_tex=False, compiler='pdflatex')
