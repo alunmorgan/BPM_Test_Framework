@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import json
+import sys
 
 
 def beam_power_dependence(
@@ -79,6 +80,9 @@ def beam_power_dependence(
         y_pos_raw.append(y_pos_data)
         x_pos_raw_time.append(x_time)
         y_pos_raw_time.append(y_time)
+        # progress = (index / len(output_power_levels)) * 100.
+        # sys.stdout.write(('=' * progress) + ('' * (100 - progress)) + ("\r [ %d" % progress + "% ] "))
+        # sys.stdout.flush()
 
     # turn off the RF
     test_system_object.RF.turn_off_RF()
