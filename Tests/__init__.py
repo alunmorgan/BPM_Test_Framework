@@ -5,4 +5,4 @@ from Template import *
 from Beam_position_equidistant_grid_raster_scan_test import beam_position_equidistant_grid_raster_scan_test
 from Noise_test import noise_test
 from ADC_bit_check import adc_test
-from ADC_int_atten_sweep import adc_int_atten_sweep_test
+from int_atten_sweep import adc_int_atten_sweep_test
