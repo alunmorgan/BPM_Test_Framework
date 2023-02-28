@@ -7,7 +7,7 @@ import Tests
 import json
 from pkg_resources import require
 require("numpy == 1.13.1")
-require("scipy == 0.19.1")
+require("scipy == 1.2.3")
 
 
 def tests_for_single_bpm(test_sys, data_location, rf_frequency, settling_time=0.1):
@@ -56,37 +56,25 @@ def tests_for_single_bpm(test_sys, data_location, rf_frequency, settling_time=0.
                                 sub_directory=subdirectory
                                 )
 
-    Tests.beam_position_equidistant_grid_raster_scan_test(test_system_object=test_sys,
-                                                          rf_frequency=rf_frequency,
-                                                          output_power_level=-6,
-                                                          x_points=3,
-                                                          y_points=3,
-                                                          settling_time=settling_time,
-                                                          samples=100,
-                                                          sub_directory=subdirectory
-                                                          )
+    #Tests.beam_position_equidistant_grid_raster_scan_test(test_system_object=test_sys,
+    #                                                      rf_frequency=rf_frequency,
+    #                                                      output_power_level=-6,
+    #                                                      x_points=3,
+    #                                                      y_points=3,
+    #                                                      settling_time=settling_time,
+    #                                                      samples=100,
+    #                                                      sub_directory=subdirectory
+    #                                                      )
     print '\nData stored in ', subdirectory
     return subdirectory
 
 
-dls_rf_frequency = 499.655  # MHz. For the ITECH hardware you can only set RF in steps of 5kHz.
+dls_rf_frequency = 499.655  # MHz.
 data_store_location = sys.argv[1]
-# t0 = time.clock()
-sys1 = Test_system_common.TestSystem(bpm_epics_id='TS-DI-EBPM-05',
-                                     rf_hw='Rigol3030DSG', bpm_hw='Libera_Electron', atten_hw='MC_RC4DAT6G95')
+sys1 = Test_system_common.TestSystem(bpm_epics_id='TS-DI-EBPM-04',
+                                     rf_hw='ITechBL12HI', bpm_hw='Libera_Electron', atten_hw='MC_RC4DAT6G95')
 subdirectory1 = tests_for_single_bpm(test_sys=sys1, data_location=data_store_location,
                                      rf_frequency=dls_rf_frequency, settling_time=0.1)
-# Latex_Report.assemble_report(subdirectory=subdirectory1)
+Latex_Report.assemble_report(subdirectory=subdirectory1)
 print 'Data stored in ', subdirectory1
-# t1 = time.clock()
-# print round((t1-t0) * 100.), 'seconds for 04 unit'
-
-sys2 = Test_system_common.TestSystem(bpm_epics_id='TS-DI-EBPM-04',
-                                     rf_hw='Rigol3030DSG', bpm_hw='Libera_Electron', atten_hw='MC_RC4DAT6G95')
-subdirectory2 = tests_for_single_bpm(test_sys=sys2, data_location=data_store_location,
-                                     rf_frequency=dls_rf_frequency, settling_time=0.1)
-# Latex_Report.assemble_report(subdirectory=subdirectory2)
-print 'Data stored in ', subdirectory2
-# t2 = time.clock()
-# print round((t2-t1) * 100.), 'seconds for 05 unit'
 
