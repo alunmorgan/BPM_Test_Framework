@@ -40,6 +40,10 @@ class TestSystem:
 
         self.all_devices = {'RF_sources': {'Rigol3030DSG': {'ipaddress': "172.23.252.51", 'port': 5555,
                                                             'timeout': 1, 'limit': 10},
+                                           'RigolDSG815': {'ipaddress': "", 'port': 5555,
+                                                            'timeout': 1, 'limit': 10},
+                                           'AtlantecASG3000U': {'ipaddress': "", 'port': 5555,
+                                                            'timeout': 1, 'limit': 10},
                                            'ITechBL12HI': {'ipaddress': "172.23.252.102", 'port': 23,
                                                            'timeout': 20, 'limit': 10},
                                            'Simulated': {'limit': 10, 'noise_mag': 1}},
@@ -70,6 +74,24 @@ class TestSystem:
                 limit=self.all_devices['RF_sources'][self.rf_hw]['limit'])
             # The output from the RF source is fixed due to the requirements of the timing circuitry.
             self.rf_output = 5  # dBm
+        if self.rf_hw == 'RigolDSG815':
+            self.RF = RFSignalGenerators.RigolDSG815_RFSigGen(
+                ipaddress=self.all_devices['RF_sources'][self.rf_hw]['ipaddress'],
+                port=self.all_devices['RF_sources'][self.rf_hw]['port'],
+                timeout=self.all_devices['RF_sources'][self.rf_hw]['timeout'],
+                limit=self.all_devices['RF_sources'][self.rf_hw]['limit'])
+            # The output from the RF source is fixed due to the requirements of the timing circuitry.
+            self.rf_output = 5  # dBm
+        if self.rf_hw == 'AtlantecASG3000U':
+            self.RF = RFSignalGenerators.AtlantecASG3000U_RFSigGen(
+                ipaddress=self.all_devices['RF_sources'][self.rf_hw]['ipaddress'],
+                port=self.all_devices['RF_sources'][self.rf_hw]['port'],
+                timeout=self.all_devices['RF_sources'][self.rf_hw]['timeout'],
+                limit=self.all_devices['RF_sources'][self.rf_hw]['limit'])
+            # The output from the RF source is fixed due to the requirements of the timing circuitry.
+            self.rf_output = 5  # dBm   
+            # The output from the RF source is fixed due to the requirements of the timing circuitry.
+            self.rf_output = 0  # dBm
         elif rf_hw == 'ITechBL12HI':
             self.RF = RFSignalGenerators.ITechBL12HI_RFSigGen(
                 ipaddress=self.all_devices['RF_sources'][self.rf_hw]['ipaddress'],
