@@ -27,11 +27,10 @@ def line_plot_data(datasets, sub_directory):
         # There is a specification line. Add this.
         # Spec is in um while data is in mm so scale by 1E-3.
         plt.plot(datasets[0][2][0], datasets[0][2][1], 'r')
-    fig_name = os.path.join(sub_directory, datasets[0][1][2])
-    plt.savefig(fig_name)
+    plt.savefig(os.path.join(sub_directory, datasets[0][1][2]))
     plt.cla()  # Clear axis
     plt.clf()  # Clear figure
-    return fig_name
+    return datasets[0][1][2] #figure name
 
 
 def bar_plot_data(datasets, sub_directory):
@@ -48,11 +47,10 @@ def bar_plot_data(datasets, sub_directory):
     x_step = datasets[0][0][0][1] - datasets[0][0][0][0]
     plt.xlim(datasets[0][0][0][0] - x_step / 2., datasets[0][0][0][-1] + x_step / 2.)
     plt.ylim(0, 1)
-    fig_name = os.path.join(sub_directory, datasets[0][1][2])
-    plt.savefig(fig_name)
+    plt.savefig(os.path.join(sub_directory, datasets[0][1][2]))
     plt.cla()  # Clear axis
     plt.clf()  # Clear figure
-    return fig_name
+    return datasets[0][1][2] # figure name
 
 
 def plot_adc_bit_check_data(sub_directory, loaded_data):
@@ -234,8 +232,8 @@ def plot_raster_scan(sub_directory, loaded_data, test_data, centre_test_data):
     plt.ylabel("Vertical Beam Position (mm)")
     plt.legend(('Passed', 'Failed', 'Predicted'), loc='upper right')
     plt.grid(True)
-    fig_name = os.path.join(sub_directory, "Beam_position_equidistant_grid_raster_scan_test.pdf")
-    plt.savefig(fig_name)
+    fig_name = "Beam_position_equidistant_grid_raster_scan_test.pdf"
+    plt.savefig(os.path.join(sub_directory, fig_name))
     return fig_name
 
 
@@ -279,8 +277,8 @@ def plot_noise(sub_directory, loaded_data, loaded_data_complex):
             # There is a specification line. Add this.
             plt.plot(index[2][0], index[2][1], 'r')
 
-        fig_names.append(os.path.join(sub_directory, index[1][2]))
-        plt.savefig(fig_names[-1])
+        fig_names.append(index[1][2])
+        plt.savefig(os.path.join(sub_directory, index[1][2]))
 
         plt.cla()  # Clear axis
         plt.clf()  # Clear figure
