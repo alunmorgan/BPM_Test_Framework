@@ -2,6 +2,7 @@ BPMDevice/htmlcov/
 BPMDevice/.coverage
 htmlcov/
 venv/
+.venv/
 .idea/
 *.py~
 *.sh~
