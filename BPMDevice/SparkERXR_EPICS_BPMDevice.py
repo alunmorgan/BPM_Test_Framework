@@ -1,5 +1,5 @@
 from pkg_resources import require
-require("cothread==2.15")
+require("cothread==2.18.2")
 from cothread.catools import caget, caput, connect
 #import cothread
 from Generic_BPMDevice import *
