@@ -6,7 +6,7 @@ def adc_test(
              test_system_object,
              frequency,
              output_power_level=-20,
-             settling_time=1,
+             settling_time=0.2,
              sub_directory=""):
     """Compares the signals from the ADCs while a sine wave excitation is input.
 
@@ -35,10 +35,9 @@ def adc_test(
                                                'ft_state': 'Enabled'})
     ft_state, agc, delta, offset_wf, switches, switch_state, bpm_attenuation, dsc = \
         test_system_object.BPM.get_internal_state()
-
+    test_system_object.RF.set_output_power(output_power_level)
     test_system_object.RF.turn_on_RF()
-    # Wait for signal to settle
-    time.sleep(settling_time)
+    time.sleep(settling_time) # Wait for signal to settle
     # Gets 1024 samples for each ADC.
     time_tmp, data_tmp = test_system_object.BPM.get_adc_data(16)  # record data
     # turn off the RF

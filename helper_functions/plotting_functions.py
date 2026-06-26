@@ -91,22 +91,22 @@ def plot_adc_int_atten_sweep_data(sub_directory, loaded_data):
         data_c_norm.append(data_c[atten_steps] / ref_c)
         data_d_norm.append(data_d[atten_steps] / ref_d)
 
-    format_plot.append(((loaded_data['output_power'], data_a),
-                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'A')))
-    format_plot.append(((loaded_data['output_power'], data_b),
-                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'B')))
-    format_plot.append(((loaded_data['output_power'], data_c),
-                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'C')))
-    format_plot.append(((loaded_data['output_power'], data_d),
-                        ('power', 'counts', "ADC_varying_internal_attenuation.pdf", 'D')))
-    format_plot.append(((loaded_data['output_power'], data_a_norm),
-                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'A')))
-    format_plot.append(((loaded_data['output_power'], data_b_norm),
-                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'B')))
-    format_plot.append(((loaded_data['output_power'], data_c_norm),
-                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'C')))
-    format_plot.append(((loaded_data['output_power'], data_d_norm),
-                        ('power', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'D')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_a),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation.pdf", 'A')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_b),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation.pdf", 'B')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_c),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation.pdf", 'C')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_d),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation.pdf", 'D')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_a_norm),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'A')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_b_norm),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'B')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_c_norm),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'C')))
+    format_plot.append(((loaded_data['bpm_attenuation'], data_d_norm),
+                        ('bpm_attenuation', 'counts', "ADC_varying_internal_attenuation_normalised.pdf", 'D')))
 
     # plot all of the graphs
     fig1_name = line_plot_data([format_plot[0], format_plot[1], format_plot[2], format_plot[3]], sub_directory)
@@ -125,10 +125,10 @@ def plot_beam_power_dependence_data(sub_directory, loaded_data, ref_data):
     y_noise_freq, y_noise_fft = helper_functions.helper_calc_functions.change_to_freq_domain(
         loaded_data['y_time_baseline'], loaded_data['y_pos_baseline'])
 
-    format_plot.append(((loaded_data['output_power_levels'], [xp * 1e3 for xp in x_pos_mean],
+    format_plot.append(((loaded_data['bpm_input_power'], [xp * 1e3 for xp in x_pos_mean],
                          [xs * 1e3 for xs in x_pos_std]),
                         ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Horizontal')))
-    format_plot.append(((loaded_data['output_power_levels'], [yp * 1e3 for yp in y_pos_mean],
+    format_plot.append(((loaded_data['bpm_input_power'], [yp * 1e3 for yp in y_pos_mean],
                          [ys * 1e3 for ys in y_pos_std]),
                         ('Input power (dBm)', 'Beam Position (um)', "power_vs_position.pdf", 'Vertical')))
     format_plot.append(((loaded_data['x_time_baseline'], loaded_data['x_pos_baseline']),

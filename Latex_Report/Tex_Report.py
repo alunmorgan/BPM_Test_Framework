@@ -54,13 +54,11 @@ class TexReport:
             arguments=['article'],
         )
         self.doc.preamble.append(NoEscape(r'\newcommand\tab[1][1cm]{\hspace*{#1}}'))
-        self.doc.preamble.append(NoEscape(r'\usepackage{fullpage}'))
-        self.doc.preamble.append(NoEscape(r'\usepackage{graphicx}'))
+        #self.doc.preamble.append(NoEscape(r'\usepackage{fullpage}'))
         self.doc.append(NoEscape(r'\noindent'))
         self.doc.append(NoEscape(r'\large\textbf{Diamond Light Source Ltd} \hfill\large\textbf{Date: \today}'))
         self.doc.append(NoEscape(r'\\\normalsize Beam Diagnostics Group \hfill\\'))
         # self.doc.append(NoEscape(''.join(
-        #     (r'\\\\\includegraphics[width = 1\textwidth]{', '/'.join((logo_path[0], 'Logo.PNG')), r'}\\\\'))))
         self.doc.append(NoEscape(''.join((r'\section*{BPM Test Report for ', test_system_state['mac_address'], '}'))))
 
         intro_text = r'This is a test report for the, beam profile monitor electronics that are used at ' \

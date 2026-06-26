@@ -57,6 +57,10 @@ def assemble_report(subdirectory):
         report_section_beam_power_dependence(report_object=report, subdirectory=subdirectory,
                                              test_data='beam_power_dependence_data.json',
                                              ref_data='initial_BPM_state.json')
+    if os.path.exists(os.path.join(subdirectory, 'beam_power_dependence_data_rf_power_sweep.json')):
+        report_section_beam_power_dependence(report_object=report, subdirectory=subdirectory,
+                                             test_data='beam_power_dependence_data_rf_power_sweep.json',
+                                             ref_data='initial_BPM_state.json')
 
     if os.path.exists(os.path.join(subdirectory, 'constant_fill_charge_fill_sweep_data.json')):
         report_section_fixed_voltage_amplitude_fill_pattern(report_object=report, subdirectory=subdirectory,
@@ -130,14 +134,12 @@ def report_section_adc_int_atten(report_object, subdirectory, test_data):
                     'Programmable attenuator is ' + loaded_data['prog_atten_id']]
 
     # Get the parameter values for the report
-    parameter_names = ['Output power level: ' + str(
-        helper_functions.round_to_2sf(loaded_data['output_power'])),
-                       'AGC %s' % agc_state_label(loaded_data['bpm_agc']),
+    parameter_names = ['AGC %s' % agc_state_label(loaded_data['bpm_agc']),
                        ''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))),
                        'DSC %s' % dsc_state_label(loaded_data['bpm_dsc']),
-                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']),
                        'Test limit is %s (%s percent)' % (str(test_limit), str(test_limit*100))
                        ]
+                       #                       'BPM attenuation setting %s dB' % str(loaded_data['bpm_attenuation']),
     # add the test details to the report
     report_object.setup_test(' - '.join((loaded_data['test_name'], status_label)), intro_text, device_names, parameter_names)
     fig1_name, fig2_name = helper_functions.plot_adc_int_atten_sweep_data(sub_directory=subdirectory,
@@ -162,8 +164,8 @@ def report_section_beam_power_dependence(report_object, subdirectory, test_data,
                     'Programmable attenuator is ' + loaded_data['prog_atten_id']]
     # Get the parameter values for the report
     parameter_names = ["Frequency: " + str(loaded_data['frequency']) + "MHz", "Power levels requested: " + str(
-        helper_functions.round_to_2sf(loaded_data['set_output_power_levels'])) + "dBm", "Power levels used: " + str(
-        helper_functions.round_to_2sf(loaded_data['output_power_levels'])) + "dBm",
+        helper_functions.round_to_2sf(loaded_data['set_output_power_levels'])) + "dBm", "Power levels BPM sees: " + str(
+        helper_functions.round_to_2sf(loaded_data['bpm_input_power'])) + "dBm",
                        "Settling time: " + str(loaded_data['settling_time']) + "s",
                        'AGC %s' % agc_state_label(loaded_data['bpm_agc']),
                        ''.join(('Switching ', switching_state_label(loaded_data['bpm_switching']))),

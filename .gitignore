@@ -3,6 +3,9 @@ BPMDevice/.coverage
 htmlcov/
 venv/
 .venv/
+.pytest_cache/
+.vscode/
+*.code-workspace
 .idea/
 *.py~
 *.sh~

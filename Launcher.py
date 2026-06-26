@@ -36,27 +36,34 @@ def tests_for_single_bpm(test_sys, data_location, rf_frequency, settling_time=0.
         json.dump(data_out, write_file)
 
     Tests.adc_test(test_system_object=test_sys,
-                   frequency=rf_frequency,
-                   output_power_level=-4,
-                   settling_time=settling_time,
-                   sub_directory=subdirectory
-                   )
+                    frequency=rf_frequency,
+                    output_power_level=-4,
+                    settling_time=settling_time,
+                    sub_directory=subdirectory
+                    )
 
     Tests.adc_int_atten_sweep_test(test_system_object=test_sys,
-                                   frequency=rf_frequency,
-                                   output_power_level=-4,
-                                   settling_time=settling_time,
-                                   sub_directory=subdirectory)
+                                    frequency=rf_frequency,
+                                    output_power_level=-24,
+                                    settling_time=settling_time,
+                                    sub_directory=subdirectory)
 
     Tests.beam_power_dependence(test_system_object=test_sys,
                                 frequency=rf_frequency,
-                                output_power_levels=range(-4, -30, -5),
+                                output_power_levels=range(-4, -50, -5),
                                 settling_time=settling_time,
-                                samples=100,
+                                samples=5,
                                 sub_directory=subdirectory
                                 )
+    #Tests.beam_power_dependence_rf_power_sweep(test_system_object=test_sys,
+    #                            frequency=rf_frequency,
+    #                            output_power_levels=range(-4, -25, -5),
+    #                            settling_time=settling_time,
+    #                            samples=5,
+    #                            sub_directory=subdirectory
+    #                            )
 
-    #Tests.beam_position_equidistant_grid_raster_scan_test(test_system_object=test_sys,
+    # Tests.beam_position_equidistant_grid_raster_scan_test(test_system_object=test_sys,
     #                                                      rf_frequency=rf_frequency,
     #                                                      output_power_level=-6,
     #                                                      x_points=3,
@@ -71,8 +78,8 @@ def tests_for_single_bpm(test_sys, data_location, rf_frequency, settling_time=0.
 
 dls_rf_frequency = 499.655  # MHz.
 data_store_location = sys.argv[1]
-sys1 = Test_system_common.TestSystem(bpm_epics_id='TS-DI-EBPM-04',
-                                     rf_hw='ITechBL12HI', bpm_hw='Libera_Electron', atten_hw='MC_RC4DAT6G95')
+sys1 = Test_system_common.TestSystem(bpm_epics_id='TS-DI-EBPM-05',
+                                     rf_hw='Rigol3030DSG', bpm_hw='Libera_Brilliance', atten_hw='MC_RC4DAT6G95')
 subdirectory1 = tests_for_single_bpm(test_sys=sys1, data_location=data_store_location,
                                      rf_frequency=dls_rf_frequency, settling_time=0.1)
 Latex_Report.assemble_report(subdirectory=subdirectory1)

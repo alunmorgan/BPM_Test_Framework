@@ -79,12 +79,12 @@ def turn_rf_on(tn, timeout, Output_Power):
         bool: Returns True if the output is enabled, False if it is not.
     """
     # turns on the output
-    ret, check = telnet_query(tn, timeout, "POW:RF " + str(Output_Power))
-    if "OK" not in check:
+    ret_power, check_power = telnet_query(tn, timeout, "POW:RF " + str(Output_Power))
+    if "OK" not in check_power:
         raise ValueError("Turning RF on unsuccessful. Power setting in unknown state.")
     # Turns on the modulation state output
-    ret, check = telnet_query(tn, timeout, "GATE:FILL 100")
-    if "OK" not in check:
+    ret_gate, check_gate = telnet_query(tn, timeout, "GATE:FILL 100")
+    if "OK" not in check_gate:
         raise ValueError("Turning RF on unsuccessful. Gate setting in unknown state.")
 
 
@@ -100,11 +100,11 @@ def turn_rf_off(tn, timeout):
         bool: Returns True if the output is enabled, False if it is not.
     """
     # turns off the output
-    ret, check = telnet_query(tn, timeout, "POW:RF -50")
-    if "OK" not in check:
+    ret_power, check_power = telnet_query(tn, timeout, "POW:RF -50")
+    if "OK" not in check_power:
         raise ValueError("Turning RF off unsuccessful. Power setting in unknown state.")
     # Turns off the modulation state output
-    ret, check = telnet_query(tn, timeout, "GATE:FILL 0")
-    if "OK" not in check:
+    ret_gate, check_gate = telnet_query(tn, timeout, "GATE:FILL 0")
+    if "OK" not in check_gate:
         raise ValueError("Turning RF off unsuccessful. Gate setting in unknown state.")
 
